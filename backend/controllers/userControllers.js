@@ -56,3 +56,28 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const updateUser = async (req, res) => {
+  try {
+    const userId = req.params.id; // get user id from URL
+    const updates = req.body;     // only the fields provided
+
+    const notAllowed = ["email", "password", "phone"]; 
+    notAllowed.forEach(field => delete updates[field]);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },   // update only provided fields
+      { new: true, runValidators: true } // return updated doc
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
