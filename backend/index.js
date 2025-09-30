@@ -13,6 +13,8 @@ app.use("/user", userRoutes);
 
 app.use("/user", userRoutes);
 
+app.use()
+
 
 app.get('/', (req, res) => res.send('API running'));
 

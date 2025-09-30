@@ -8,6 +8,7 @@ router.post("/register", createUser);
 
 router.post("/login", loginUser);
 
+
 // Get all users
 // router.get("/", getUsers);
 
