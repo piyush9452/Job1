@@ -9,7 +9,9 @@ connectDB();
 const app = express();
 app.use(express.json()); // parse JSON requests
 
-app.use("/api/users", userRoutes);
+app.use("/user", userRoutes);
+
+app.use("/user", userRoutes);
 
 
 app.get('/', (req, res) => res.send('API running'));

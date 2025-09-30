@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phone: { type: Number },
+  phone: { type: Number,unique: true },
   skills: [String],
   experience:[{
     jobId: { type: mongoose.Schema.Types.ObjectId, ref: "Job" },
