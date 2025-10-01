@@ -4,22 +4,39 @@ import connectDB from './configs/db.js';
 import userRoutes from './routes/userRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import errorHandler from './middleware/errorhandler.js';
+import jobsRoutes from './routes/jobsRoutes.js';
 
 dotenv.config();
 connectDB();
 
 const app = express();
-app.use(express.json()); // parse JSON requests
-
-//User Routes
-app.use("/user", userRoutes);
+app.use(express.json());
 
 
-//Contact Routes
-app.use("/contact",contactRoutes);
 
 
-app.use(errorHandler);
+//---------------------------MAIN-ROUTES---------------------------------------//
+//                                                                             //
+//User Routes                                                                  //
+app.use("/user", userRoutes);                                                  //
+//                                                                             //
+//Contact Routes                                                               //
+app.use("/contact",contactRoutes);                                             //
+//                                                                             //
+//Jobs Routes                                                                  //
+app.use("/jobs",jobsRoutes);                                                   //
+//                                                                             //
+//---------------------------MAIN ROUTES---------------------------------------//
+
+
+
+
+
+//-----------------------------ERROR HANDLING MIDDLEWARE--------------------------//
+// Error handling middleware                                                      //
+app.use(errorHandler);                                                            //
+//-----------------------------ERROR HANDLING MIDDLEWARE--------------------------//
+
 
 
 const PORT = process.env.PORT || 5000;

@@ -1,8 +1,8 @@
-// import constants  from "../constants.js";
+import constants  from "./constants.js";
 
 const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode ? res.statusCode : 500;
-
+  console.log(constants.INTERNAL_SERVER_ERROR)
   switch (statusCode) {
     case constants.VALIDATION_ERROR:
       res.status(statusCode).json({
