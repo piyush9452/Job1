@@ -3,7 +3,6 @@ import expressAsyncHandler from "express-async-handler";
 
 
 export const contactUs = expressAsyncHandler(async (req, res) => {
- 
     const {name,email,communicationType,message} = req.body;
     const newContact = new Contact({name,email,communicationType,message});
     await newContact.save();
