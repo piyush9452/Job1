@@ -1,11 +1,12 @@
 import User from "../models/users.js";
 import jwt from "jsonwebtoken";
+import expressAsyncHandler from "express-async-handler";
 // import errorHandler from "../middleware/errorhandler.js";
 import bcrypt from "bcrypt";
 
 // Create a new user
-export const createUser = async (req, res) => {
-  try {
+export const createUser = expressAsyncHandler(async (req, res) => {
+
     const { name, email, password, phone} = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     // Check if email already exists
@@ -14,15 +15,12 @@ export const createUser = async (req, res) => {
 
     const user = new User({ name, email, password:hashedPassword, phone});
     const savedUser = await user.save();
-
     res.status(201).json(savedUser);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
-export const loginUser = async (req, res) => {
-  try {
+});
+
+export const loginUser = expressAsyncHandler(async (req, res) => {
+
     const { email, password } = req.body;
 
     // Check if user exists
@@ -52,13 +50,10 @@ export const loginUser = async (req, res) => {
       }
     });
 
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+});
 
-export const updateUser = async (req, res) => {
-  try {
+export const updateUser = expressAsyncHandler(async (req, res) => {
+
     const userId = req.params.id; // get user id from URL
     const updates = req.body;     // only the fields provided
 
@@ -76,22 +71,21 @@ export const updateUser = async (req, res) => {
     }
 
     res.status(200).json(updatedUser);
-  } catch (err) {
+
     console.error("Update error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
+  
+});
 
-export const userDetails = async (req, res) => {
-  try {
+export const userDetails = expressAsyncHandler(async (req, res) => {
     const userId = req.params.id;
     const user = await User.findById(userId).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     res.status(200).json(user);
-  } catch (err) {
+
     res.status(500).json({ error: err.message });
-  }
-}
+  
+})
 
