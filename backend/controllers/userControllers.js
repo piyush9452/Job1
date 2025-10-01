@@ -37,7 +37,7 @@ export const loginUser = expressAsyncHandler(async (req, res) => {
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET, // store secret in .env
-      { expiresIn: "240h" }
+      { expiresIn: "120h" }
     );
 
     res.status(200).json({
