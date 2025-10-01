@@ -14,7 +14,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   } = req.body;
 
   // postedBy comes from JWT-authenticated user
-  const userId = req.user._id; 
+  const userId = req.user.id; 
   const userName = req.user.name;
   const userImage = req.user.image || null;
 

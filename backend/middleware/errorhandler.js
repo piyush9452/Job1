@@ -1,52 +1,29 @@
-import constants  from "./constants.js";
+import constants from "./constants.js";
 
 const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode ? res.statusCode : 500;
-  console.log(constants.INTERNAL_SERVER_ERROR)
-  switch (statusCode) {
+
+  res.status(statusCode).json({
+    title: getErrorTitle(statusCode),
+    message: err.message || "Something went wrong",
+    stackTrace: process.env.NODE_ENV === "production" ? null : err.stack,
+  });
+};
+
+const getErrorTitle = (code) => {
+  switch (code) {
     case constants.VALIDATION_ERROR:
-      res.status(statusCode).json({
-        title: "Validation Failed",
-        message: err.message,
-        stackTrace: err.stack,
-      });
-      break;
-
+      return "Validation Failed";
     case constants.NOT_FOUND:
-      res.status(statusCode).json({
-        title: "Not Found",
-        message: err.message,
-        stackTrace: err.stack,
-      });
-      break;
-
+      return "Not Found";
     case constants.FORBIDDEN:
-      res.status(statusCode).json({
-        title: "Forbidden",
-        message: err.message,
-        stackTrace: err.stack,
-      });
-      break;
-
+      return "Forbidden";
     case constants.UNAUTHORIZED:
-      res.status(statusCode).json({
-        title: "Unauthorized",
-        message: err.message,
-        stackTrace: err.stack,
-      });
-      break;
-
+      return "Unauthorized";
     case constants.INTERNAL_SERVER_ERROR:
-      res.status(statusCode).json({
-        title: "Internal Server Error",
-        message: err.message,
-        stackTrace: err.stack,
-      });
-      break;
-
+      return "Internal Server Error";
     default:
-      console.log("No error, all good!");
-      break;
+      return "Error"; // <--- important
   }
 };
 
