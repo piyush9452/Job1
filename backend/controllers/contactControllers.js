@@ -12,3 +12,14 @@ export const contactUs = async (req, res) => {
   }
 };
 
+export const getContactmessage = async (req, res) => {
+  try {
+    const {id} = req.params;
+    const contact = await Contact.findById(id);
+    if(!contact) return res.status(404).json({message: "Contact message not found"});
+    res.status(200).json(contact);
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+}
+
