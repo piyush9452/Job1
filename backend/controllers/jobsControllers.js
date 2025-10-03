@@ -46,4 +46,16 @@ export const createJob = expressAsyncHandler((async (req, res) => {
 }));
 
 
+export const getJob = expressAsyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const job = await Job.findById(id);
+  if (!job) return res.status(404).json({ message: "Job not found" });
+  res.status(200).json(job);
+  
+})
 
+
+export const getJobs = expressAsyncHandler(async (req, res) => {
+  const jobs = await Job.find().sort({ createdAt: -1 });
+  res.status(200).json(jobs);
+});
