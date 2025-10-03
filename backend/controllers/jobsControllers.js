@@ -55,8 +55,82 @@ export const getJob = expressAsyncHandler(async (req, res) => {
 })
 
 
+
+
 export const getJobs = expressAsyncHandler(async (req, res) => {
-  const jobs = await Job.find().sort({ createdAt: -1 });
-  res.status(200).json(jobs);
-  //new addon 
+  // --- 1. FILTERING ---
+  // We start with a base query object and add filters conditionally.
+  const queryObj = { ...req.query };
+  const filters = {};
+
+  // Text-based search for title and location (case-insensitive)
+  if (queryObj.title) {
+    filters.title = { $regex: queryObj.title, $options: 'i' };
+  }
+  if (queryObj.location) {
+    filters.location = { $regex: queryObj.location, $options: 'i' };
+  }
+
+  // Exact match for enum fields
+  if (queryObj.jobType) {
+    filters.jobType = queryObj.jobType;
+  }
+  if (queryObj.status) {
+    filters.status = queryObj.status;
+  }
+
+  // Filter by skills (supports comma-separated values like "react,node")
+  if (queryObj.skillsRequired) {
+    const skills = queryObj.skillsRequired.split(',');
+    // $in operator matches if the skillsRequired array contains any of the provided skills
+    filters.skillsRequired = { $in: skills };
+  }
+
+  // Numeric range for salary (e.g., /jobs?salary[gte]=500&salary[lte]=1000)
+  if (queryObj.salary) {
+    const salaryFilter = {};
+    if (queryObj.salary.gte) {
+      salaryFilter.$gte = Number(queryObj.salary.gte);
+    }
+    if (queryObj.salary.lte) {
+      salaryFilter.$lte = Number(queryObj.salary.lte);
+    }
+    if (Object.keys(salaryFilter).length > 0) {
+      filters.salary = salaryFilter;
+    }
+  }
+
+  // --- 2. PAGINATION ---
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10; // Default to 10 results per page
+  const skip = (page - 1) * limit;
+
+  // --- 3. SORTING ---
+  // Default sort by most recent post.
+  // Supports sorting like ?sort=salary or ?sort=-salary (for descending)
+  let sortBy = { postedAt: -1 }; 
+  if (req.query.sort) {
+    const sortField = req.query.sort.startsWith('-') 
+      ? req.query.sort.substring(1) 
+      : req.query.sort;
+    const sortOrder = req.query.sort.startsWith('-') ? -1 : 1;
+    sortBy = { [sortField]: sortOrder };
+  }
+
+  // --- 4. EXECUTE QUERY ---
+  const jobs = await Job.find(filters)
+    .sort(sortBy)
+    .skip(skip)
+    .limit(limit);
+    
+  // Optional: Get total count for pagination metadata on the frontend
+  const totalJobs = await Job.countDocuments(filters);
+
+  res.status(200).json({
+    results: jobs.length,
+    page,
+    totalPages: Math.ceil(totalJobs / limit),
+    totalJobs,
+    data: jobs,
+  });
 });
