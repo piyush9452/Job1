@@ -6,7 +6,7 @@ const errorHandler = (err, req, res, next) => {
   res.status(statusCode).json({
     title: getErrorTitle(statusCode),
     message: err.message || "Something went wrong",
-    stackTrace: process.env.NODE_ENV === "production" ? null : err.stack,
+    // stackTrace: process.env.NODE_ENV === "production" ? null : err.stack,
   });
 };
 

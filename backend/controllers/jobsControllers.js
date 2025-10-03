@@ -1,7 +1,7 @@
 import expressAsyncHandler from "express-async-handler";
 import Job from "../models/jobs.js";
 
-export const createJob = expressAsyncHandler(async (req, res) => {
+export const createJob = expressAsyncHandler((async (req, res) => {
   const {
     title,
     description,
@@ -14,7 +14,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   } = req.body;
 
   // postedBy comes from JWT-authenticated user
-  const userId = req.user.id; 
+  const userId = req.user._id; 
   const userName = req.user.name;
   const userImage = req.user.image || null;
 
@@ -43,4 +43,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     message: "Job created successfully",
     job: newJob,
   });
-});
+}));
+
+
+
