@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Hero from "../components/Hero";
 import JobCategories from "../components/JobCategories";
 import FeaturedJobs from "../components/FeaturedJobs";
+//   this is home
 export default function Home() {
     return (
         <div className="min-h-screen flex flex-col">
