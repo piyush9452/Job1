@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import Hero from "../components/Hero";
 import JobCategories from "../components/JobCategories";
 import FeaturedJobs from "../components/FeaturedJobs";
