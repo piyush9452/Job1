@@ -3,6 +3,12 @@ import jwt from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
 // import errorHandler from "../middleware/errorhandler.js";
 import bcrypt from "bcrypt";
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK (do this once when your server starts)
+admin.initializeApp({
+  credential: admin.credential.cert(require('./path/to/your/serviceAccountKey.json'))
+});
 
 // Create a new user
 export const createUser = expressAsyncHandler(async (req, res) => {
@@ -89,3 +95,45 @@ export const userDetails = expressAsyncHandler(async (req, res) => {
   
 })
 
+
+
+
+// Your API endpoint
+ export const G_Auth = expressAsyncHandler(async (req, res) => {
+  const idToken = req.headers.authorization?.split('Bearer ')[1];
+
+  if (!idToken) {
+    return res.status(401).send('Unauthorized: No token provided.');
+  }
+
+  try {
+    // 1. Verify the ID token using the Admin SDK
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const firebaseUid = decodedToken.uid;
+    const email = decodedToken.email;
+    const displayName = decodedToken.name;
+
+    // 2. "Find or Create" user in YOUR database
+    let user = await User.findOne({ email: email });
+
+    if (!user) {
+      // User doesn't exist, so this is their registration
+      user = new User({
+        email: email,
+        displayName: displayName,
+        firebaseUid: firebaseUid, // Link your user record to the Firebase UID
+        // *** THE PASSWORD FIELD IS LEFT NULL/EMPTY ***
+        // You can add other fields like mobileNumber here if you collect them in a second step
+      });
+      await user.save();
+    }
+
+    // 3. Create YOUR OWN session/JWT for your application
+    const appToken = generateYourAppJWT(user.id); // A function you write
+    res.json({ token: appToken });
+
+  } catch (error) {
+    console.error("Backend Auth Error", error);
+    res.status(401).send('Unauthorized: Invalid token.');
+  }
+});

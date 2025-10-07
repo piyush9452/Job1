@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser,loginUser,updateUser,userDetails } from "../controllers/userControllers.js";
+import { createUser,loginUser,updateUser,userDetails,G_Auth } from "../controllers/userControllers.js";
 
 const router = express.Router();
 
@@ -12,6 +12,6 @@ router.patch("/:id", updateUser);
 
 router.get("/:id", userDetails);
 
-
+router.post('/api/auth/google-signin',G_Auth);
 
 export default router;
