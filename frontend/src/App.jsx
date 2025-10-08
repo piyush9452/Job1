@@ -1,6 +1,6 @@
 import './App.css'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
+import  Home  from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import About from "./pages/About";
@@ -9,6 +9,7 @@ import Profile from "./pages/Profile";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Jobs from "./pages/Jobs";
+import CreateJob from "./pages/CreateJob";
 import Navbar from "./components/NavBar";
 function App() {
 
@@ -25,6 +26,8 @@ function App() {
             <Route path="/employeedashboard" element={<EmployeeDashboard />} />
             <Route path="/employerdashboard" element={<EmployerDashboard />} />
             <Route path="/jobs" element={<Jobs />} />
+            <Route path="/createjob" element={<CreateJob />} />
+
         </Routes>
     </Router>
   )

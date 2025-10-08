@@ -34,14 +34,11 @@ export default function Navbar() {
                     <Link to="/">
                         <button className="text-gray-700 hover:text-blue-700">Home</button>
                     </Link>
-                    <Link to="/about">
-                        <button className="text-gray-700 hover:text-blue-700">About Us</button>
+                    <Link to="/jobs">
+                        <button className="text-gray-700 hover:text-blue-700">Find Job</button>
                     </Link>
-                    <Link to="/services">
-                        <button className="text-gray-700 hover:text-blue-700">Services</button>
-                    </Link>
-                    <Link to="/contact">
-                        <button className="text-gray-700 hover:text-blue-700">Contact Us</button>
+                    <Link to="/createjob">
+                        <button className="text-gray-700 hover:text-blue-700">Post Job</button>
                     </Link>
 
                     {/* User Profile Dropdown */}
