@@ -1,39 +1,38 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import JobPreviewCard from "../components/JobPreviewCard";
 
-export default function EmployeeDashboard() {
+export default function EmployerDashboard() {
     const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchAppliedJobs = async () => {
+        const fetchJobs = async () => {
             try {
-                const res = await axios.get("http://localhost:5000/user/applied-jobs", {
-                    withCredentials: true,
+                const token = JSON.parse(localStorage.getItem("userInfo"))?.token;
+                const { data } = await axios.get("http://localhost:5000/jobs/myjobs", {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-                setJobs(res.data);
-            } catch (err) {
-                console.error("Error fetching applied jobs:", err);
+                setJobs(data);
+            } catch (error) {
+                console.error("Error fetching employer jobs:", error);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchAppliedJobs();
+        fetchJobs();
     }, []);
 
+    if (loading) return <p>Loading your jobs...</p>;
+
     return (
-        <div className="min-h-screen bg-gray-50 py-10 px-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">My Applications</h1>
-            {jobs.length === 0 ? (
-                <p className="text-center text-gray-600">You haven’t applied for any jobs yet.</p>
-            ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {jobs.map((job) => (
-                        <div key={job._id} className="bg-white shadow-lg rounded-xl p-6">
-                            <h2 className="text-xl font-semibold text-gray-800">{job.title}</h2>
-                            <p className="text-gray-600 mt-1">{job.company}</p>
-                            <p className="text-sm text-gray-500 mt-2">Status: {job.status}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
+        <div className="p-8">
+            <h1 className="text-2xl font-bold mb-6">Your Posted Jobs</h1>
+            <div className="grid gap-4">
+                {jobs.map((job) => (
+                    <JobPreviewCard key={job._id} job={job} />
+                ))}
+            </div>
         </div>
     );
 }

@@ -1,5 +1,8 @@
 import React from "react";
+import { FaWhatsapp, FaInstagram, FaLinkedinIn, FaFacebookF } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import Hero from "../components/Hero";
+import Testimonials from "../components/Testimonials";
 import JobCategories from "../components/JobCategories";
 import FeaturedJobs from "../components/FeaturedJobs";
 //   this is home
@@ -10,12 +13,77 @@ export default function Home() {
             <Hero/>
             <JobCategories/>
             <FeaturedJobs/>
+            <Testimonials/>
 
             {/* Contact / Footer */}
-            <footer className="bg-blue-700 text-white py-8">
-                <div className="container mx-auto px-6 text-center">
-                    <p>Email: support@job1.com | Phone: +91 98765 43210</p>
-                    <p className="mt-4 text-sm">© {new Date().getFullYear()} Job1 Portal. All rights reserved.</p>
+            <footer className="bg-blue-900 text-white">
+                {/* Top section */}
+                <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 border-b border-blue-500">
+                    {/* Contact Info */}
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Job1 Portal</h2>
+                        <p className="font-semibold">Call us</p>
+                        <p className="text-white font-medium hover:text-gray-200 cursor-pointer">+91 98765 43210</p>
+                        <p className="mt-3 text-sm">
+                            329 Sarojini Street, North Delhi VIC 3051, India.
+                        </p>
+                        <p className="mt-2 text-sm hover:text-gray-200 cursor-pointer">support@job1.com</p>
+                    </div>
+
+                    {/* For Candidates */}
+                    <div>
+                        <h3 className="font-bold mb-4">For Candidates</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li className="hover:text-gray-200 cursor-pointer">Browse Jobs</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Browse Categories</li>
+                        </ul>
+                    </div>
+
+                    {/* For Employers */}
+                    <div>
+                        <h3 className="font-bold mb-4">For Employers</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li className="hover:text-gray-200 cursor-pointer">Post Jobs</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Manage Listings</li>
+                        </ul>
+                    </div>
+
+                    {/* About Us */}
+                    <div>
+                        <h3 className="font-bold mb-4">Info</h3>
+                        <ul className="space-y-2 text-sm">
+                           <li> <Link to="/about" className="hover:text-gray-200 cursor-pointer">About Us</Link></li>
+                            <li><Link to="/contact" className="hover:text-gray-200 cursor-pointer">Contact Us</Link></li>
+                            <li><Link to="/services" className="hover:text-gray-200 cursor-pointer">Our Services</Link></li>
+                        </ul>
+                    </div>
+
+                    {/* Helpful Resources */}
+                    <div>
+                        <h3 className="font-bold mb-4">Helpful Resources</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li className="hover:text-gray-200 cursor-pointer">Site Map</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Terms of Use</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Privacy Center</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Security Center</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Accessibility Center</li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Bottom section */}
+                <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between text-sm">
+                    <p className="text-center md:text-left">
+                        © {new Date().getFullYear()} Job1 Portal by Simtrak Solutions
+                    </p>
+
+                    {/* Social Icons */}
+                    <div className="flex space-x-5 mt-4 md:mt-0">
+                        <a href="#" className="hover:text-gray-200"><FaWhatsapp size={18} /></a>
+                        <a href="#" className="hover:text-gray-200"><FaInstagram size={18} /></a>
+                        <a href="#" className="hover:text-gray-200"><FaLinkedinIn size={18} /></a>
+                        <a href="#" className="hover:text-gray-200"><FaFacebookF size={18} /></a>
+                    </div>
                 </div>
             </footer>
         </div>

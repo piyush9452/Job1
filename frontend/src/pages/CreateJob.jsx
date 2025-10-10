@@ -3,18 +3,18 @@ import axios from "axios";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 
 export default function CreateJob() {
-    const [showPreview, setShowPreview] = useState(false);
-
     const [job, setJob] = useState({
         title: "",
-        description: "",
-        jobType: "daily",
+        description: "", // will hold combined summary + responsibilities
+        jobType: "daily", // matches backend enum
         skillsRequired: [],
         location: "",
         pinCode: "",
         salary: "",
     });
 
+    const [jobSummary, setJobSummary] = useState("");
+    const [keyResponsibilities, setKeyResponsibilities] = useState("");
     const [skillsInput, setSkillsInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(false);
@@ -24,10 +24,11 @@ export default function CreateJob() {
     };
 
     const handleSkills = () => {
-        if (skillsInput.trim() && !job.skillsRequired.includes(skillsInput.trim())) {
+        const skill = skillsInput.trim();
+        if (skill && !job.skillsRequired.includes(skill)) {
             setJob({
                 ...job,
-                skillsRequired: [...job.skillsRequired, skillsInput.trim()],
+                skillsRequired: [...job.skillsRequired, skill],
             });
             setSkillsInput("");
         }
@@ -36,18 +37,48 @@ export default function CreateJob() {
     const handleSubmit = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem("token");
-            const res = await axios.post(
-                "http://localhost:5000/jobs",
-                job,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+            const token = userInfo?.token;
+
+            // Combine job summary and key responsibilities
+            const combinedDescription = `
+Job Summary:
+${jobSummary}
+
+Key Responsibilities:
+${keyResponsibilities}
+            `.trim();
+
+            const payload = {
+                ...job,
+                description: combinedDescription,
+                pinCode: job.pinCode ? Number(job.pinCode) : undefined,
+                salary: Number(job.salary),
+            };
+
+            const res = await axios.post("http://localhost:5000/jobs", payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
             alert("Job posted successfully!");
             console.log(res.data);
+
+            // Reset form
+            setJob({
+                title: "",
+                description: "",
+                jobType: "daily",
+                skillsRequired: [],
+                location: "",
+                pinCode: "",
+                salary: "",
+            });
+            setJobSummary("");
+            setKeyResponsibilities("");
+            setSkillsInput("");
+            setPreview(false);
         } catch (error) {
             console.error("Error posting job:", error);
             alert("Failed to post job.");
@@ -61,7 +92,6 @@ export default function CreateJob() {
             {/* Left Section: Form */}
             <div className="w-full md:w-1/2 bg-white p-8 rounded-xl shadow-md border border-gray-200">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Create a Job</h1>
-
                 <div className="space-y-4">
                     <input
                         name="title"
@@ -71,12 +101,20 @@ export default function CreateJob() {
                         className="w-full p-3 border rounded-md outline-none"
                     />
 
+                    {/* Job Summary Input */}
                     <textarea
-                        name="description"
-                        value={job.description}
-                        onChange={handleChange}
-                        placeholder="Job Description"
-                        className="w-full p-3 border rounded-md outline-none h-28"
+                        value={jobSummary}
+                        onChange={(e) => setJobSummary(e.target.value)}
+                        placeholder="Job Summary"
+                        className="w-full p-3 border rounded-md outline-none h-24"
+                    />
+
+                    {/* Key Responsibilities Input */}
+                    <textarea
+                        value={keyResponsibilities}
+                        onChange={(e) => setKeyResponsibilities(e.target.value)}
+                        placeholder="Key Responsibilities"
+                        className="w-full p-3 border rounded-md outline-none h-24"
                     />
 
                     <select
@@ -112,8 +150,8 @@ export default function CreateJob() {
                                     key={index}
                                     className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                                 >
-                  {skill}
-                </span>
+                                    {skill}
+                                </span>
                             ))}
                         </div>
                     </div>
@@ -139,12 +177,26 @@ export default function CreateJob() {
                         value={job.salary}
                         onChange={handleChange}
                         placeholder="Salary (in ₹)"
+                        type="number"
                         className="w-full p-3 border rounded-md outline-none"
                     />
 
                     <div className="flex justify-between mt-6">
                         <button
-                            onClick={() => setPreview(true)}
+                            onClick={() => {
+                                // Combine description for preview
+                                setJob({
+                                    ...job,
+                                    description: `
+Job Summary:
+${jobSummary}
+
+Key Responsibilities:
+${keyResponsibilities}
+                                    `.trim(),
+                                });
+                                setPreview(true);
+                            }}
                             className="bg-gray-200 px-6 py-2 rounded-md hover:bg-gray-300"
                         >
                             Preview
@@ -170,7 +222,6 @@ export default function CreateJob() {
                     </div>
                 )}
             </div>
-
         </div>
     );
 }
