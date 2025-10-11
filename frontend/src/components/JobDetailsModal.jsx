@@ -1,55 +1,146 @@
 import React from "react";
-import { FaTimes } from "react-icons/fa";
+import {
+    FaTimes,
+    FaMapMarkerAlt,
+    FaMoneyBillWave,
+    FaClock,
+    FaBuilding,
+} from "react-icons/fa";
+import { BsFacebook, BsWhatsapp, BsLinkedin } from "react-icons/bs";
 
-const JobDetailsModal = ({ job, onClose }) => {
-    if (!job) return null; // If no job selected, don't render modal
+export default function JobDetailsModal({ job, onClose }) {
+    if (!job) return null;
+
+    // Get recruiter's name from localStorage
+    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+    const recruiterName = userInfo?.name || "Recruiter";
+
+    // Split the description into summary and responsibilities
+    const [summaryPart, responsibilitiesPart] = job.description
+        ? job.description.split("Key Responsibilities:")
+        : ["", ""];
+
+    const jobSummary = summaryPart.replace("Job Summary:", "").trim();
+    const keyResponsibilities = responsibilitiesPart
+        ? responsibilitiesPart
+            .split("\n")
+            .filter((line) => line.trim().length > 0)
+            .map((r) => r.trim())
+        : [];
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-            {/* Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-3xl relative">
+            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-3xl relative">
                 {/* Close Button */}
                 <button
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
                     onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
                 >
                     <FaTimes size={20} />
                 </button>
 
-                {/* Job Info */}
-                <h2 className="text-2xl font-semibold mb-2">{job.title}</h2>
-                <p className="text-gray-600 mb-4">{job.company}</p>
+                {/* Job Header */}
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">{job.title}</h2>
+                <p className="text-gray-600 mb-4 flex items-center gap-2">
+                    <FaBuilding className="text-gray-500" />
+                    {recruiterName}
+                </p>
 
-                <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
-                    <span>{job.type}</span>
-                    <span>{job.duration}</span>
-                    <span>{job.stipend}</span>
+                {/* Meta Info */}
+                <div className="flex flex-wrap items-center gap-4 text-gray-500 text-sm mb-6">
+                    <div className="flex items-center gap-2">
+                        <FaMapMarkerAlt className="text-red-500" />
+                        {job.location || "Location not specified"}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <FaClock className="text-blue-500" />
+                        {job.jobType || "Type not specified"}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <FaMoneyBillWave className="text-green-500" />
+                        ₹{job.salary ? job.salary.toLocaleString() : "Not specified"}
+                    </div>
                 </div>
 
+                {/* Job Description */}
                 <h3 className="text-lg font-bold text-gray-800 mb-2">Job Description</h3>
-                <p className="text-gray-700 leading-relaxed mb-4">{job.description}</p>
+                <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-line">
+                    {jobSummary || job.description || "No job description provided."}
+                </p>
 
-                <h3 className="text-lg font-bold text-gray-800 mb-2">Key Responsibilities</h3>
-                <ul className="list-disc ml-6 text-gray-700 space-y-1">
-                    {job.responsibilities?.map((r, i) => (
-                        <li key={i}>{r}</li>
-                    ))}
-                </ul>
+                {/* Key Responsibilities */}
+                {keyResponsibilities.length > 0 && (
+                    <>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">
+                            Key Responsibilities
+                        </h3>
+                        <ul className="list-disc ml-6 text-gray-700 space-y-2 mb-4">
+                            {keyResponsibilities.map((r, i) => (
+                                <li key={i}>{r}</li>
+                            ))}
+                        </ul>
+                    </>
+                )}
 
-                <div className="mt-6 flex gap-3">
+                {/* Skills */}
+                {job.skillsRequired?.length > 0 && (
+                    <>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">Required Skills</h3>
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            {job.skillsRequired.map((skill, index) => (
+                                <span
+                                    key={index}
+                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                                >
+                                    {skill}
+                                </span>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {/* Share Section */}
+                <h4 className="font-semibold text-gray-800 mb-3">Share This Job</h4>
+                <div className="flex gap-3 mb-6">
+                    <a
+                        href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#1877F2] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#0f6ae1]"
+                    >
+                        <BsFacebook size={18} /> Facebook
+                    </a>
+                    <a
+                        href={`https://wa.me/?text=Check this job: ${window.location.href}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#25D366] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1ebe5a]"
+                    >
+                        <BsWhatsapp size={18} /> WhatsApp
+                    </a>
+                    <a
+                        href={`https://www.linkedin.com/shareArticle?mini=true&url=${window.location.href}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#0A66C2] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#0959a8]"
+                    >
+                        <BsLinkedin size={18} /> LinkedIn
+                    </a>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg"
+                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg"
                     >
                         Close
                     </button>
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg">
                         Apply Now
                     </button>
                 </div>
             </div>
         </div>
     );
-};
-
-export default JobDetailsModal;
+}

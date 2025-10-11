@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // ⬅️ import useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom"; //  import useLocation
 import { FaUserCircle, FaPowerOff } from "react-icons/fa";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const navigate = useNavigate();
-    const location = useLocation(); // ⬅️ current route info
+    const location = useLocation(); //  current route info
     const menuRef = useRef(null);
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
+        localStorage.removeItem("userInfo");
         navigate("/login");
     };
 
@@ -38,10 +38,10 @@ export default function Navbar() {
                         <button className="text-gray-700 hover:text-blue-700">Home</button>
                     </Link>
                     <Link to="/jobs">
-                        <button className="text-gray-700 hover:text-blue-700">Find Job</button>
+                        <button className="text-gray-700 hover:text-blue-700">Find Jobs</button>
                     </Link>
                     <Link to="/createjob">
-                        <button className="text-gray-700 hover:text-blue-700">Post Job</button>
+                        <button className="text-gray-700 hover:text-blue-700">Post a Job</button>
                     </Link>
 
                     <div className="relative" ref={menuRef}>
@@ -63,14 +63,14 @@ export default function Navbar() {
                                     className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                                     onClick={() => setMenuOpen(false)}
                                 >
-                                    Employee Dashboard
+                                    My Applications
                                 </Link>
                                 <Link
                                     to="/employerdashboard"
                                     className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                                     onClick={() => setMenuOpen(false)}
                                 >
-                                    Employer Dashboard
+                                    My Job Posts
                                 </Link>
 
                                 <hr className="my-1" />

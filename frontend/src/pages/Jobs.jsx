@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { FaSearch, FaHome, FaClock } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa";
 import axios from "axios";
 import JobDetailsModal from "../components/JobDetailsModal";
 
@@ -30,7 +30,7 @@ export default function Jobs() {
             try {
                 setLoading(true);
                 const res = await axios.get("http://localhost:5000/jobs");
-                setAllJobs(res.data.data || []); // make sure backend sends array in data.data
+                setAllJobs(res.data.data || []);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load jobs.");
@@ -41,7 +41,7 @@ export default function Jobs() {
         fetchJobs();
     }, []);
 
-    // Compute filtered jobs dynamically (no useEffect needed)
+    // Compute filtered jobs
     const filteredJobs = allJobs.filter((job) => {
         const title = job.title?.toLowerCase() || "";
         const location = job.location?.toLowerCase() || "";
@@ -192,48 +192,72 @@ export default function Jobs() {
                     {filteredJobs.length === 0 ? (
                         <p className="text-gray-500 text-center mt-10">No jobs found.</p>
                     ) : (
-                        filteredJobs.map((job, index) => (
-                            <div
-                                key={index}
-                                onClick={() => setSelectedJob(job)}
-                                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer"
-                            >
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="text-lg font-semibold text-gray-800">
-                                        {job.title}
-                                    </h3>
-                                    <span className="text-sm text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
-                                        Actively hiring
-                                    </span>
-                                </div>
+                        filteredJobs.map((job, index) => {
+                            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+                            const recruiterName = userInfo?.name || "Recruiter";
 
-                                <p className="text-gray-600 font-medium">{job.company}</p>
+                            const postedDate = job.createdAt ? new Date(job.createdAt) : null;
+                            const timeAgo = postedDate
+                                ? (() => {
+                                    const diff = (Date.now() - postedDate.getTime()) / 1000;
+                                    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+                                    if (diff < 86400)
+                                        return `${Math.floor(diff / 3600)} hours ago`;
+                                    return `${Math.floor(diff / 86400)} days ago`;
+                                })()
+                                : "Recently posted";
 
-                                <div className="flex flex-wrap gap-6 mt-3 text-gray-500 text-sm">
-                                    <span className="flex items-center gap-1">
-                                        <FaHome /> {job.jobType}
-                                    </span>
-                                    <span>{job.salary ? `₹${job.salary}` : "Not specified"}</span>
-                                    <span className="flex items-center gap-1">
-                                        <FaClock />{" "}
-                                        {job.expiringAt
-                                            ? new Date(job.expiringAt).toLocaleDateString()
-                                            : "Ongoing"}
-                                    </span>
-                                </div>
+                            return (
+                                <div
+                                    key={index}
+                                    onClick={() => setSelectedJob(job)}
+                                    className="bg-white rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 p-5 flex items-center gap-4"
+                                >
+                                    {/* Logo or Placeholder */}
+                                    <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-lg font-bold">
+                                        {recruiterName?.charAt(0).toUpperCase()}
+                                    </div>
 
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                    {job.skillsRequired?.map((skill, i) => (
-                                        <span
-                                            key={i}
-                                            className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-                                        >
-                                            {skill}
-                                        </span>
-                                    ))}
+                                    {/* Job Info */}
+                                    <div className="flex-1">
+                                        <h3 className="text-lg font-semibold text-gray-800">
+                                            {job.title}
+                                        </h3>
+                                        <div className="flex items-center gap-2 text-gray-500 text-sm mt-1 flex-wrap">
+                                            <span className="flex items-center gap-1">
+                                                💼 {recruiterName}
+                                            </span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                📍 {job.location || "Remote"}
+                                            </span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                ⏰ {timeAgo}
+                                            </span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                💰 ₹{job.salary ? job.salary.toLocaleString() : "N/A"}
+                                            </span>
+                                        </div>
+
+                                        {/* Job Type Tag */}
+                                        <div className="flex gap-2 mt-3">
+                                            {job.jobType && (
+                                                <span className="px-3 py-1 text-sm rounded-full bg-blue-50 text-blue-700 font-medium">
+                                                    {job.jobType}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Optional Save Icon */}
+                                    <div className="text-gray-400 hover:text-blue-500">
+                                        <i className="fa-regular fa-star"></i>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
 
                     {selectedJob && (

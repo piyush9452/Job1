@@ -10,7 +10,7 @@ export default function EmployerDashboard() {
         const fetchJobs = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo"))?.token;
-                const { data } = await axios.get("http://localhost:5000/jobs/myjobs", {
+                const { data } = await axios.get("http://localhost:5000/jobs", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setJobs(data);
