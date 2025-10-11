@@ -13,5 +13,7 @@ router.get("/", getJobs);
 
 router.get("/user/:id",protect, jobCreatedByUser);
 
+router.get("/userApplied/:id",protect);
+
 
 export default router;

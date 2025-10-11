@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import errorHandler from './middleware/errorhandler.js';
 import jobsRoutes from './routes/jobsRoutes.js';
+import applicationRoutes from './routes/applicationRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -29,7 +30,10 @@ app.use("/user", userRoutes);                                                  /
 app.use("/contact",contactRoutes);                                             //
 //                                                                             //
 //Jobs Routes                                                                  //
-app.use("/jobs",jobsRoutes);                                                   //
+app.use("/jobs",jobsRoutes);     
+
+app.use("/applications",applicationRoutes);
+//
 //                                                                             //
 //---------------------------MAIN ROUTES---------------------------------------//
 
