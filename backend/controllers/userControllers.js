@@ -6,9 +6,9 @@ import bcrypt from "bcrypt";
 import admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK (do this once when your server starts)
-admin.initializeApp({
-  credential: admin.credential.cert(require('./path/to/your/serviceAccountKey.json'))
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(require('./path/to/your/serviceAccountKey.json'))
+// });
 
 // Create a new user
 export const createUser = expressAsyncHandler(async (req, res) => {

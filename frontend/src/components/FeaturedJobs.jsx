@@ -85,7 +85,7 @@ export default function FeaturedJobs() {
                     {jobs.map((job) => (
                         <div
                             key={job.id}
-                            className="bg-white p-6 rounded-xl shadow-md flex items-start gap-4 hover:shadow-lg transition"
+                            className="bg-white p-6 rounded-xl shadow-md flex items-start gap-4 hover:scale-105 transition"
                         >
                             <img
                                 src={job.logo}

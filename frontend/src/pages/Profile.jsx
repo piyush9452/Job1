@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function Profile() {
     const [profile, setProfile] = useState({
-        name: "John Doe",
-        email: "john@example.com",
-        phone: "9876543210",
+        name: "",
+        email: "",
+        phone: "",
         description: "",
         skills: [],
         experience: [],
@@ -20,7 +21,41 @@ export default function Profile() {
         description: "",
     });
 
-    // Add new skill
+    const [loading, setLoading] = useState(true);
+
+    // ✅ Fetch user info on mount
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+                if (!userInfo) return;
+
+                const token = localStorage.getItem("token");
+                const { data } = await axios.get(
+                    `http://localhost:5000/user/${userInfo.id}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                setProfile((prev) => ({
+                    ...prev,
+                    ...data,
+                }));
+            } catch (error) {
+                console.error("Error fetching user:", error);
+                alert("Failed to load user profile");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUser();
+    }, []);
+
+    // ✅ Add new skill
     const handleAddSkill = () => {
         if (newSkill.trim()) {
             setProfile((prev) => ({
@@ -31,7 +66,7 @@ export default function Profile() {
         }
     };
 
-    // Remove skill
+    // ✅ Remove skill
     const handleRemoveSkill = (skill) => {
         setProfile((prev) => ({
             ...prev,
@@ -39,7 +74,7 @@ export default function Profile() {
         }));
     };
 
-    // Add new experience
+    // ✅ Add new experience
     const handleAddExperience = () => {
         if (expForm.company && expForm.role) {
             setProfile((prev) => ({
@@ -50,7 +85,13 @@ export default function Profile() {
         }
     };
 
-    // Handle file uploads
+    // ✅ Handle general input changes
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setProfile((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // ✅ Handle file uploads
     const handleFileChange = (e) => {
         const { name, files } = e.target;
         setProfile((prev) => ({
@@ -59,20 +100,48 @@ export default function Profile() {
         }));
     };
 
-    // Handle general input changes
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setProfile((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = (e) => {
+    // ✅ Submit updated profile
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        try {
+            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+            const token = localStorage.getItem("token");
 
-        // Here you’ll connect to backend: POST /user/profile or PATCH /user/:id
-        // Use FormData to include images & files (resume, profilePicture)
-        console.log("Updated profile:", profile);
-        alert("Profile updated successfully!");
+            if (!userInfo || !token) {
+                alert("You are not logged in!");
+                return;
+            }
+
+            const formData = new FormData();
+            Object.entries(profile).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    formData.append(key, JSON.stringify(value));
+                } else {
+                    formData.append(key, value);
+                }
+            });
+
+            await axios.patch(
+                `http://localhost:5000/user/${userInfo.id}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+
+            alert("Profile updated successfully!");
+        } catch (error) {
+            console.error("Update error:", error);
+            alert("Failed to update profile");
+        }
     };
+
+    if (loading) {
+        return <div className="text-center py-10 text-gray-600">Loading profile...</div>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-6">
@@ -83,7 +152,13 @@ export default function Profile() {
                 <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="relative">
                         <img
-                            src={profile.profilePicture ? URL.createObjectURL(profile.profilePicture) : "https://via.placeholder.com/150"}
+                            src={
+                                profile.profilePicture
+                                    ? typeof profile.profilePicture === "string"
+                                        ? profile.profilePicture
+                                        : URL.createObjectURL(profile.profilePicture)
+                                    : "https://via.placeholder.com/150"
+                            }
                             alt="Profile"
                             className="w-32 h-32 rounded-full object-cover border"
                         />
@@ -105,7 +180,7 @@ export default function Profile() {
                             <label className="block font-semibold mb-1">Description</label>
                             <textarea
                                 name="description"
-                                value={profile.description}
+                                value={profile.description || ""}
                                 onChange={handleChange}
                                 placeholder="Write something about yourself..."
                                 className="w-full border rounded-lg px-3 py-2"

@@ -1,6 +1,6 @@
 import './App.css'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
+import  Home  from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import About from "./pages/About";
@@ -9,7 +9,10 @@ import Profile from "./pages/Profile";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Jobs from "./pages/Jobs";
+import CreateJob from "./pages/CreateJob";
 import Navbar from "./components/NavBar";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 function App() {
 
   return (
@@ -17,14 +20,17 @@ function App() {
         <Navbar/>
         <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/employeedashboard" element={<EmployeeDashboard />} />
-            <Route path="/employerdashboard" element={<EmployerDashboard />} />
-            <Route path="/jobs" element={<Jobs />} />
+
+            <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
+            <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/employeedashboard" element={<ProtectedRoute><EmployeeDashboard /></ProtectedRoute>} />
+            <Route path="/employerdashboard" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
+            <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
+            <Route path="/createjob" element={<ProtectedRoute><CreateJob /></ProtectedRoute>} />
+
         </Routes>
     </Router>
   )

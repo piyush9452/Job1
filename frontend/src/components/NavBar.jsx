@@ -1,55 +1,51 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; //  import useLocation
 import { FaUserCircle, FaPowerOff } from "react-icons/fa";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const navigate = useNavigate();
-    const menuRef = useRef(null); // Reference for dropdown menu
+    const location = useLocation(); //  current route info
+    const menuRef = useRef(null);
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
+        localStorage.removeItem("userInfo");
         navigate("/login");
     };
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
                 setMenuOpen(false);
             }
         };
-
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    // Hide navbar on login/register pages
+    if (location.pathname === "/login" || location.pathname === "/register") {
+        return null;
+    }
 
     return (
         <nav className="bg-white shadow-md relative">
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-blue-700">Job1</h1>
 
-                {/* Desktop Menu */}
                 <div className="hidden md:flex space-x-6 items-center">
                     <Link to="/">
                         <button className="text-gray-700 hover:text-blue-700">Home</button>
                     </Link>
-                    <Link to="/about">
-                        <button className="text-gray-700 hover:text-blue-700">About Us</button>
+                    <Link to="/jobs">
+                        <button className="text-gray-700 hover:text-blue-700">Find Jobs</button>
                     </Link>
-                    <Link to="/services">
-                        <button className="text-gray-700 hover:text-blue-700">Services</button>
-                    </Link>
-                    <Link to="/contact">
-                        <button className="text-gray-700 hover:text-blue-700">Contact Us</button>
+                    <Link to="/createjob">
+                        <button className="text-gray-700 hover:text-blue-700">Post a Job</button>
                     </Link>
 
-                    {/* User Profile Dropdown */}
                     <div className="relative" ref={menuRef}>
-                        <button
-                            onClick={() => setMenuOpen((prev) => !prev)}
-                            className="focus:outline-none"
-                        >
+                        <button onClick={() => setMenuOpen((prev) => !prev)} className="focus:outline-none">
                             <FaUserCircle className="text-gray-700 hover:text-blue-700 text-3xl cursor-pointer" />
                         </button>
 
@@ -67,14 +63,14 @@ export default function Navbar() {
                                     className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                                     onClick={() => setMenuOpen(false)}
                                 >
-                                    Employee Dashboard
+                                    My Applications
                                 </Link>
                                 <Link
                                     to="/employerdashboard"
                                     className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                                     onClick={() => setMenuOpen(false)}
                                 >
-                                    Employer Dashboard
+                                    My Job Posts
                                 </Link>
 
                                 <hr className="my-1" />

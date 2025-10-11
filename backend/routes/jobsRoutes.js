@@ -1,4 +1,4 @@
-import { createJob, getJob, getJobs} from "../controllers/jobsControllers.js";
+import { createJob, getJob, getJobs, jobCreatedByUser} from "../controllers/jobsControllers.js";
 import protect from "../middleware/authorization.js";
 import express from "express";
 
@@ -10,6 +10,8 @@ router.post("/",protect, createJob);
 router.get("/:id", getJob);
 
 router.get("/", getJobs);
+
+router.get("/user/:id",protect, jobCreatedByUser);
 
 
 export default router;

@@ -3,24 +3,55 @@ import axios from "axios";
 
 export default function EmployerDashboard() {
     const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const res = await axios.get("http://localhost:5000/employer/jobs", {
-                    withCredentials: true,
+                setLoading(true);
+
+                // Get token from localStorage
+                const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+                const token = userInfo?.token;
+
+                if (!token) {
+                    setError("User not logged in");
+                    setLoading(false);
+                    return;
+                }
+
+                // Call backend route for user's jobs
+                const res = await axios.get("http://localhost:5000/jobs", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
-                setJobs(res.data);
+
+                setJobs(res.data.data);
             } catch (err) {
-                console.error("Error fetching employer jobs:", err);
+                console.error("Error fetching employer jobs:", err.response?.data || err);
+                setError(err.response?.data?.message || "Failed to fetch jobs");
+            } finally {
+                setLoading(false);
             }
         };
+
         fetchJobs();
     }, []);
+
+    if (loading) {
+        return <p className="text-center mt-10 text-gray-500">Loading jobs...</p>;
+    }
+
+    if (error) {
+        return <p className="text-center mt-10 text-red-500">{error}</p>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">My Posted Jobs</h1>
+
             {jobs.length === 0 ? (
                 <p className="text-center text-gray-600">You haven’t created any jobs yet.</p>
             ) : (
@@ -28,7 +59,7 @@ export default function EmployerDashboard() {
                     {jobs.map((job) => (
                         <div key={job._id} className="bg-white shadow-lg rounded-xl p-6">
                             <h2 className="text-xl font-semibold text-gray-800">{job.title}</h2>
-                            <p className="text-gray-600 mt-1">{job.company}</p>
+                            <p className="text-gray-600 mt-1">{job.location}</p>
                             <p className="text-sm text-gray-500 mt-2">
                                 Applicants: {job.applicants?.length || 0}
                             </p>
