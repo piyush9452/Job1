@@ -22,7 +22,7 @@ export default function EmployerDashboard() {
                 }
 
                 // Call backend route for user's jobs
-                const res = await axios.get("http://localhost:5000/jobs", {
+                const res = await axios.get(`http://localhost:5000/jobs/${userInfo.id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

@@ -23,27 +23,34 @@ export default function Profile() {
 
     const [loading, setLoading] = useState(true);
 
-    // ✅ Fetch user info on mount
+    // ✅ Fetch logged-in user's data
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-                if (!userInfo) return;
+                const storedUser = JSON.parse(localStorage.getItem("userInfo"));
+                if (!storedUser || !storedUser.user) {
+                    alert("Please log in first!");
+                    setLoading(false);
+                    return;
+                }
 
-                const token = localStorage.getItem("token");
+                const userId = storedUser.user.id; // ✅ correct key
+                const token = storedUser.token; // ✅ token comes from userInfo
+
+                if (!userId || !token) {
+                    alert("Invalid user session");
+                    setLoading(false);
+                    return;
+                }
+
                 const { data } = await axios.get(
-                    `http://localhost:5000/user/${userInfo.id}`,
+                    `http://localhost:5000/user/${userId}`,
                     {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
+                        headers: { Authorization: `Bearer ${token}` },
                     }
                 );
 
-                setProfile((prev) => ({
-                    ...prev,
-                    ...data,
-                }));
+                setProfile((prev) => ({ ...prev, ...data }));
             } catch (error) {
                 console.error("Error fetching user:", error);
                 alert("Failed to load user profile");
@@ -104,10 +111,11 @@ export default function Profile() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-            const token = localStorage.getItem("token");
+            const storedUser = JSON.parse(localStorage.getItem("userInfo"));
+            const userId = storedUser?.user?.id;
+            const token = storedUser?.token;
 
-            if (!userInfo || !token) {
+            if (!userId || !token) {
                 alert("You are not logged in!");
                 return;
             }
@@ -121,16 +129,12 @@ export default function Profile() {
                 }
             });
 
-            await axios.patch(
-                `http://localhost:5000/user/${userInfo.id}`,
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "multipart/form-data",
-                    },
-                }
-            );
+            await axios.patch(`http://localhost:5000/user/${userId}`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
 
             alert("Profile updated successfully!");
         } catch (error) {
@@ -140,13 +144,19 @@ export default function Profile() {
     };
 
     if (loading) {
-        return <div className="text-center py-10 text-gray-600">Loading profile...</div>;
+        return (
+            <div className="text-center py-10 text-gray-600">
+                Loading profile...
+            </div>
+        );
     }
 
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-6">
             <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
-                <h2 className="text-3xl font-bold text-center text-gray-800">User Profile</h2>
+                <h2 className="text-3xl font-bold text-center text-gray-800">
+                    User Profile
+                </h2>
 
                 {/* Profile Info */}
                 <div className="flex flex-col md:flex-row items-center gap-6">
@@ -172,9 +182,16 @@ export default function Profile() {
                     </div>
 
                     <div className="flex-1 space-y-2">
-                        <p><span className="font-semibold">Name:</span> {profile.name}</p>
-                        <p><span className="font-semibold">Email:</span> {profile.email}</p>
-                        <p><span className="font-semibold">Phone:</span> {profile.phone}</p>
+                        <p>
+                            <span className="font-semibold">Name:</span> {profile.name}
+                        </p>
+                        <p>
+                            <span className="font-semibold">Email:</span> {profile.email}
+                        </p>
+                        <p>
+                            <span className="font-semibold">Phone:</span>{" "}
+                            {profile.phone || "Not provided"}
+                        </p>
 
                         <div>
                             <label className="block font-semibold mb-1">Description</label>
@@ -215,15 +232,15 @@ export default function Profile() {
                                 key={index}
                                 className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-1"
                             >
-                                {skill}
+                {skill}
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveSkill(skill)}
                                     className="text-red-500 ml-1"
                                 >
-                                    ×
-                                </button>
-                            </span>
+                  ×
+                </button>
+              </span>
                         ))}
                     </div>
                 </div>
@@ -236,7 +253,9 @@ export default function Profile() {
                             type="text"
                             name="company"
                             value={expForm.company}
-                            onChange={(e) => setExpForm({ ...expForm, company: e.target.value })}
+                            onChange={(e) =>
+                                setExpForm({ ...expForm, company: e.target.value })
+                            }
                             placeholder="Company"
                             className="border rounded-lg px-3 py-2"
                         />
@@ -244,7 +263,9 @@ export default function Profile() {
                             type="text"
                             name="role"
                             value={expForm.role}
-                            onChange={(e) => setExpForm({ ...expForm, role: e.target.value })}
+                            onChange={(e) =>
+                                setExpForm({ ...expForm, role: e.target.value })
+                            }
                             placeholder="Role"
                             className="border rounded-lg px-3 py-2"
                         />
@@ -252,7 +273,9 @@ export default function Profile() {
                             type="text"
                             name="duration"
                             value={expForm.duration}
-                            onChange={(e) => setExpForm({ ...expForm, duration: e.target.value })}
+                            onChange={(e) =>
+                                setExpForm({ ...expForm, duration: e.target.value })
+                            }
                             placeholder="Duration (e.g., 6 months)"
                             className="border rounded-lg px-3 py-2"
                         />
@@ -260,7 +283,9 @@ export default function Profile() {
                             type="text"
                             name="description"
                             value={expForm.description}
-                            onChange={(e) => setExpForm({ ...expForm, description: e.target.value })}
+                            onChange={(e) =>
+                                setExpForm({ ...expForm, description: e.target.value })
+                            }
                             placeholder="Description"
                             className="border rounded-lg px-3 py-2"
                         />
@@ -278,7 +303,9 @@ export default function Profile() {
                         {profile.experience.map((exp, index) => (
                             <li key={index} className="border rounded-lg p-3 bg-gray-50">
                                 <p className="font-semibold">{exp.role}</p>
-                                <p className="text-sm text-gray-600">{exp.company} — {exp.duration}</p>
+                                <p className="text-sm text-gray-600">
+                                    {exp.company} — {exp.duration}
+                                </p>
                                 <p className="text-sm">{exp.description}</p>
                             </li>
                         ))}
