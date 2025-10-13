@@ -29,7 +29,7 @@ export default function Jobs() {
         const fetchJobs = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get("http://localhost:5000/jobs/user/:id");
+                const res = await axios.get("http://localhost:5000/jobs");
                 setAllJobs(res.data.data || []);
             } catch (err) {
                 console.error(err);
