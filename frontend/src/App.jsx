@@ -12,6 +12,7 @@ import Jobs from "./pages/Jobs";
 import CreateJob from "./pages/CreateJob";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProfileDescr from './pages/ProfileDescr';
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
             <Route path="/employerdashboard" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
             <Route path="/createjob" element={<ProtectedRoute><CreateJob /></ProtectedRoute>} />
+            <Route path="/profiledescr" element={<ProfileDescr />} />
 
         </Routes>
     </Router>

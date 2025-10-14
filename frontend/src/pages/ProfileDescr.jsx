@@ -117,7 +117,7 @@ const ProfileDescr = () => {
   };
 
   return (
-    <div className="flex content-center  w-[100vw]  p-16 ">
+    <div className="flex flex-col  lg:flex-row items-center lg:items-start  lg:justify-center  w-[100vw] p-3 lg:p-16 ">
       <div className="w-[400px] ">
         <div className="w-[400px] bg-blue-50 p-4 mr-5 mb-3 rounded-2xl flex items-center justify-center">
           <div className="flex gap-4 flex-col items-center justify-center">
@@ -143,7 +143,7 @@ const ProfileDescr = () => {
         </div>
       </div>
 
-      <div className="w-[100%]  ml-5 bg-blue-50 p-8">
+      <div className="w-[100%]  lg:ml-5 bg-blue-50 p-2 lg:p-8 mt-5 lg:mt-0 rounded-2xl">
         <h1 className="text-4xl text-center mb-5 font-semibold">
           Professional Profile
         </h1>

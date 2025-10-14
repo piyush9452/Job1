@@ -1,4 +1,4 @@
-import { createJob, getJob, getJobs, jobCreatedByUser} from "../controllers/jobsControllers.js";
+import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob} from "../controllers/jobsControllers.js";
 import protect from "../middleware/authorization.js";
 import express from "express";
 
@@ -15,5 +15,8 @@ router.get("/user/:id",protect, jobCreatedByUser);
 
 router.get("/userApplied/:id",protect);
 
+router.delete("/:id",protect,deleteJob);
+
+router.patch("/:id",protect,updateJob);
 
 export default router;
