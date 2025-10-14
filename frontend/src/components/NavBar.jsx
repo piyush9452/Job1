@@ -59,7 +59,7 @@ export default function Navbar() {
                                     My Profile
                                 </Link>
                                 <Link
-                                    to="/employeedashboard"
+                                    to="/myapplications"
                                     className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                                     onClick={() => setMenuOpen(false)}
                                 >

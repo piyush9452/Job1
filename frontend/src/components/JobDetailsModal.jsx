@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     FaTimes,
     FaMapMarkerAlt,
@@ -7,11 +7,14 @@ import {
     FaBuilding,
 } from "react-icons/fa";
 import { BsFacebook, BsWhatsapp, BsLinkedin } from "react-icons/bs";
+import axios from "axios";
 
 export default function JobDetailsModal({ job, onClose }) {
     if (!job) return null;
 
-    // Get recruiter's name from localStorage
+    const [loading, setLoading] = useState(false);
+
+    // Get logged-in user info
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
     const recruiterName = userInfo?.name || "Recruiter";
 
@@ -28,6 +31,43 @@ export default function JobDetailsModal({ job, onClose }) {
             .map((r) => r.trim())
         : [];
 
+    // 🧩 Apply Button Handler
+    const handleApply = async () => {
+        try {
+            setLoading(true);
+            if (!userInfo || !userInfo.token) {
+                alert("Please log in first!");
+                setLoading(false);
+                return;
+            }
+
+            const config = {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${userInfo.token}`,
+                },
+            };
+
+            const { data } = await axios.post(
+                "http://localhost:5000/applications",
+                {
+                    jobId: job._id,
+                    jobHost: job.user, // recruiter ID from Job model
+                },
+                config
+            );
+
+            alert(data.message || "Application submitted successfully!");
+        } catch (error) {
+            console.error("Apply error:", error);
+            alert(
+                error.response?.data?.message || "Failed to apply for this job."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
             <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-3xl relative">
@@ -40,7 +80,9 @@ export default function JobDetailsModal({ job, onClose }) {
                 </button>
 
                 {/* Job Header */}
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">{job.title}</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                    {job.title}
+                </h2>
                 <p className="text-gray-600 mb-4 flex items-center gap-2">
                     <FaBuilding className="text-gray-500" />
                     {recruiterName}
@@ -58,12 +100,16 @@ export default function JobDetailsModal({ job, onClose }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <FaMoneyBillWave className="text-green-500" />
-                        ₹{job.salary ? job.salary.toLocaleString() : "Not specified"}
+                        ₹{job.salary
+                        ? job.salary.toLocaleString()
+                        : "Not specified"}
                     </div>
                 </div>
 
                 {/* Job Description */}
-                <h3 className="text-lg font-bold text-gray-800 mb-2">Job Description</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">
+                    Job Description
+                </h3>
                 <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-line">
                     {jobSummary || job.description || "No job description provided."}
                 </p>
@@ -85,7 +131,9 @@ export default function JobDetailsModal({ job, onClose }) {
                 {/* Skills */}
                 {job.skillsRequired?.length > 0 && (
                     <>
-                        <h3 className="text-lg font-bold text-gray-800 mb-2">Required Skills</h3>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">
+                            Required Skills
+                        </h3>
                         <div className="flex flex-wrap gap-2 mb-6">
                             {job.skillsRequired.map((skill, index) => (
                                 <span
@@ -100,7 +148,9 @@ export default function JobDetailsModal({ job, onClose }) {
                 )}
 
                 {/* Share Section */}
-                <h4 className="font-semibold text-gray-800 mb-3">Share This Job</h4>
+                <h4 className="font-semibold text-gray-800 mb-3">
+                    Share This Job
+                </h4>
                 <div className="flex gap-3 mb-6">
                     <a
                         href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
@@ -136,8 +186,16 @@ export default function JobDetailsModal({ job, onClose }) {
                     >
                         Close
                     </button>
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg">
-                        Apply Now
+                    <button
+                        onClick={handleApply}
+                        disabled={loading}
+                        className={`${
+                            loading
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700"
+                        } text-white px-5 py-2 rounded-lg`}
+                    >
+                        {loading ? "Applying..." : "Apply Now"}
                     </button>
                 </div>
             </div>
