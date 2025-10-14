@@ -5,11 +5,13 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import About from "./pages/About";
 import Services from "./pages/Services";
-import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile.jsx";
 import MyApplications from "./pages/MyApplications";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Jobs from "./pages/Jobs";
 import CreateJob from "./pages/CreateJob";
+import Profile from "./pages/Profile.jsx";
+
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -22,10 +24,12 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+
 
             <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
             <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/editprofile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
             <Route path="/myapplications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
             <Route path="/employerdashboard" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />

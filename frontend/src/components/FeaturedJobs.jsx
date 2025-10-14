@@ -3,12 +3,9 @@ import axios from "axios";
 import { FaLock, FaMapMarkerAlt, FaClock, FaGlobe } from "react-icons/fa";
 
 const badgeColors = {
-    "Full Time": "bg-blue-100 text-blue-600",
-    "Part Time": "bg-purple-100 text-purple-600",
-    "Freelancer": "bg-indigo-100 text-indigo-600",
-    "Temporary": "bg-cyan-100 text-cyan-600",
-    "Private": "bg-green-100 text-green-600",
-    "Urgent": "bg-yellow-100 text-yellow-600",
+    "part-time": "bg-purple-100 text-purple-600",
+    "short-term": "bg-green-100 text-green-600",
+    "daily": "bg-yellow-100 text-yellow-600",
 };
 
 export default function FeaturedJobs() {
@@ -19,8 +16,13 @@ export default function FeaturedJobs() {
         const fetchJobs = async () => {
             try {
                 const { data } = await axios.get("http://localhost:5000/jobs");
-                // Take the latest 6 jobs
-                const latestJobs = data.slice(-6).reverse();
+
+                // ✅ Access actual job array via data.data
+                const jobArray = data.data || [];
+
+                // ✅ Take the latest 6 jobs (most recent first)
+                const latestJobs = jobArray.slice(-6).reverse();
+
                 setJobs(latestJobs);
             } catch (error) {
                 console.error("Error fetching jobs:", error);
@@ -79,7 +81,10 @@ export default function FeaturedJobs() {
                     <FaMapMarkerAlt /> {job.location || "Remote"}
                   </span>
                                     <span className="flex items-center gap-1">
-                    <FaClock /> {new Date(job.createdAt).toLocaleDateString()}
+                    <FaClock />{" "}
+                                        {job.createdAt
+                                            ? new Date(job.createdAt).toLocaleDateString()
+                                            : "Recently posted"}
                   </span>
                                     <span className="flex items-center gap-1">
                     <FaGlobe /> {job.salary || "Not specified"}
@@ -87,17 +92,16 @@ export default function FeaturedJobs() {
                                 </div>
 
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                    {job.jobType
-                                        ? (
-                                            <span
-                                                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                                    badgeColors[job.jobType] || "bg-gray-100 text-gray-600"
-                                                }`}
-                                            >
-                          {job.jobType}
-                        </span>
-                                        )
-                                        : null}
+                                    {job.jobType && (
+                                        <span
+                                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                badgeColors[job.jobType] ||
+                                                "bg-gray-100 text-gray-600"
+                                            }`}
+                                        >
+                      {job.jobType}
+                    </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
