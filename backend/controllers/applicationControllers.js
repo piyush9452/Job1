@@ -18,20 +18,17 @@ export const createApplication = errorHandler(async (req, res) => {
     throw new Error("Job ID is required");
   }
 
-  // ✅ Check if the job exists
   const job = await Job.findById(jobId);
   if (!job) {
     res.status(404);
     throw new Error("Job not found");
   }
 
-  // ✅ Prevent applying to own job
   if (job.postedBy.toString() === userId.toString()) {
     res.status(400);
     throw new Error("You cannot apply to your own job");
   }
 
-  // ✅ Prevent duplicate applications
   const existingApplication = await Application.findOne({
     job_id: jobId,
     appliedBy: userId,
@@ -41,18 +38,16 @@ export const createApplication = errorHandler(async (req, res) => {
     throw new Error("You have already applied for this job");
   }
 
-  // ✅ Create new application entry
+
   const application = await Application.create({
     job_id: jobId,
     jobHost: job.postedBy,
     appliedBy: userId,
   });
 
-  // ✅ Push applicant into the job
   job.applicants.push(userId);
   await job.save();
 
-  // ✅ Push jobId into user's appliedJobs array (if not already there)
   await User.findByIdAndUpdate(
     userId,
     { $addToSet: { appliedJobs: jobId } }, // addToSet prevents duplicates
@@ -122,3 +117,41 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
     applications: formatted,
   });
 });
+
+
+
+
+// PATCH: /api/applications/:id
+export const updateApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    // Optional: restrict what can be updated
+    const allowedFields = ["status"];
+    const invalidFields = Object.keys(updates).filter(
+      (field) => !allowedFields.includes(field)
+    );
+    if (invalidFields.length) {
+      return res.status(400).json({
+        message: `Invalid fields: ${invalidFields.join(", ")}`,
+      });
+    }
+
+    const application = await Application.findByIdAndUpdate(id, updates, {
+      new: true, // return updated document
+      runValidators: true, // enforce schema validation
+    });
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    res.status(200).json({
+      message: "Application updated successfully",
+      data: application,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

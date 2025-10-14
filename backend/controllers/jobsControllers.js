@@ -144,8 +144,16 @@ export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
 })
 
 
-export const jobAppliedByUser = expressAsyncHandler(async (req, res) => {
+export const updateJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
-  
+  const job = await Job.findById(id);
+  if (!job) return res.status(404).json({ message: "Job not found" });
+  // Ensure the authenticated user is the owner of the job
+  if (job.postedBy.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Not authorized to update this job" });
+  }
+  const updatedJob = await Job.findByIdAndUpdate(id, req.body, { new: true });
+  res.status(200).json({ message: "Job updated successfully", job: updatedJob });
+});
 
-})
+

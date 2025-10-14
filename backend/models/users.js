@@ -20,6 +20,13 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   resume: { type: String },
+  education:[{
+    degree: { type: String },
+    university:{ type: String},
+    started:{type: String},
+    ended:{type:String},
+    CGPA:{type:String}
+  }],
   description: { type: String },
   profilePicture: { type: String },
   employeeratings: [
