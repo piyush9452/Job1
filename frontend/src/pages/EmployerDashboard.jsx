@@ -10,25 +10,24 @@ export default function EmployerDashboard() {
         const fetchJobs = async () => {
             try {
                 setLoading(true);
+                setError("");
 
-                // Get token from localStorage
                 const userInfo = JSON.parse(localStorage.getItem("userInfo"));
                 const token = userInfo?.token;
+                const userId = userInfo?.user?.id; // <-- correct path
 
-                if (!token) {
+                if (!token || !userId) {
                     setError("User not logged in");
                     setLoading(false);
                     return;
                 }
 
-                // Call backend route for user's jobs
-                const res = await axios.get(`http://localhost:5000/jobs/${userInfo.id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                // ✅ Correct URL for protected route
+                const res = await axios.get(`http://localhost:5000/jobs/user/${userId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
-                setJobs(res.data.data);
+                setJobs(res.data || []); // ✅ safe fallback
             } catch (err) {
                 console.error("Error fetching employer jobs:", err.response?.data || err);
                 setError(err.response?.data?.message || "Failed to fetch jobs");
@@ -40,18 +39,12 @@ export default function EmployerDashboard() {
         fetchJobs();
     }, []);
 
-    if (loading) {
-        return <p className="text-center mt-10 text-gray-500">Loading jobs...</p>;
-    }
-
-    if (error) {
-        return <p className="text-center mt-10 text-red-500">{error}</p>;
-    }
+    if (loading) return <p className="text-center mt-10 text-gray-500">Loading jobs...</p>;
+    if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">My Posted Jobs</h1>
-
             {jobs.length === 0 ? (
                 <p className="text-center text-gray-600">You haven’t created any jobs yet.</p>
             ) : (

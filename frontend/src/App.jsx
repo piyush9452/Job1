@@ -6,7 +6,7 @@ import Register from "./pages/Register";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Profile from "./pages/Profile";
-import EmployeeDashboard from "./pages/EmployeeDashboard";
+import MyApplications from "./pages/MyApplications";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Jobs from "./pages/Jobs";
 import CreateJob from "./pages/CreateJob";
@@ -26,7 +26,7 @@ function App() {
             <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
             <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/employeedashboard" element={<ProtectedRoute><EmployeeDashboard /></ProtectedRoute>} />
+            <Route path="/myapplications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
             <Route path="/employerdashboard" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
             <Route path="/createjob" element={<ProtectedRoute><CreateJob /></ProtectedRoute>} />
