@@ -31,7 +31,7 @@ export default function HeroSection() {
     }, []);
 
     return (
-        <section className="relative bg-gradient-to-br from-blue-50 to-white py-20 px-6">
+        <section className="relative bg-gradient-to-br from-blue-50 to-white py-30 px-6">
             <div className="max-w-4xl mx-auto text-center">
                 {/* Heading */}
                 <h2 className="text-3xl md:text-5xl font-bold text-gray-900">

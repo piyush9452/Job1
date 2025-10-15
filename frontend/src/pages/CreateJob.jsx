@@ -88,7 +88,7 @@ ${keyResponsibilities}
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
+        <div className="flex flex-col py-20 md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
             {/* Left Section: Form */}
             <div className="w-full md:w-1/2 bg-white p-8 rounded-xl shadow-md border border-gray-200">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Create a Job</h1>
