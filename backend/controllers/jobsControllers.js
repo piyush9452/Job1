@@ -140,7 +140,7 @@ export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const jobs = await Job.find({ postedBy: id });
   if (!jobs) return res.status(404).json({ message: "No jobs found for this user" });
-  res.status(200).json(jobs);
+  res.status(200).json(jobs || []);
 })
 
 

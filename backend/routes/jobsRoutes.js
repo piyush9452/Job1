@@ -7,11 +7,11 @@ const router = express.Router();
 
 router.post("/",protect, createJob);
 
+router.get("/user/:id",protect, jobCreatedByUser);
+
 router.get("/:id", getJob);
 
 router.get("/", getJobs);
-
-router.get("/user/:id",protect, jobCreatedByUser);
 
 router.get("/userApplied/:id",protect);
 

@@ -29,7 +29,7 @@ function App() {
             <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
             <Route path="/editprofile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
             <Route path="/myapplications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
-            <Route path="/employerdashboard" element={<ProtectedRoute><JobPosts /></ProtectedRoute>} />
+            <Route path="/jobposts" element={<ProtectedRoute><JobPosts /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
             <Route path="/createjob" element={<ProtectedRoute><CreateJob /></ProtectedRoute>} />
 
