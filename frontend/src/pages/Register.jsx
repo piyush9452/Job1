@@ -13,7 +13,7 @@ export default function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post("http://localhost:5000/user/register", {
+            const { data } = await axios.post("https://jobone-mrpy.onrender.com/user/register", {
                 name,
                 email,
                 password,

@@ -30,7 +30,7 @@ export default function EditProfile() {
                 const userId = storedUser?.user?._id || storedUser?.user?.id;
                 const token = storedUser?.token;
 
-                const { data } = await axios.get(`http://localhost:5000/user/${userId}`, {
+                const { data } = await axios.get(`https://jobone-mrpy.onrender.com/user/${userId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -106,7 +106,7 @@ export default function EditProfile() {
             });
 
             const { data: updatedUser } = await axios.patch(
-                `http://localhost:5000/user/${userId}`,
+                `https://jobone-mrpy.onrender.com/user/${userId}`,
                 formData,
                 {
                     headers: {

@@ -17,7 +17,7 @@ export default function MyApplications() {
                     return;
                 }
 
-                const { data } = await axios.get(`http://localhost:5000/applications/${userId}`, {
+                const { data } = await axios.get(`https://jobone-mrpy.onrender.com/applications/${userId}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

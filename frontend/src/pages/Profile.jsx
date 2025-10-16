@@ -23,7 +23,7 @@ const Profile = () => {
                 const token = storedUser.token;
 
                 const { data } = await axios.get(
-                    `http://localhost:5000/user/${userId}`,
+                    `https://jobone-mrpy.onrender.com/user/${userId}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
 

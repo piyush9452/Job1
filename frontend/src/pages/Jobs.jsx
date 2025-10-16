@@ -28,7 +28,7 @@ export default function Jobs() {
         const fetchJobs = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get("http://localhost:5000/jobs");
+                const res = await axios.get("https://jobone-mrpy.onrender.com/jobs");
                 setAllJobs(res.data.data || []);
             } catch (err) {
                 console.error(err);
@@ -76,10 +76,9 @@ export default function Jobs() {
         );
 
     return (
-        <div className="p-4 md:p-8 py-20 bg-gray-50">
+        <div className="p-4 md:p-8 py-20 md:pt-[100px] bg-gray-50">
             <h2 className="text-2xl font-bold mb-4 text-gray-800 flex justify-between items-center">
                 Job Results
-                {/* Mobile filter button */}
                 {/* Mobile filter button */}
                 <button
                     className="md:hidden fixed top-20 right-4 bg-white px-3 py-2 rounded shadow z-50 flex items-center gap-2"
@@ -87,7 +86,6 @@ export default function Jobs() {
                 >
                     <FaFilter /> Filters
                 </button>
-
             </h2>
 
             <div className="flex flex-col md:flex-row min-h-screen gap-6">
@@ -100,10 +98,18 @@ export default function Jobs() {
                 )}
 
                 {/* Filter Sidebar */}
+                {/* Explanation of the class changes:
+                    - For mobile we keep `fixed` so the sidebar slides in from the left (as before).
+                    - For md+ screens we use `md:sticky md:top-20 md:z-10` so the sidebar sits below the navbar
+                      (adjust top-20 to match your navbar height) and will scroll under the navbar rather than over it.
+                    - We lower the sidebar z-index on md (`md:z-10`) so the navbar (give it z-50) stays on top.
+                */}
                 <aside
-                    className={`fixed top-0 left-0 h-full w-3/4 max-w-xs bg-white shadow-md p-5 space-y-6 z-50 transform transition-transform duration-300
-            ${showFilters ? "translate-x-0" : "-translate-x-full"}
-            md:translate-x-0 md:relative md:w-1/4 md:h-auto md:shadow-none md:block rounded-lg`}
+                    className={`
+                        fixed top-20 left-0 h-[calc(100vh-5rem)] w-3/4 max-w-xs bg-white shadow-md p-5 space-y-6 z-40 transform transition-transform duration-300
+                        ${showFilters ? "translate-x-0" : "-translate-x-full"}
+                        md:translate-x-0 md:sticky md:top-20 md:h-auto md:w-1/4 md:max-w-none md:shadow-none md:z-10 rounded-lg
+                    `}
                 >
                     {/* Close button for mobile */}
                     <div className="flex justify-between items-center md:hidden mb-4">

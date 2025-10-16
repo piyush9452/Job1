@@ -23,7 +23,7 @@ export default function JobPosts() {
                     return;
                 }
 
-                const res = await axios.get(`http://localhost:5000/jobs/user/${userId}`, {
+                const res = await axios.get(`https://jobone-mrpy.onrender.com/jobs/user/${userId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -76,7 +76,7 @@ export default function JobPosts() {
     const saveEdit = async (id) => {
         try {
             const res = await axios.patch(
-                `http://localhost:5000/jobs/${id}`,
+                `https://jobone-mrpy.onrender.com/jobs/${id}`,
                 editData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

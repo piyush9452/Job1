@@ -11,7 +11,7 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post("http://localhost:5000/user/login", { email, password });
+            const { data } = await axios.post("https://jobone-mrpy.onrender.com/user/login", { email, password });
             // Assuming backend sends back a token
             localStorage.setItem("userInfo", JSON.stringify(data));
             navigate("/"); // Redirect after login

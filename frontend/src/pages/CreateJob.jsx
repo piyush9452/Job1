@@ -56,7 +56,7 @@ ${keyResponsibilities}
                 salary: Number(job.salary),
             };
 
-            const res = await axios.post("http://localhost:5000/jobs", payload, {
+            const res = await axios.post("https://jobone-mrpy.onrender.com/jobs", payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

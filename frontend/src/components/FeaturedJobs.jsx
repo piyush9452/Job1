@@ -15,7 +15,7 @@ export default function FeaturedJobs() {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const { data } = await axios.get("http://localhost:5000/jobs");
+                const { data } = await axios.get("https://jobone-mrpy.onrender.com/jobs");
 
                 // ✅ Access actual job array via data.data
                 const jobArray = data.data || [];
