@@ -37,7 +37,7 @@ export default function MyApplications() {
     }, []);
 
     if (loading) {
-        return <div className="text-center py-10 text-gray-600">Loading your applications...</div>;
+        return <div className="text-center py-20 text-gray-600">Loading your applications...</div>;
     }
 
     if (applications.length === 0) {
@@ -52,7 +52,7 @@ export default function MyApplications() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-10 px-6">
+        <div className="min-h-screen bg-gray-50 py-20 px-6">
             <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-xl p-8">
                 <h2 className="text-3xl font-bold mb-6 text-gray-800 text-center">My Applications</h2>
 

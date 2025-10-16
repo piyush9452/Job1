@@ -94,7 +94,7 @@ export default function JobPosts() {
     if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
     return (
-        <div className="min-h-screen bg-gray-50 py-10 px-6">
+        <div className="min-h-screen bg-gray-50 py-20 px-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">My Posted Jobs</h1>
 
             {jobs.length === 0 ? (
