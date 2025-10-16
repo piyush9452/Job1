@@ -31,7 +31,7 @@ export default function EditProfile() {
         const token = storedUser?.token;
 
         const { data } = await axios.get(
-          `http://localhost:5000/user/${userId}`,
+          `https://jobone-mrpy.onrender.com/user/${userId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -100,7 +100,7 @@ export default function EditProfile() {
 
         // Send the payload object directly. Do not use FormData.
         const { data: updatedUser } = await axios.patch(
-            `http://localhost:5000/user/${userId}`,
+            `https://jobone-mrpy.onrender.com/user/${userId}`,
             payload, // Send the JS object
             {
                 headers: {
