@@ -130,7 +130,7 @@ export default function Navbar() {
                             onClick={() => setMenuOpen(false)}
                             className="block px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                         >
-                            Find Jobs
+                            Find Part-time Jobs
                         </Link>
                         <Link
                             to="/createjob"

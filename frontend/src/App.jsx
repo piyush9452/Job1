@@ -11,7 +11,7 @@ import JobPosts from "./pages/JobPosts.jsx";
 import Jobs from "./pages/Jobs";
 import CreateJob from "./pages/CreateJob";
 import Profile from "./pages/Profile.jsx";
-
+import ApplyPage from "./pages/ApplyPage";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -32,7 +32,7 @@ function App() {
             <Route path="/jobposts" element={<ProtectedRoute><JobPosts /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
             <Route path="/createjob" element={<ProtectedRoute><CreateJob /></ProtectedRoute>} />
-
+            <Route path="/apply/:jobId" element={<ApplyPage />} />
         </Routes>
     </Router>
   )

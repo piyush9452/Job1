@@ -5,21 +5,24 @@ import Hero from "../components/Hero";
 import Testimonials from "../components/Testimonials";
 import JobCategories from "../components/JobCategories";
 import FeaturedJobs from "../components/FeaturedJobs";
+import CompanyCard from "../components/CompanyCard";
 
 export default function Home() {
     return (
         <div className="min-h-screen flex flex-col bg-white">
-
             {/* Main sections */}
             <Hero />
-            <JobCategories />
-            <FeaturedJobs />
-            <Testimonials />
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10">
+                <JobCategories />
+                < CompanyCard />
+                <FeaturedJobs />
+                <Testimonials />
+            </div>
 
             {/* Footer */}
-            <footer className="bg-blue-900 text-white ">
+            <footer className="bg-blue-900 text-white w-full">
                 {/* Top section */}
-                <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 border-b border-blue-700">
+                <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 border-b border-blue-700">
                     {/* Contact Info */}
                     <div>
                         <h2 className="text-xl font-bold mb-4">Job1 Portal</h2>
@@ -40,9 +43,7 @@ export default function Home() {
                         <h3 className="font-bold mb-4">For Candidates</h3>
                         <ul className="space-y-2 text-sm">
                             <li className="hover:text-gray-200 cursor-pointer">Browse Jobs</li>
-                            <li className="hover:text-gray-200 cursor-pointer">
-                                Browse Categories
-                            </li>
+                            <li className="hover:text-gray-200 cursor-pointer">Browse Categories</li>
                         </ul>
                     </div>
 
@@ -51,9 +52,7 @@ export default function Home() {
                         <h3 className="font-bold mb-4">For Employers</h3>
                         <ul className="space-y-2 text-sm">
                             <li className="hover:text-gray-200 cursor-pointer">Post Jobs</li>
-                            <li className="hover:text-gray-200 cursor-pointer">
-                                Manage Listings
-                            </li>
+                            <li className="hover:text-gray-200 cursor-pointer">Manage Listings</li>
                         </ul>
                     </div>
 
@@ -62,28 +61,13 @@ export default function Home() {
                         <h3 className="font-bold mb-4">Info</h3>
                         <ul className="space-y-2 text-sm">
                             <li>
-                                <Link
-                                    to="/about"
-                                    className="hover:text-gray-200 cursor-pointer block"
-                                >
-                                    About Us
-                                </Link>
+                                <Link to="/about" className="hover:text-gray-200 block">About Us</Link>
                             </li>
                             <li>
-                                <Link
-                                    to="/contact"
-                                    className="hover:text-gray-200 cursor-pointer block"
-                                >
-                                    Contact Us
-                                </Link>
+                                <Link to="/contact" className="hover:text-gray-200 block">Contact Us</Link>
                             </li>
                             <li>
-                                <Link
-                                    to="/services"
-                                    className="hover:text-gray-200 cursor-pointer block"
-                                >
-                                    Our Services
-                                </Link>
+                                <Link to="/services" className="hover:text-gray-200 block">Our Services</Link>
                             </li>
                         </ul>
                     </div>
@@ -94,39 +78,24 @@ export default function Home() {
                         <ul className="space-y-2 text-sm">
                             <li className="hover:text-gray-200 cursor-pointer">Site Map</li>
                             <li className="hover:text-gray-200 cursor-pointer">Terms of Use</li>
-                            <li className="hover:text-gray-200 cursor-pointer">
-                                Privacy Center
-                            </li>
-                            <li className="hover:text-gray-200 cursor-pointer">
-                                Security Center
-                            </li>
-                            <li className="hover:text-gray-200 cursor-pointer">
-                                Accessibility Center
-                            </li>
+                            <li className="hover:text-gray-200 cursor-pointer">Privacy Center</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Security Center</li>
+                            <li className="hover:text-gray-200 cursor-pointer">Accessibility Center</li>
                         </ul>
                     </div>
                 </div>
 
                 {/* Bottom Section */}
-                <div className="max-w-7xl mx-auto px-6 sm:px-8 py-6 flex flex-col md:flex-row items-center justify-between text-sm gap-4">
+                <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10 py-6 flex flex-col md:flex-row items-center justify-between text-sm gap-4">
                     <p className="text-center md:text-left">
                         © {new Date().getFullYear()} Job1 Portal by Simtrak Solutions
                     </p>
 
-                    {/* Social Icons */}
                     <div className="flex space-x-5">
-                        <a href="#" className="hover:text-gray-200">
-                            <FaWhatsapp size={18} />
-                        </a>
-                        <a href="#" className="hover:text-gray-200">
-                            <FaInstagram size={18} />
-                        </a>
-                        <a href="#" className="hover:text-gray-200">
-                            <FaLinkedinIn size={18} />
-                        </a>
-                        <a href="#" className="hover:text-gray-200">
-                            <FaFacebookF size={18} />
-                        </a>
+                        <a href="#" className="hover:text-gray-200"><FaWhatsapp size={18} /></a>
+                        <a href="#" className="hover:text-gray-200"><FaInstagram size={18} /></a>
+                        <a href="#" className="hover:text-gray-200"><FaLinkedinIn size={18} /></a>
+                        <a href="#" className="hover:text-gray-200"><FaFacebookF size={18} /></a>
                     </div>
                 </div>
             </footer>

@@ -8,11 +8,14 @@ import {
 } from "react-icons/fa";
 import { BsFacebook, BsWhatsapp, BsLinkedin } from "react-icons/bs";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function JobDetailsModal({ job, onClose }) {
     if (!job) return null;
 
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
     const recruiterName = userInfo?.name || "Recruiter";
 
@@ -27,37 +30,8 @@ export default function JobDetailsModal({ job, onClose }) {
             .map((r) => r.trim())
         : [];
 
-    const handleApply = async () => {
-        try {
-            setLoading(true);
-            if (!userInfo || !userInfo.token) {
-                alert("Please log in first!");
-                setLoading(false);
-                return;
-            }
-
-            const config = {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-
-            const { data } = await axios.post(
-                "http://localhost:5000/applications",
-                { jobId: job._id, jobHost: job.user },
-                config
-            );
-
-            alert(data.message || "Application submitted successfully!");
-        } catch (error) {
-            console.error("Apply error:", error);
-            alert(
-                error.response?.data?.message || "Failed to apply for this job."
-            );
-        } finally {
-            setLoading(false);
-        }
+    const handleApplyClick = () => {
+        navigate(`/apply/${job._id}`, { state: { job } });
     };
 
     return (
@@ -67,6 +41,7 @@ export default function JobDetailsModal({ job, onClose }) {
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-50"
+                    aria-label="Close job details"
                 >
                     <FaTimes size={20} />
                 </button>
@@ -129,8 +104,8 @@ export default function JobDetailsModal({ job, onClose }) {
                                     key={index}
                                     className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm"
                                 >
-                                    {skill}
-                                </span>
+                  {skill}
+                </span>
                             ))}
                         </div>
                     </>
@@ -147,7 +122,8 @@ export default function JobDetailsModal({ job, onClose }) {
                         rel="noopener noreferrer"
                         className="bg-[#1877F2] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm hover:bg-[#0f6ae1]"
                     >
-                        <BsFacebook size={16} /> <span className="hidden sm:inline">Facebook</span>
+                        <BsFacebook size={16} />{" "}
+                        <span className="hidden sm:inline">Facebook</span>
                     </a>
                     <a
                         href={`https://wa.me/?text=Check this job: ${window.location.href}`}
@@ -155,7 +131,8 @@ export default function JobDetailsModal({ job, onClose }) {
                         rel="noopener noreferrer"
                         className="bg-[#25D366] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm hover:bg-[#1ebe5a]"
                     >
-                        <BsWhatsapp size={16} /> <span className="hidden sm:inline">WhatsApp</span>
+                        <BsWhatsapp size={16} />{" "}
+                        <span className="hidden sm:inline">WhatsApp</span>
                     </a>
                     <a
                         href={`https://www.linkedin.com/shareArticle?mini=true&url=${window.location.href}`}
@@ -163,7 +140,8 @@ export default function JobDetailsModal({ job, onClose }) {
                         rel="noopener noreferrer"
                         className="bg-[#0A66C2] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm hover:bg-[#0959a8]"
                     >
-                        <BsLinkedin size={16} /> <span className="hidden sm:inline">LinkedIn</span>
+                        <BsLinkedin size={16} />{" "}
+                        <span className="hidden sm:inline">LinkedIn</span>
                     </a>
                 </div>
 
@@ -175,8 +153,10 @@ export default function JobDetailsModal({ job, onClose }) {
                     >
                         Close
                     </button>
+
+                    {/* Redirect to Apply Page */}
                     <button
-                        onClick={handleApply}
+                        onClick={handleApplyClick}
                         disabled={loading}
                         className={`${
                             loading
