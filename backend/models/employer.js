@@ -6,18 +6,22 @@ const employer = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   phone: { type: String,unique: true },
+  companyName: { type: String},
   createdJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
   description: { type: String },
   profilePicture: { type: String },
   companyWebsite: { 
       type: String,
+      default: "",
       trim: true
     },
     location: { 
-      type: String 
+      type: String ,
+      default: "",
     },
     industry: {
-      type: String
+      type: String,
+      default: "",
     },
   ratingsReceived:[
         {
