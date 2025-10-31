@@ -53,3 +53,38 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
   // 7. Send the token as the response
   res.status(201).json({ token });
 });
+
+//-----------------------------------------------------------------------------------------------------------------
+
+
+export const loginEmployer = expressAsyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  const employer = await Employer.findOne({ email });
+
+  
+  const isMatch = employer 
+    ? await bcrypt.compare(password, employer.password) 
+    : false;
+
+  // 2. Use ONE generic error message
+  if (!employer || !isMatch) {
+    res.status(401); // Use 401 Unauthorized
+    throw new Error("Invalid credentials");
+  }
+
+  // 3. Create and return JWT
+  const payload = {
+    employer: {
+      id: employer.id,
+    },
+  };
+
+  const token = jwt.sign(
+    payload,
+    process.env.JWT_SECRET,
+    { expiresIn: "5h" }
+  );
+
+  res.status(200).json({ token });
+});
