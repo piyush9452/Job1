@@ -32,9 +32,17 @@ export default function Navbar() {
 
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
+    // 👇 Function to handle "For Employers" redirection
+    const handleEmployerClick = () => {
+        if (userInfo) {
+            navigate("/employerdashboard");
+        } else {
+            navigate("/employerregister");
+        }
+    };
+
     return (
         <>
-            {/* Navbar */}
             <nav className="bg-white shadow-md fixed w-full z-50 top-0 left-0">
                 <div className="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
                     {/* Brand */}
@@ -51,10 +59,7 @@ export default function Navbar() {
                             Home
                         </Link>
                         <Link to="/jobs" className="text-gray-700 hover:text-blue-700">
-                            Find Jobs
-                        </Link>
-                        <Link to="/createjob" className="text-gray-700 hover:text-blue-700">
-                            Post a Job
+                            Find part-time Jobs
                         </Link>
 
                         {/* User dropdown */}
@@ -80,13 +85,7 @@ export default function Navbar() {
                                         >
                                             My Applications
                                         </Link>
-                                        <Link
-                                            to="/jobposts"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                                            onClick={() => setUserMenuOpen(false)}
-                                        >
-                                            My Job Posts
-                                        </Link>
+
                                         <hr className="my-1" />
                                         <button
                                             onClick={handleLogout}
@@ -98,10 +97,23 @@ export default function Navbar() {
                                 )}
                             </div>
                         ) : (
-                            <Link to="/login" className="text-gray-700 hover:text-blue-700">
-                                Login
-                            </Link>
+                            <div className="flex items-center gap-4">
+                                <Link to="/login" className="text-gray-700 hover:text-blue-700">
+                                    Login
+                                </Link>
+                                <Link to="/register" className="text-gray-700 hover:text-blue-700">
+                                    Register
+                                </Link>
+                            </div>
                         )}
+
+                        {/* ✅ Dynamic Employers Link */}
+                        <button
+                            onClick={handleEmployerClick}
+                            className="text-blue-600 font-medium hover:text-blue-800 transition"
+                        >
+                            For Employers ➔
+                        </button>
                     </div>
 
                     {/* Mobile Hamburger */}
@@ -132,13 +144,17 @@ export default function Navbar() {
                         >
                             Find Part-time Jobs
                         </Link>
-                        <Link
-                            to="/createjob"
-                            onClick={() => setMenuOpen(false)}
-                            className="block px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+
+                        {/* ✅ Mobile Employers Link */}
+                        <button
+                            onClick={() => {
+                                setMenuOpen(false);
+                                handleEmployerClick();
+                            }}
+                            className="block w-full text-left px-6 py-3 text-blue-600 hover:bg-blue-50 hover:text-blue-800 font-medium"
                         >
-                            Post a Job
-                        </Link>
+                            For Employers ➔
+                        </button>
 
                         {userInfo ? (
                             <>
@@ -157,13 +173,7 @@ export default function Navbar() {
                                 >
                                     My Applications
                                 </Link>
-                                <Link
-                                    to="/jobposts"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="block px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                                >
-                                    My Job Posts
-                                </Link>
+
                                 <button
                                     onClick={() => {
                                         setMenuOpen(false);
@@ -186,7 +196,6 @@ export default function Navbar() {
                     </div>
                 )}
             </nav>
-
         </>
     );
 }

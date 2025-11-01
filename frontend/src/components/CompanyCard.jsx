@@ -9,7 +9,7 @@ export default function CompanyPromoCard() {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 p-[2px] shadow-xl space-y-10 mx-auto max-w-6xl"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br mb-15 from-blue-400 via-blue-500 to-indigo-600 p-[2px] shadow-xl space-y-10 mx-auto max-w-6xl"
         >
             {/* Inner white container */}
             <div className="flex flex-col md:flex-row items-center justify-between bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-3xl p-10 md:p-16">

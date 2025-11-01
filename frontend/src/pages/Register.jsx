@@ -1,103 +1,60 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import React from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { FcGoogle } from "react-icons/fc";
 
-export default function Register() {
+const RegisterOption = () => {
     const navigate = useNavigate();
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [phone, setPhone] = useState("");
-    const [error, setError] = useState("");
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const { data } = await axios.post("https://jobone-mrpy.onrender.com/user/register", {
-                name,
-                email,
-                password,
-                phone,
-            });
-            // Assuming backend sends back a token
-            localStorage.setItem("userInfo", JSON.stringify(data));
-            navigate("/"); // Redirect after registration
-        } catch (err) {
-            setError(err.response?.data?.message || "Registration failed");
-        }
+    const handleGoogleSignup = () => {
+        // You can replace this alert with actual Google Auth (Firebase or backend route)
+        alert("Google signup coming soon!");
+    };
+
+    const handleEmailSignup = () => {
+        navigate("/registeremail"); // 👈 goes to your existing email registration page
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-md">
-                <h2 className="text-2xl font-bold text-center text-gray-800">Register</h2>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+            <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                    Sign-up and apply for free
+                </h1>
+                <p className="text-gray-600 text-lg">
+                    3,00,000+ employers hiring on <span className="font-semibold">First Job</span>
+                </p>
+            </div>
 
-                {error && <p className="text-red-500 text-center">{error}</p>}
+            <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md text-center">
+                {/* Google Sign-up */}
+                <button
+                    onClick={handleGoogleSignup}
+                    className="flex items-center justify-center w-full py-3 mb-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium"
+                >
+                    <FcGoogle className="text-2xl mr-2 bg-white rounded-full p-1" />
+                    Sign up with Google
+                </button>
 
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                    {/* Name */}
-                    <div>
-                        <label className="block mb-1 text-gray-600">Name</label>
-                        <input
-                            type="text"
-                            placeholder="Enter your name"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                        />
-                    </div>
+                {/* OR Divider */}
+                <button
+                    onClick={handleEmailSignup}
+                    className="w-full py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition font-medium text-gray-700"
+                >
+                    Sign up with Email
+                </button>
 
-                    {/* Email */}
-                    <div>
-                        <label className="block mb-1 text-gray-600">Email</label>
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
 
-                    {/* Password */}
-                    <div>
-                        <label className="block mb-1 text-gray-600">Password</label>
-                        <input
-                            type="password"
-                            placeholder="Enter your password"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                {/* Terms */}
+                <p className="text-sm text-gray-500 mt-4">
+                    By signing up, you agree to our{" "}
+                    <Link to="/terms" className="text-blue-600 hover:underline">
+                        Terms and Conditions
+                    </Link>.
+                </p>
 
-                    {/* Phone */}
-                    <div>
-                        <label className="block mb-1 text-gray-600">Phone Number</label>
-                        <input
-                            type="tel"
-                            placeholder="Enter your phone number"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    {/* Submit */}
-                    <button
-                        type="submit"
-                        className="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                    >
-                        Register
-                    </button>
-                </form>
-
-                <p className="text-sm text-center text-gray-600">
-                    Already have an account?{" "}
+                {/* Login link */}
+                <p className="mt-3 text-gray-600 text-sm">
+                    Already registered?{" "}
                     <Link to="/login" className="text-blue-600 hover:underline">
                         Login
                     </Link>
@@ -105,4 +62,6 @@ export default function Register() {
             </div>
         </div>
     );
-}
+};
+
+export default RegisterOption;
