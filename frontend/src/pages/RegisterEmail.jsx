@@ -21,7 +21,7 @@ export default function RegisterEmail() {
             });
             // Assuming backend sends back a token
             localStorage.setItem("userInfo", JSON.stringify(data));
-            navigate("/"); // Redirect after registration
+            navigate("/login"); // Redirect after registration
         } catch (err) {
             setError(err.response?.data?.message || "Registration failed");
         }
