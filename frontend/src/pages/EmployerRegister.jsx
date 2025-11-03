@@ -52,7 +52,7 @@ const EmployerRegister = () => {
             setLoading(false);
 
             // Redirect to Employer Dashboard after successful registration
-            setTimeout(() => navigate("/employerdashboard"), 1500);
+            setTimeout(() => navigate("/"), 1500);
         } catch (err) {
             setLoading(false);
             setError(

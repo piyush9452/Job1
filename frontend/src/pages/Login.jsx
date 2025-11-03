@@ -20,11 +20,13 @@ export default function Login() {
                     : "https://jobone-mrpy.onrender.com/user/login";
 
             const { data } = await axios.post(endpoint, { email, password });
+            console.log("Login success:", data); // ✅ check what backend returns
+
 
             // store different keys based on user type
             if (activeTab === "employer") {
                 localStorage.setItem("employerInfo", JSON.stringify(data));
-                navigate("/employerdashboard"); // redirect to employer dashboard
+                navigate("/"); // redirect to employer dashboard
             } else {
                 localStorage.setItem("userInfo", JSON.stringify(data));
                 navigate("/");
@@ -137,14 +139,14 @@ export default function Login() {
                 <p className="text-center text-gray-600 text-sm mt-4">
                     New to Job1? Register{" "}
                     <Link to="/register" className="text-blue-600 hover:underline">
-                         (User)
+                         (User
                     </Link>{" "}
                     /{" "}
                     <Link
                         to="/employerregister"
                         className="text-blue-600 hover:underline"
                     >
-                        Employer
+                        Employer)
                     </Link>
                 </p>
             </div>
