@@ -8,7 +8,18 @@ const JobSchema = new mongoose.Schema({
   location: { type: String, required: true }, // city/area
   pinCode: { type: Number }, // optional
   salary: { type: Number, required: true }, // payment for the job
-  postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  durationType: { type: String, enum: ["Day", "Week", "Month"], required: true },
+  startDate: { type: Date, required: true },
+  endDate: { type: Date, required: true },
+  dailyWorkingHours: { type: Number, required: true },
+  mode: { type: String, enum: ["Online", "Offline", "Hybrid"], required: true },
+  workFrom: { type: String }, // optional
+  workTo: { type: String }, // optional
+  noOfDays: { type: Number, required: true },
+  noOfPeopleRequired: { type: Number, required: true },
+  genderPreference: { type: String, enum:["Male","Female","Other","No Preference"], default: "No Preference" },
+  paymentPerHour: { type: Number, required: true },
+  postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Employer", required: true },
   postedByImage: { type: String }, 
   postedByName: { type: String },
   postedAt: { type: Date, default: Date.now },

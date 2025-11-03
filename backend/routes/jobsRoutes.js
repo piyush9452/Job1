@@ -1,11 +1,12 @@
 import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob} from "../controllers/jobsControllers.js";
 import protect from "../middleware/authorization.js";
+import { protectEmployer } from "../middleware/employercheck.js";
 import express from "express";
 
 
 const router = express.Router();
 
-router.post("/",protect, createJob);
+router.post("/",protectEmployer, createJob);
 
 router.get("/user/:id",protect, jobCreatedByUser);
 
