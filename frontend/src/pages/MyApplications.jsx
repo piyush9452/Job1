@@ -27,7 +27,7 @@ export default function MyApplications() {
                 setApplications(data.applications || []);
             } catch (error) {
                 console.error("Error fetching applications:", error);
-                alert("Failed to load applications.");
+                alert("You have not applied to any jobs yet");
             } finally {
                 setLoading(false);
             }

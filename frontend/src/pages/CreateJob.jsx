@@ -48,8 +48,8 @@ export default function CreateJob() {
     const handleSubmit = async () => {
         try {
             setLoading(true);
-            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-            const token = userInfo?.token;
+            const employerInfo = JSON.parse(localStorage.getItem("employerInfo"));
+            const token = employerInfo?.token;
 
             const combinedDescription = `
 Job Summary:
