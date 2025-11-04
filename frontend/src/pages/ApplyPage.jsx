@@ -1,28 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-
-const ACCEPTED_TYPES = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+import { motion } from "framer-motion";
 
 export default function ApplyPage() {
-    const [message, setMessage] = useState("");
-    const [file, setFile] = useState(null);
-    const [dragOver, setDragOver] = useState(false);
-    const [error, setError] = useState("");
-    const [submitting, setSubmitting] = useState(false);
-    const [successMsg, setSuccessMsg] = useState("");
-    const [job, setJob] = useState(null);
-
-    const textareaRef = useRef(null);
-    const navigate = useNavigate();
     const { jobId } = useParams();
+    const navigate = useNavigate();
 
-    // ✅ Fetch job details
+    const [job, setJob] = useState(null);
+    const [message, setMessage] = useState("");
+    const [feedback, setFeedback] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [jobLoading, setJobLoading] = useState(true);
+
+    // ✅ Fetch job details by ID
     useEffect(() => {
         const fetchJob = async () => {
             try {
@@ -30,247 +21,134 @@ export default function ApplyPage() {
                     `https://jobone-mrpy.onrender.com/jobs/${jobId}`
                 );
                 setJob(data);
-            } catch (err) {
-                console.error("Job fetch error:", err);
+            } catch (error) {
+                console.error("Failed to fetch job details:", error);
+            } finally {
+                setJobLoading(false);
             }
         };
-        if (jobId) fetchJob();
+
+        fetchJob();
     }, [jobId]);
 
-    // ✅ File validation
-    const validateFile = (f) => {
-        if (!f) return "No file selected.";
-        if (!ACCEPTED_TYPES.includes(f.type)) {
-            return "Unsupported file type. Please upload PDF, DOC or DOCX.";
-        }
-        if (f.size > MAX_FILE_SIZE) {
-            return "File is too large. Max size is 5 MB.";
-        }
-        return "";
-    };
-
-    const handleFile = (f) => {
-        const err = validateFile(f);
-        if (err) {
-            setError(err);
-            setFile(null);
-            return;
-        }
-        setError("");
-        setFile(f);
-    };
-
-    const onFileInput = (e) => {
-        const f = e.target.files?.[0];
-        if (f) handleFile(f);
-    };
-
-    const onDrop = (e) => {
+    // ✅ Handle submit
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setDragOver(false);
-        const f = e.dataTransfer.files?.[0];
-        if (f) handleFile(f);
-    };
-
-    // ✅ Submit Application
-    const submit = async (e) => {
-        e?.preventDefault();
-        setError("");
-        setSuccessMsg("");
-
-        if (!message.trim()) {
-            setError("Please tell us why we should hire you.");
-            textareaRef.current?.focus();
-            return;
-        }
-        if (!file) {
-            setError("Please upload your resume (PDF / DOC / DOCX).");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("jobId", jobId);
-        if (job?.title) formData.append("jobTitle", job.title);
-        formData.append("message", message.trim());
-        formData.append("resume", file);
-
-        setSubmitting(true);
+        setLoading(true);
+        setFeedback("");
 
         try {
             const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-            if (!userInfo || !userInfo.token) {
-                alert("Please log in before applying.");
-                navigate("/login");
+            if (!userInfo?.token) {
+                setFeedback("You must be logged in to apply.");
+                setLoading(false);
                 return;
             }
 
-            const config = {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
+            const payload = {
+                jobId,
+                message: message.trim(),
             };
 
-            const { data } = await axios.post(
+            await axios.post(
                 "https://jobone-mrpy.onrender.com/applications",
-                formData,
-                config
+                payload,
+                {
+                    headers: { Authorization: `Bearer ${userInfo.token}` },
+                }
             );
 
-            setSuccessMsg(data?.message || "Application submitted successfully!");
+            setFeedback("✅ Application submitted successfully!");
             setMessage("");
-            setFile(null);
 
-            setTimeout(() => {
-                navigate("/jobs");
-            }, 1500);
-        } catch (err) {
-            console.error("Apply submit error:", err);
-            setError(
-                err?.response?.data?.message ||
-                "Failed to submit application. Please try again later."
-            );
+            setTimeout(() => navigate("/jobs"), 1500);
+        } catch (error) {
+            console.error("Error applying:", error);
+            setFeedback("❌ Failed to submit application. Please try again.");
         } finally {
-            setSubmitting(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-white py-25 px-4">
-            <div className="max-w-3xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Apply for {job?.title || "this job"}
-                </h1>
-                <p className="text-gray-600 mb-8">
-                    Please fill in the details below and upload your resume to apply.
-                </p>
+        <div className="min-h-screen bg-gray-50 flex justify-center items-center py-20 px-4">
+            <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-2xl border border-gray-100"
+            >
+                {/* Job Details Section */}
+                {jobLoading ? (
+                    <p className="text-gray-500 text-center">Loading job details...</p>
+                ) : job ? (
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">
+                            {job.title}
+                        </h2>
+                        <p className="text-gray-600 text-center mb-2">
+                            {job.company || "Company not specified"} •{" "}
+                            {job.location || "Remote"}
+                        </p>
+                        <p className="text-gray-500 text-sm text-center max-w-lg mx-auto">
+                            {job.description?.substring(0, 200)}...
+                        </p>
+                    </div>
+                ) : (
+                    <p className="text-red-500 text-center mb-8">
+                        Failed to load job details.
+                    </p>
+                )}
 
-                <form onSubmit={submit} className="space-y-8">
-                    {/* Message */}
+                {/* Application Form */}
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Why should we hire you?
+                        <label
+                            htmlFor="message"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                            Why should we hire you for this job?{" "}
+                            <span className="text-red-500">*</span>
                         </label>
                         <textarea
-                            ref={textareaRef}
+                            id="message"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            rows={6}
-                            placeholder="Briefly explain your strengths, experience, and why you'd be a great fit..."
-                            className="w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
                             required
+                            rows="5"
+                            placeholder="Write a brief statement about why you’re a good fit..."
+                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
                         />
                     </div>
 
-                    {/* Resume Upload */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Upload your resume
-                        </label>
-                        <div
-                            onDragOver={(e) => {
-                                e.preventDefault();
-                                setDragOver(true);
-                            }}
-                            onDragLeave={(e) => {
-                                e.preventDefault();
-                                setDragOver(false);
-                            }}
-                            onDrop={onDrop}
-                            className={`w-full border border-dashed rounded-md p-6 flex items-center justify-between gap-4 cursor-pointer transition ${
-                                dragOver
-                                    ? "border-blue-400 bg-blue-50"
-                                    : "border-gray-300 bg-gray-50"
-                            }`}
-                            onClick={() =>
-                                document.getElementById("apply-resume-input")?.click()
-                            }
-                        >
-                            <div className="flex items-center gap-3">
-                                <svg
-                                    className="w-6 h-6 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 4v16m8-8H4"
-                                    />
-                                </svg>
-                                <div className="text-left">
-                                    <div className="text-sm text-gray-700">
-                                        {file ? file.name : "Drag & drop or click to upload"}
-                                    </div>
-                                    <div className="text-xs text-gray-400">
-                                        PDF, DOC, DOCX — max 5 MB
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    document.getElementById("apply-resume-input")?.click();
-                                }}
-                                className="px-3 py-1 rounded-md bg-gray-200 text-sm text-gray-700 hover:bg-gray-300"
-                            >
-                                Browse
-                            </button>
-
-                            <input
-                                id="apply-resume-input"
-                                type="file"
-                                accept=".pdf,.doc,.docx"
-                                onChange={onFileInput}
-                                className="hidden"
-                            />
-                        </div>
-
-                        {file && (
-                            <div className="mt-2 flex items-center justify-between">
-                                <div className="text-sm text-gray-600">
-                                    {file.name} • {(file.size / 1024 / 1024).toFixed(2)} MB
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setFile(null)}
-                                    className="text-red-500 text-sm hover:underline"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Error / Success */}
-                    {error && <div className="text-sm text-red-600">{error}</div>}
-                    {successMsg && (
-                        <div className="text-sm text-green-600">{successMsg}</div>
-                    )}
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-4 pt-4">
-                        <button
-                            type="button"
-                            onClick={() => navigate(-1)}
-                            className="px-5 py-2 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="px-5 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                            {submitting ? "Submitting..." : "Submit Application"}
-                        </button>
-                    </div>
+                    <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full py-3 rounded-lg font-semibold text-white transition-all duration-300 ${
+                            loading
+                                ? "bg-blue-400 cursor-not-allowed"
+                                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-md"
+                        }`}
+                    >
+                        {loading ? "Submitting..." : "Submit Application"}
+                    </motion.button>
                 </form>
-            </div>
+
+                {feedback && (
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className={`mt-4 text-center ${
+                            feedback.startsWith("✅")
+                                ? "text-green-600"
+                                : "text-red-600"
+                        }`}
+                    >
+                        {feedback}
+                    </motion.p>
+                )}
+            </motion.div>
         </div>
     );
 }

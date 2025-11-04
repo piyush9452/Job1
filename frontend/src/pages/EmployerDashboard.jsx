@@ -8,20 +8,30 @@ export default function EmployerDashboard() {
     const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
 
-    // Fetch user's job posts
+    // ✅ Fetch user's job posts using token only
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-                const token = userInfo?.token;
+                const employerInfo = JSON.parse(localStorage.getItem("employerInfo"));
+                const token = employerInfo?.token;
 
-                const { data } = await axios.get("https://jobone-mrpy.onrender.com/employer/jobs", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                if (!token) {
+                    console.error("No token found in localStorage");
+                    return;
+                }
 
-                setJobs(data || []);
+                // ✅ Fixed API call — using only token for authentication
+                const { data } = await axios.get(
+                    `https://jobone-mrpy.onrender.com/jobs/employer/${token}`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+
+                setJobs(Array.isArray(data) ? data : []);
             } catch (err) {
-                console.error("Failed to fetch jobs", err);
+                console.error("❌ Failed to fetch jobs:", err.response?.data || err.message);
+                setJobs([]);
             }
         };
 
@@ -112,8 +122,12 @@ export default function EmployerDashboard() {
                                 onClick={() => navigate(`/job/${job._id}`)}
                                 className="cursor-pointer bg-white shadow-md rounded-xl p-5 hover:shadow-xl hover:border hover:border-blue-300 transition"
                             >
-                                <h3 className="text-lg font-semibold text-gray-800 mb-1">{job.title}</h3>
-                                <p className="text-sm text-gray-600 line-clamp-3">{job.description}</p>
+                                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                                    {job.title}
+                                </h3>
+                                <p className="text-sm text-gray-600 line-clamp-3">
+                                    {job.description}
+                                </p>
                                 <div className="mt-3 text-blue-600 font-medium text-sm">
                                     {job.location || "Remote"}
                                 </div>
