@@ -141,9 +141,14 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
 export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const jobs = await Job.find({ postedBy: id });
-  if (!jobs) return res.status(404).json({ message: "No jobs found for this user" });
-  res.status(200).json(jobs || []);
-})
+
+  // This is the correct way to check if no jobs were found
+  if (!jobs || jobs.length === 0) {
+    return res.status(404).json({ message: "No jobs found for this user" });
+  }
+
+  res.status(200).json(jobs);
+});
 
 
 export const updateJob = expressAsyncHandler(async (req, res) => {
