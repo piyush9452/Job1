@@ -45,9 +45,6 @@ export const createJob = expressAsyncHandler(async (req, res) => {
 
 
 
-
-
-
 export const getJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
