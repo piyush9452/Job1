@@ -1,37 +1,31 @@
 import jwt from 'jsonwebtoken';
 import expressAsyncHandler from 'express-async-handler';
-import Employer from '../models/employer.js'; // Adjust path
+import Employer from '../models/employer.js';
 
 export const protectEmployer = expressAsyncHandler(async (req, res, next) => {
   let token;
 
-  // Check for the "Bearer" token in the authorization header
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // 1. Get token from header (e.g., "Bearer <token>")
+      // FIX 1: Token is now assigned
       token = req.headers.authorization.split(' ')[1];
 
-      // 2. Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // 3. Get employer ID from the token payload
-      // (This matches the payload we created in login/register)
       req.employerId = decoded.employer.id;
+      next(); // Continue only if token is valid
 
-      // 4. Continue to the next function (the update controller)
-      next(); 
     } catch (error) {
+      // Token is invalid or expired
       console.error(error);
-      res.status(401);
-      throw new Error('Not authorized, token failed');
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
+  // FIX 2: This check now catches requests with NO token
   if (!token) {
-    res.status(401);
-    throw new Error('Not authorized, no token');
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 });
