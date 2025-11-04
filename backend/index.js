@@ -16,6 +16,9 @@ connectDB();
 
 const app = express();
 app.use(express.json());
+
+
+// Enable CORS for all routes
 app.use(cors());
 
 
