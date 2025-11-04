@@ -1,49 +1,51 @@
 import expressAsyncHandler from "express-async-handler";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
-export const createJob = expressAsyncHandler((async (req, res) => {
-  const {
-    title,
-    description,
-    jobType,
-    skillsRequired,
-    location,
-    pinCode,
-    salary,
-    expiringAt
-  } = req.body;
+import { validationResult } from "express-validator";
+import Employer from "../models/employer.js"; // Adjust path as needed
 
-  // postedBy comes from JWT-authenticated user
-  const userId = req.user._id; 
-  const userName = req.user.name;
-  const userImage = req.user.image || null;
 
-  if (!title || !description || !jobType || !location || !salary) {
+export const createJob = expressAsyncHandler(async (req, res) => {
+  // 1. Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
     res.status(400);
-    throw new Error("Missing required fields");
+    throw new Error(errors.array()[0].msg);
   }
 
+  // 2. Find the employer who is posting the job
+  // We get req.employerId from the 'protectEmployer' middleware
+  const employer = await Employer.findById(req.employerId).select('name profilePicture createdJobs');
+
+  if (!employer) {
+    res.status(404);
+    throw new Error('Employer not found');
+  }
+
+  // 3. Create the new job
   const newJob = new Job({
-    title,
-    description,
-    jobType,
-    skillsRequired: skillsRequired || [],
-    location,
-    pinCode,
-    salary,
-    postedBy: userId,
-    postedByName: userName,
-    postedByImage: userImage,
-    expiringAt
+    ...req.body,
+    postedBy: req.employerId,
+    postedByName: employer.name,
+    postedByImage: employer.profilePicture || '', // Use profile pic or empty string
   });
 
-  await newJob.save();
+  // 4. Save the job
+  const savedJob = await newJob.save();
 
-  res.status(201).json({
-    message: "Job created successfully",
-    job: newJob,
-  });
-}));
+  // 5. Add this job's ID to the employer's 'createdJobs' array
+  employer.createdJobs.push(savedJob._id);
+  await employer.save();
+
+  // 6. Send the new job as the response
+  res.status(201).json(savedJob);
+});
+
+
+
+
+
+
 
 
 export const getJob = expressAsyncHandler(async (req, res) => {
@@ -139,9 +141,14 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
 export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const jobs = await Job.find({ postedBy: id });
-  if (!jobs) return res.status(404).json({ message: "No jobs found for this user" });
-  res.status(200).json(jobs || []);
-})
+
+  // This is the correct way to check if no jobs were found
+  if (!jobs || jobs.length === 0) {
+    return res.status(404).json({ message: "No jobs found for this user" });
+  }
+
+  res.status(200).json(jobs);
+});
 
 
 export const updateJob = expressAsyncHandler(async (req, res) => {
