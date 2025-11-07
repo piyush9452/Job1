@@ -1,5 +1,5 @@
 import express from "express";
-import { registerEmployer,loginEmployer } from "../controllers/employerControllers.js";
+import { registerEmployer,loginEmployer,verifyOTP } from "../controllers/employerControllers.js";
 import { body } from 'express-validator';
 
 const router = express.Router();
@@ -11,6 +11,7 @@ const rules = [
 ];
 router.post("/register",rules, registerEmployer);
 
+router.post("/verifyotp", verifyOTP);
 router.post("/login", loginEmployer);
 
 

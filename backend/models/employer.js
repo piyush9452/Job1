@@ -25,6 +25,7 @@ const employer = new mongoose.Schema({
       type: String,
       default: "",
     },
+    isVerified: { type: Boolean, default: false },
   ratingsReceived:[
         {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

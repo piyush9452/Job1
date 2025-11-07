@@ -5,57 +5,116 @@ import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import Employer from '../models/employer.js'; // Adjust path as needed
 import {protectEmployer} from '../middleware/employercheck.js';
+import OTP from '../models/verification.js';
+import sendEmail from '../utils/emailVerification.js';
+
 
 export const registerEmployer = expressAsyncHandler(async (req, res) => {
-  // 1. Check for validation errors from the middleware
+  // 1. Validation (Same as before)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    res.status(400); // Set status
-    throw new Error(errors.array()[0].msg); // Let error handler format it
+    res.status(400);
+    throw new Error(errors.array()[0].msg);
   }
 
-  // 2. Destructure the full body
-  const { name, email, password, phone , companyName} = req.body;
+  const { name, email, password, phone, companyName } = req.body;
 
-  // 3. Hash password (following your style)
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // 4. Check if employer exists (following your style)
+  // 2. Check existence (Same as before)
   const existingEmployer = await Employer.findOne({ email });
   if (existingEmployer) {
     res.status(400);
     throw new Error('Employer with this email already exists');
   }
 
-  // 5. Create and save new employer
+  // 3. Hash password (Same as before)
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // 4. Create Employer (NOW marked as unverified by default in Schema)
   const employer = new Employer({
     name,
     email,
-    password: hashedPassword, // Use the hashed password
+    password: hashedPassword,
     phone,
     companyName: companyName || "",
+    // isVerified: false // (This should be default in your schema)
   });
+  
   const savedEmployer = await employer.save();
 
-  // 6. Create and return JWT (This is the correct response)
-  const payload = {
-    employer: {
-      id: savedEmployer.id, // Use the new employer's ID
-    },
-  };
+  // 5. Generate 6-digit OTP
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Sign the token
-  const token = jwt.sign(
-    payload,
-    process.env.JWT_SECRET, // Ensure JWT_SECRET is in your .env file
-    { expiresIn: '5h' } // Set an expiration
-  );
+  try {
+    // 6. Save to OTP collection
+    await OTP.create({
+      employerId: savedEmployer._id,
+      otp: otpCode,
+    });
 
-  // 7. Send the token as the response
-  res.status(201).json({ token });
+    // 7. Send Email
+    await sendEmail({
+      email: savedEmployer.email,
+      subject: 'Verify your Employer Account',
+      message: `Your verification code is: ${otpCode}. It expires in 10 minutes.`,
+    });
+
+    // 8. Response (NO TOKEN)
+    res.status(201).json({
+      message: 'Registration successful. Please check your email to verify your account.',
+      email: savedEmployer.email // Helpful for the frontend to auto-fill the verify form
+    });
+
+  } catch (error) {
+    // CRITICAL: If email/OTP fails, delete the user so they aren't stuck in limbo.
+    await Employer.deleteOne({ _id: savedEmployer._id });
+    // Optional: also delete the OTP if it was created but email failed
+    await OTP.deleteOne({ employerId: savedEmployer._id });
+    
+    console.error("Registration failed during OTP step:", error);
+    res.status(500);
+    throw new Error('Could not send verification email. Please try registering again.');
+  }
 });
 
 //-----------------------------------------------------------------------------------------------------------------
+
+
+export const verifyOTP = expressAsyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  // 1. Find the employer first to get their ID
+  const employer = await Employer.findOne({ email });
+  if (!employer) {
+      res.status(400);
+      throw new Error("Employer not found");
+  }
+
+  // 2. Look for their OTP in the separate collection
+  const otpRecord = await OTP.findOne({
+      employerId: employer._id,
+      otp: otp,
+  });
+
+  if (!otpRecord) {
+      res.status(400);
+      // If it's not found, it either didn't exist OR it already auto-expired.
+      throw new Error("Invalid or expired OTP.");
+  }
+
+  // 3. OTP found! Mark employer as verified.
+  employer.isVerified = true;
+  await employer.save();
+
+  // 4. (Optional but good) Manually delete the OTP now so it can't be used again
+  // even before the 10 minutes are up.
+  await OTP.deleteOne({ _id: otpRecord._id });
+
+  // 5. Generate token and log them in
+  const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
+  res.status(200).json({ message: "Verified!", token });
+});
+
+
 
 
 export const loginEmployer = expressAsyncHandler(async (req, res) => {
