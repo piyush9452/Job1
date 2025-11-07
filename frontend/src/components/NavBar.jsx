@@ -71,9 +71,14 @@ export default function Navbar() {
 
                     {/* Job links only for users */}
                     {!employerInfo && (
-                        <Link to="/jobs" className="text-gray-700 hover:text-blue-700">
-                            Find part-time Jobs
-                        </Link>
+                        <>
+                            <Link to="/jobs" className="text-gray-700 hover:text-blue-700">
+                                Find part-time Jobs
+                            </Link>
+                            <Link to="/createjob" className="text-gray-700 hover:text-blue-700">
+                                Post part-time Jobs
+                            </Link>
+                        </>
                     )}
 
                     {/* ✅ Employer Logged In */}
@@ -84,12 +89,6 @@ export default function Navbar() {
                                 className="text-gray-700 hover:text-blue-700"
                             >
                                 Post a Job
-                            </Link>
-                            <Link
-                                to="/employerdashboard"
-                                className="text-gray-700 hover:text-blue-700"
-                            >
-                                My Dashboard
                             </Link>
 
                             <div className="relative" ref={userMenuRef}>
@@ -105,6 +104,13 @@ export default function Navbar() {
                                             onClick={() => setUserMenuOpen(false)}
                                         >
                                             My Profile
+                                        </Link>
+                                        <Link
+                                            to="/employerdashboard"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            My Dashboard
                                         </Link>
                                         <button
                                             onClick={handleLogout}
@@ -156,9 +162,6 @@ export default function Navbar() {
                         <div className="flex items-center gap-4">
                             <Link to="/login" className="text-gray-700 hover:text-blue-700">
                                 Login
-                            </Link>
-                            <Link to="/register" className="text-gray-700 hover:text-blue-700">
-                                Register
                             </Link>
                             <button
                                 onClick={handleEmployerClick}

@@ -14,6 +14,9 @@ export default function EmployerDashboard() {
             try {
                 const employerInfo = JSON.parse(localStorage.getItem("employerInfo"));
                 const token = employerInfo?.token;
+                const employerID = employerInfo?._id;
+                console.log(employerID);
+
 
                 if (!token) {
                     console.error("No token found in localStorage");
@@ -22,7 +25,7 @@ export default function EmployerDashboard() {
 
                 // ✅ Fixed API call — using only token for authentication
                 const { data } = await axios.get(
-                    `https://jobone-mrpy.onrender.com/jobs/employer/${token}`,
+                    `https://jobone-mrpy.onrender.com/jobs/employer/${employerID}`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
                     }

@@ -128,6 +128,216 @@ ${keyResponsibilities}
                         placeholder="Job Title"
                         className="w-full p-3 border rounded-md outline-none"
                     />
+                    <div>
+                        <label className="block text-gray-600 mb-1">Duration</label>
+                        <div className="w-full p-3 border rounded-md">
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="durationType"
+                                    value="Day"
+                                    checked={job.durationType === "Day"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Day
+                            </label>
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="durationType"
+                                    value="Week"
+                                    checked={job.durationType === "Week"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Week
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="durationType"
+                                    value="Month"
+                                    checked={job.durationType === "Month"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Month
+                            </label>
+                        </div>
+                    </div>
+                    <input
+                        type="number"
+                        name="noOfDays"
+                        value={job.noOfDays}
+                        onChange={handleChange}
+                        placeholder="No. of Days (e.g. 5)"
+                        className="w-full p-3 border rounded-md outline-none"
+                    />
+                    <input
+                        type="number"
+                        name="dailyWorkingHours"
+                        value={job.dailyWorkingHours}
+                        onChange={handleChange}
+                        placeholder="Daily Working Hours"
+                        className="w-full p-3 border rounded-md outline-none"
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-gray-600 mb-1">Start Date</label>
+                            <input
+                                type="date"
+                                name="startDate"
+                                value={job.startDate}
+                                onChange={handleChange}
+                                className="w-full p-3 border rounded-md outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-600 mb-1">End Date</label>
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={job.endDate}
+                                onChange={handleChange}
+                                className="w-full p-3 border rounded-md outline-none"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-gray-600 mb-1">Mode</label>
+                        <div className="w-full p-3 border rounded-md">
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="Online"
+                                    checked={job.mode === "Online"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Online
+                            </label>
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="Offline"
+                                    checked={job.mode === "Offline"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Offline
+                            </label>
+                        </div>
+                    </div>
+                    <label className="block text-gray-600 mb-1">JobType</label>
+                    <div className="w-full p-3 border rounded-md">
+                        <label>
+                            <input
+                                type="radio"
+                                name="jobType"
+                                value="daily"
+                                checked={job.jobType === "daily"}
+                                onChange={handleChange}
+                                className="mr-2"
+                            />
+                            Daily
+                        </label>
+                        <label className="ml-4">
+                            <input
+                                type="radio"
+                                name="jobType"
+                                value="short-term"
+                                checked={job.jobType === "short-term"}
+                                onChange={handleChange}
+                                className="mr-2"
+                            />
+                            Short-term
+                        </label>
+                        <label className="ml-4">
+                            <input
+                                type="radio"
+                                name="jobType"
+                                value="part-time"
+                                checked={job.jobType === "part-time"}
+                                onChange={handleChange}
+                                className="mr-2"
+                            />
+                            Part-time
+                        </label>
+                    </div>
+                    <input
+                        type="number"
+                        name="noOfPeopleRequired"
+                        value={job.noOfPeopleRequired}
+                        onChange={handleChange}
+                        placeholder="No. of People Required (e.g. 4)"
+                        className="w-full p-3 border rounded-md outline-none"
+                    />
+                    <div>
+                        <label className="block text-gray-600 mb-1">Gender Preference</label>
+                        <div className="w-full p-3 border rounded-md">
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="genderPreference"
+                                    value="No Preference"
+                                    checked={job.genderPreference === "No Preference"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                No Preference
+                            </label>
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="genderPreference"
+                                    value="Male"
+                                    checked={job.genderPreference === "Male"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Male
+                            </label>
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="genderPreference"
+                                    value="Female"
+                                    checked={job.genderPreference === "Female"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Female
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="genderPreference"
+                                    value="Other"
+                                    checked={job.genderPreference === "Other"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Other
+                            </label>
+                        </div>
+                    </div>
+                    <input
+                        type="number"
+                        name="paymentPerHour"
+                        value={job.paymentPerHour}
+                        onChange={handleChange}
+                        placeholder="Payment per Hour (₹)"
+                        className="w-full p-3 border rounded-md outline-none"
+                    />
+                    <div className="w-full p-3 border rounded-md bg-gray-100">
+                        Total Monthly Hours:{" "}
+                        {Number(job.noOfDays) && Number(job.dailyWorkingHours)
+                            ? Number(job.noOfDays) * Number(job.dailyWorkingHours)
+                            : "--"}
+                    </div>
 
                     <textarea
                         value={jobSummary}
@@ -142,17 +352,27 @@ ${keyResponsibilities}
                         placeholder="Key Responsibilities"
                         className="w-full p-3 border rounded-md outline-none h-24"
                     />
-
-                    <select
-                        name="jobType"
-                        value={job.jobType}
-                        onChange={handleChange}
-                        className="w-full p-3 border rounded-md outline-none"
-                    >
-                        <option value="daily">Daily</option>
-                        <option value="short-term">Short-term</option>
-                        <option value="part-time">Part-time</option>
-                    </select>
+                    <div>
+                        <label className="block text-gray-600 mb-1">
+                            Working Time (From – To)
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <input
+                                type="time"
+                                name="workFrom"
+                                value={job.workFrom}
+                                onChange={handleChange}
+                                className="p-3 border rounded-md outline-none"
+                            />
+                            <input
+                                type="time"
+                                name="workTo"
+                                value={job.workTo}
+                                onChange={handleChange}
+                                className="p-3 border rounded-md outline-none"
+                            />
+                        </div>
+                    </div>
 
                     {/* Skills */}
                     <div>
@@ -205,134 +425,6 @@ ${keyResponsibilities}
                         onChange={handleChange}
                         placeholder="Salary (in ₹)"
                         type="number"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-
-                    {/* --- Additional Fields (from Screenshot) --- */}
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-600 mb-1">Duration</label>
-                            <select
-                                name="durationType"
-                                value={job.durationType}
-                                onChange={handleChange}
-                                className="w-full p-3 border rounded-md outline-none"
-                            >
-                                <option value="Day">Day</option>
-                                <option value="Week">Week</option>
-                                <option value="Month">Month</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-600 mb-1">Mode</label>
-                            <select
-                                name="mode"
-                                value={job.mode}
-                                onChange={handleChange}
-                                className="w-full p-3 border rounded-md outline-none"
-                            >
-                                <option value="Online">Online</option>
-                                <option value="Offline">Offline</option>
-                                <option value="Hybrid">Hybrid</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-600 mb-1">Start Date</label>
-                            <input
-                                type="date"
-                                name="startDate"
-                                value={job.startDate}
-                                onChange={handleChange}
-                                className="w-full p-3 border rounded-md outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-gray-600 mb-1">End Date</label>
-                            <input
-                                type="date"
-                                name="endDate"
-                                value={job.endDate}
-                                onChange={handleChange}
-                                className="w-full p-3 border rounded-md outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    <input
-                        type="number"
-                        name="dailyWorkingHours"
-                        value={job.dailyWorkingHours}
-                        onChange={handleChange}
-                        placeholder="Daily Working Hours"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-
-                    <div>
-                        <label className="block text-gray-600 mb-1">
-                            Working Time (From – To)
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <input
-                                type="time"
-                                name="workFrom"
-                                value={job.workFrom}
-                                onChange={handleChange}
-                                className="p-3 border rounded-md outline-none"
-                            />
-                            <input
-                                type="time"
-                                name="workTo"
-                                value={job.workTo}
-                                onChange={handleChange}
-                                className="p-3 border rounded-md outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    <input
-                        type="number"
-                        name="noOfDays"
-                        value={job.noOfDays}
-                        onChange={handleChange}
-                        placeholder="No. of Days (e.g. 5)"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-
-                    <input
-                        type="number"
-                        name="noOfPeopleRequired"
-                        value={job.noOfPeopleRequired}
-                        onChange={handleChange}
-                        placeholder="No. of People Required (e.g. 4)"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-
-                    <div>
-                        <label className="block text-gray-600 mb-1">Gender Preference</label>
-                        <select
-                            name="genderPreference"
-                            value={job.genderPreference}
-                            onChange={handleChange}
-                            className="w-full p-3 border rounded-md outline-none"
-                        >
-                            <option value="No Preference">No Preference</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    <input
-                        type="number"
-                        name="paymentPerHour"
-                        value={job.paymentPerHour}
-                        onChange={handleChange}
-                        placeholder="Payment per Hour (₹)"
                         className="w-full p-3 border rounded-md outline-none"
                     />
 

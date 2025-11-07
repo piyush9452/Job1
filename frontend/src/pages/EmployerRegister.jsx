@@ -52,7 +52,7 @@ const EmployerRegister = () => {
             setLoading(false);
 
             // Redirect to Employer Dashboard after successful registration
-            setTimeout(() => navigate("/login"), 1500);
+            setTimeout(() => navigate("/employerdashboard"), 1500);
         } catch (err) {
             setLoading(false);
             setError(
@@ -91,6 +91,7 @@ const EmployerRegister = () => {
                     transition={{ duration: 1 }}
                     className="relative z-10 text-center"
                 >
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4">Job1</h1>
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">
                         Build Your Dream Team
                     </h1>
@@ -160,18 +161,33 @@ const EmployerRegister = () => {
                             className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
 
-                        <select
-                            name="userType"
-                            value={formData.userType}
-                            onChange={handleChange}
-                            required
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">-- Select User Type --</option>
-                            <option value="Company">Company</option>
-                            <option value="Recruiter">Individual</option>
-                        </select>
-
+                        <label className="block text-gray-600 mb-1">User Type</label>
+                        <div className="w-full border border-gray-300 rounded-lg p-3">
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="userType"
+                                    value="Company"
+                                    checked={formData.userType === "Company"}
+                                    onChange={handleChange}
+                                    required
+                                    className="mr-2"
+                                />
+                                Company
+                            </label>
+                            <label className="mr-4">
+                                <input
+                                    type="radio"
+                                    name="userType"
+                                    value="Recruiter"
+                                    checked={formData.userType === "Recruiter"}
+                                    onChange={handleChange}
+                                    required
+                                    className="mr-2"
+                                />
+                                Individual
+                            </label>
+                        </div>
                         {formData.userType === "Company" && (
                             <input
                                 type="text"
