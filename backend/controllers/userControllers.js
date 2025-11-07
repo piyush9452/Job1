@@ -11,20 +11,104 @@ import admin from 'firebase-admin';
 // });
 
 // Create a new user
+import UserOTP from '../models/userVerification.js'; // <-- Import the new model
+import sendEmail from '../utils/emailVerification.js';
+import { validationResult } from 'express-validator';
+
 export const createUser = expressAsyncHandler(async (req, res) => {
+  // 1. Validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400);
+    throw new Error(errors.array()[0].msg);
+  }
 
-    const { name, email, password, phone} = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    // Check if email already exists
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: "User already exists" });
+  const { name, email, password, phone } = req.body;
 
-    const user = new User({ name, email, password:hashedPassword, phone});
-    const savedUser = await user.save();
-    res.status(201).json(savedUser);
+  // 2. Check existence
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    res.status(400);
+    throw new Error("User already exists");
+  }
 
+  // 3. Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // 4. Create User (isVerified: false by default)
+  const user = new User({
+    name,
+    email,
+    password: hashedPassword,
+    phone,
+  });
+  const savedUser = await user.save();
+
+  // 5. Generate OTP
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+  try {
+    // 6. Save to the separate UserOTP collection
+    await UserOTP.create({
+      userId: savedUser._id,
+      otp: otpCode,
+    });
+
+    // 7. Send Email
+    await sendEmail({
+      email: savedUser.email,
+      subject: 'Verify your Job Portal Account',
+      message: `Your verification code is: ${otpCode}. It expires in 10 minutes.`,
+    });
+
+    res.status(201).json({
+      message: 'Registration successful. Please check your email to verify your account.',
+      email: savedUser.email
+    });
+
+  } catch (error) {
+    // Cleanup if email fails
+    await User.deleteOne({ _id: savedUser._id });
+    await UserOTP.deleteOne({ userId: savedUser._id });
+    res.status(500);
+    throw new Error('Verification email failed. Please try again.');
+  }
 });
 
+
+
+export const verifyUserOTP = expressAsyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(400);
+    throw new Error("User not found");
+  }
+
+  // Look for OTP in the UserOTP collection
+  const otpRecord = await UserOTP.findOne({
+    userId: user._id,
+    otp: otp,
+  });
+
+  if (!otpRecord) {
+    res.status(400);
+    throw new Error("Invalid or expired OTP.");
+  }
+
+  // Mark Verified
+  user.isVerified = true;
+  await user.save();
+
+  // Clean up OTP
+  await UserOTP.deleteOne({ _id: otpRecord._id });
+
+  // Generate Token & Login
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+  
+  res.status(200).json({ message: "Account verified!", token });
+});
 
 
 
