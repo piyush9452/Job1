@@ -15,6 +15,10 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import Profile from "./pages/Profile.jsx";
 import Register from "./pages/Register.jsx";
 import ApplyPage from "./pages/ApplyPage";
+import EmployerOTP from "./pages/EmployerOTP";
+import UserOTP from "./pages/UserOTP";
+
+
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -38,6 +42,8 @@ function App() {
             <Route path="/createjob" element={<CreateJob />} />
             <Route path="/employerregister" element={<EmployerRegister />} />
             <Route path="/employerdashboard" element={<EmployerDashboard />} />
+            <Route path="/employerotp" element={<EmployerOTP />} />
+            <Route path="/userotp" element={<UserOTP />} />
             <Route path="/apply/:jobId" element={<ApplyPage />} />
         </Routes>
     </Router>

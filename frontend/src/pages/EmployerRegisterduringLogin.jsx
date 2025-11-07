@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const EmployerRegister = () => {
+const EmployerRegisterLogin = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         firstName: "",
@@ -52,7 +52,7 @@ const EmployerRegister = () => {
             setLoading(false);
 
             // Redirect to Employer Dashboard after successful registration
-            setTimeout(() => navigate("/employerotp"), 1500);
+            setTimeout(() => navigate("/employerdashboard"), 1500);
         } catch (err) {
             setLoading(false);
             setError(
@@ -232,4 +232,4 @@ const EmployerRegister = () => {
     );
 };
 
-export default EmployerRegister;
+export default EmployerRegisterLogin;
