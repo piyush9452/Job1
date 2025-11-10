@@ -13,9 +13,9 @@ const sendEmail = async (options) => {
     },
     // Optional: Add this if you still get certificate errors, 
     // but try without it first as it lowers security slightly.
-    // tls: {
-    //    rejectUnauthorized: false
-    // }
+    tls: {
+       rejectUnauthorized: false
+    }
   });
 
   // 2. Define email options
