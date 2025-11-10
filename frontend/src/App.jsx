@@ -2,7 +2,7 @@ import './App.css'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import  Home  from "./pages/Home";
 import Login from "./pages/Login";
-import RegisterEmail from "./pages/RegisterEmail.jsx";
+import UserRegister from "./pages/UserRegister.jsx";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import EditProfile from "./pages/EditProfile.jsx";
@@ -17,6 +17,8 @@ import Register from "./pages/Register.jsx";
 import ApplyPage from "./pages/ApplyPage";
 import EmployerOTP from "./pages/EmployerOTP";
 import UserOTP from "./pages/UserOTP";
+import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
+
 
 
 import Navbar from "./components/NavBar";
@@ -31,7 +33,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/registeremail" element={<RegisterEmail />} />
+            <Route path="/userregister" element={<UserRegister />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
             <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
@@ -39,7 +41,7 @@ function App() {
             <Route path="/myapplications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
             <Route path="/jobposts" element={<ProtectedRoute><JobPosts /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
-            <Route path="/createjob" element={<CreateJob />} />
+            <Route path="/createjob" element={<EmployerProtectedRoute><CreateJob /></EmployerProtectedRoute>} />
             <Route path="/employerregister" element={<EmployerRegister />} />
             <Route path="/employerdashboard" element={<EmployerDashboard />} />
             <Route path="/employerotp" element={<EmployerOTP />} />

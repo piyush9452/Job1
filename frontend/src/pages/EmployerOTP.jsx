@@ -27,7 +27,7 @@ const VerifyOTP = () => {
             localStorage.setItem("employerToken", res.data.token);
 
             setMessage("✅ Verification successful! Redirecting...");
-            setTimeout(() => navigate("/employerdashboard"), 1500);
+            setTimeout(() => navigate("/"), 1500);
         } catch (err) {
             setMessage(
                 err.response?.data?.message || "❌ Invalid or expired OTP. Try again."

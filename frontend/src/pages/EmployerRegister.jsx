@@ -67,6 +67,9 @@ const EmployerRegister = () => {
         <div className="min-h-screen grid md:grid-cols-2 bg-white">
             {/* LEFT SECTION: Animated background + heading */}
             <div className="relative flex flex-col justify-center items-center overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 text-white p-10">
+                <div className="absolute top-6 left-8 z-20 text-3xl font-bold tracking-wide cursor-pointer">
+                    Job1
+                </div>
                 {/* Floating shapes */}
                 <motion.div
                     className="absolute top-10 left-10 w-28 h-28 bg-blue-300 rounded-full filter blur-2xl opacity-40"
@@ -91,7 +94,6 @@ const EmployerRegister = () => {
                     transition={{ duration: 1 }}
                     className="relative z-10 text-center"
                 >
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4">Job1</h1>
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">
                         Build Your Dream Team
                     </h1>

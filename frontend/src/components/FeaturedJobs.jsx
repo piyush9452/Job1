@@ -74,78 +74,80 @@ export default function FeaturedJobs() {
     const recruiterName = userInfo?.name || "Recruiter";
 
     return (
-        <section className="py-12 bg-gray-50">
-            <div className="max-w-screen-2xl mx-auto px-4">
-                <h2 className="text-3xl font-bold text-center mb-2">Featured Jobs</h2>
-                <p className="text-gray-500 text-center mb-8">
-                    Know your worth and find the job that qualifies your life
-                </p>
+        <section className="py-12 bg-gray-50 w-full">
+            <div className="w-full">
+                <div className="max-w-screen-2xl mx-auto px-10">
+                    <h2 className="text-3xl font-bold text-center mb-2">Featured Jobs</h2>
+                    <p className="text-gray-500 text-center mb-8">
+                        Know your worth and find the job that qualifies your life
+                    </p>
 
-                <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2   ">
-                    {jobs.map((job) => {
-                        const timeAgo = timeAgoFrom(job.createdAt);
-                        const salaryText = job.salary ? `₹${Number(job.salary).toLocaleString()}` : "N/A";
+                    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2   ">
+                        {jobs.map((job) => {
+                            const timeAgo = timeAgoFrom(job.createdAt);
+                            const salaryText = job.salary ? `₹${Number(job.salary).toLocaleString()}` : "N/A";
 
-                        const avatar = job.logo ? (
-                            <img
-                                src={job.logo}
-                                alt={job.companyName || "Company"}
-                                className="w-14 h-14 rounded-xl object-contain"
-                            />
-                        ) : (
-                            <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-lg font-bold flex-shrink-0">
-                                {recruiterName?.charAt(0).toUpperCase()}
-                            </div>
-                        );
+                            const avatar = job.logo ? (
+                                <img
+                                    src={job.logo}
+                                    alt={job.companyName || "Company"}
+                                    className="w-14 h-14 rounded-xl object-contain"
+                                />
+                            ) : (
+                                <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-lg font-bold flex-shrink-0">
+                                    {recruiterName?.charAt(0).toUpperCase()}
+                                </div>
+                            );
 
-                        return (
-                            <article
-                                key={job._id}
-                                onClick={() => setSelectedJob(job)}
-                                className="bg-white rounded-2xl shadow-sm hover:scale-105 transition cursor-pointer border border-gray-100 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4"
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" || e.key === " ") {
-                                        setSelectedJob(job);
-                                    }
-                                }}
-                                aria-label={`Open details for ${job.title}`}
-                            >
-                                {avatar}
+                            return (
+                                <article
+                                    key={job._id}
+                                    onClick={() => setSelectedJob(job)}
+                                    className="bg-white rounded-2xl shadow-sm hover:scale-105 transition cursor-pointer border border-gray-100 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            setSelectedJob(job);
+                                        }
+                                    }}
+                                    aria-label={`Open details for ${job.title}`}
+                                >
+                                    {avatar}
 
-                                <div className="flex-1 w-full">
-                                    <h3 className="text-lg font-semibold text-gray-800">{job.title}</h3>
+                                    <div className="flex-1 w-full">
+                                        <h3 className="text-lg font-semibold text-gray-800">{job.title}</h3>
 
-                                    <div className="flex flex-wrap items-center gap-2 text-gray-500 text-sm mt-1">
-                                        <span className="flex items-center gap-1">💼 {recruiterName}</span>
-                                        <span>•</span>
-                                        <span className="flex items-center gap-1">📍 {job.location || "Remote"}</span>
-                                        <span>•</span>
-                                        <span className="flex items-center gap-1">⏰ {timeAgo}</span>
-                                        <span>•</span>
-                                        <span className="flex items-center gap-1">💰 {salaryText}</span>
-                                    </div>
+                                        <div className="flex flex-wrap items-center gap-2 text-gray-500 text-sm mt-1">
+                                            <span className="flex items-center gap-1">💼 {recruiterName}</span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">📍 {job.location || "Remote"}</span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">⏰ {timeAgo}</span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">💰 {salaryText}</span>
+                                        </div>
 
-                                    <div className="flex gap-2 mt-3 flex-wrap">
-                                        {job.jobType && (
-                                            <span
-                                                className={`px-3 py-1 text-sm rounded-full font-medium ${
-                                                    badgeColors[job.jobType] || "bg-blue-50 text-blue-700"
-                                                }`}
-                                            >
+                                        <div className="flex gap-2 mt-3 flex-wrap">
+                                            {job.jobType && (
+                                                <span
+                                                    className={`px-3 py-1 text-sm rounded-full font-medium ${
+                                                        badgeColors[job.jobType] || "bg-blue-50 text-blue-700"
+                                                    }`}
+                                                >
                         {job.jobType}
                       </span>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="text-gray-400 hover:text-blue-500 self-start sm:self-auto mt-2 sm:mt-0">
-                                    <i className="fa-regular fa-star"></i>
-                                </div>
-                            </article>
-                        );
-                    })}
+                                    <div className="text-gray-400 hover:text-blue-500 self-start sm:self-auto mt-2 sm:mt-0">
+                                        <i className="fa-regular fa-star"></i>
+                                    </div>
+                                </article>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 

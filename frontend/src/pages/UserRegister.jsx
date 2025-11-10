@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import login from "../assets/register.jpg";
 
-export default function RegisterEmail() {
+
+export default function UserRegister() {
     const navigate = useNavigate();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -28,7 +30,7 @@ export default function RegisterEmail() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="flex items-center justify-center min-h-screen bg-gray-100 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${login})` }}>
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-md">
                 <h2 className="text-2xl font-bold text-center text-gray-800">Register</h2>
 

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
+import login from "../assets/login.jpg"; // adjust path to your actual file
+
 
 export default function Login() {
     const navigate = useNavigate();
@@ -40,7 +42,9 @@ export default function Login() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
+        <div   className="relative flex items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat px-4"
+               style={{ backgroundImage: `url(${login})` }}
+        >
             <div className="w-full max-w-sm bg-white shadow-xl rounded-2xl p-6">
                 {/* Tabs */}
                 <div className="flex justify-around border-b mb-5">
@@ -74,8 +78,8 @@ export default function Login() {
                     <FcGoogle className="text-xl mr-2" />
                     <span className="text-gray-700 text-sm font-medium">
             {activeTab === "employer"
-                ? "Login with Google (Employer)"
-                : "Login with Google"}
+                ? "Continue with Google (Employer)"
+                : "Continue with Google"}
           </span>
                 </button>
 
@@ -128,14 +132,14 @@ export default function Login() {
                         type="submit"
                         className="w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
                     >
-                        {activeTab === "employer" ? "Login as Employer" : "Login as User"}
+                        {activeTab === "employer" ? "Login as Employer" : "Login"}
                     </button>
                 </form>
 
                 {/* Register Links */}
                 <p className="text-center text-gray-600 text-sm mt-4">
                     New to Job1? Register{" "}
-                    <Link to="/register" className="text-blue-600 hover:underline">
+                    <Link to="/userregister" className="text-blue-600 hover:underline">
                         (User
                     </Link>{" "}
                     /{" "}

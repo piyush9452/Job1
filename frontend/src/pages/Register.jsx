@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
+import login from "../assets/login.jpg";
+
 
 const RegisterOption = () => {
     const navigate = useNavigate();
@@ -11,11 +13,11 @@ const RegisterOption = () => {
     };
 
     const handleEmailSignup = () => {
-        navigate("/registeremail"); // 👈 goes to your existing email registration page
+        navigate("/userregister"); // 👈 goes to your existing email registration page
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat px-4" style={{ backgroundImage: `url(${login})` }}>
             <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-gray-800 mb-2">
                     Sign-up and apply for free

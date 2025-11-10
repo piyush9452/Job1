@@ -15,9 +15,9 @@ export default function Home() {
             <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10">
                 <JobCategories />
                 < CompanyCard />
+            </div>
                 <FeaturedJobs />
                 <Testimonials />
-            </div>
 
             {/* Footer */}
             <footer className="bg-blue-900 text-white w-full">
