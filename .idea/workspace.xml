@@ -5,17 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="337125a7-a3d3-40d4-80ae-af0fda59f289" name="Changes" comment="changes made">
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/EmployerProtectedRoute.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/FeaturedJobs.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/FeaturedJobs.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerOTP.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerOTP.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerRegister.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerRegister.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerRegisterduringLogin.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerRegisterLogin.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Home.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Home.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Register.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Register.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/RegisterEmail.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/UserRegister.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/assets/login.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/assets/register.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -141,7 +132,7 @@
       <workItem from="1762578925665" duration="682000" />
       <workItem from="1762598713321" duration="8788000" />
       <workItem from="1762667889838" duration="76000" />
-      <workItem from="1762772844490" duration="9368000" />
+      <workItem from="1762772844490" duration="9638000" />
     </task>
     <task id="LOCAL-00001" summary="changes made">
       <option name="closed" value="true" />
@@ -311,7 +302,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762530036662</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="changes made">
+      <option name="closed" value="true" />
+      <created>1762786349172</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1762786349172</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
