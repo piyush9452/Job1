@@ -6,6 +6,8 @@ import Testimonials from "../components/Testimonials";
 import JobCategories from "../components/JobCategories";
 import FeaturedJobs from "../components/FeaturedJobs";
 import CompanyCard from "../components/CompanyCard";
+import VideoSection from "../components/VideoSection";
+
 
 export default function Home() {
     return (
@@ -17,6 +19,7 @@ export default function Home() {
                 < CompanyCard />
             </div>
                 <FeaturedJobs />
+                <VideoSection />
                 <Testimonials />
 
             {/* Footer */}
