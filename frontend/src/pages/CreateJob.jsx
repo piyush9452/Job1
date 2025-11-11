@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 
@@ -29,6 +29,18 @@ export default function CreateJob() {
     const [skillsInput, setSkillsInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(false);
+
+    useEffect(() => {
+        const totalHours = Number(job.noOfDays) * Number(job.dailyWorkingHours);
+        const totalSalary = totalHours * Number(job.paymentPerHour);
+
+        if (!isNaN(totalSalary) && totalSalary > 0) {
+            setJob((prevJob) => ({ ...prevJob, salary: totalSalary }));
+        } else {
+            setJob((prevJob) => ({ ...prevJob, salary: "" }));
+        }
+    }, [job.noOfDays, job.dailyWorkingHours, job.paymentPerHour]);
+
 
     const handleChange = (e) => {
         setJob({ ...job, [e.target.name]: e.target.value });
@@ -112,6 +124,7 @@ ${keyResponsibilities}
         } finally {
             setLoading(false);
         }
+
     };
 
     return (
@@ -231,6 +244,27 @@ ${keyResponsibilities}
                             </label>
                         </div>
                     </div>
+                    <div>
+                        <label className="block text-gray-600 mb-1">
+                            Working Time (From – To)
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <input
+                                type="time"
+                                name="workFrom"
+                                value={job.workFrom}
+                                onChange={handleChange}
+                                className="p-3 border rounded-md outline-none"
+                            />
+                            <input
+                                type="time"
+                                name="workTo"
+                                value={job.workTo}
+                                onChange={handleChange}
+                                className="p-3 border rounded-md outline-none"
+                            />
+                        </div>
+                    </div>
                     <label className="block text-gray-600 mb-1">JobType</label>
                     <div className="w-full p-3 border rounded-md">
                         <label>
@@ -324,6 +358,12 @@ ${keyResponsibilities}
                             </label>
                         </div>
                     </div>
+                    <div className="w-full p-3 border rounded-md bg-gray-100">
+                        Total Monthly Hours:{" "}
+                        {Number(job.noOfDays) && Number(job.dailyWorkingHours)
+                            ? Number(job.noOfDays) * Number(job.dailyWorkingHours)
+                            : "--"}
+                    </div>
                     <input
                         type="number"
                         name="paymentPerHour"
@@ -332,12 +372,6 @@ ${keyResponsibilities}
                         placeholder="Payment per Hour (₹)"
                         className="w-full p-3 border rounded-md outline-none"
                     />
-                    <div className="w-full p-3 border rounded-md bg-gray-100">
-                        Total Monthly Hours:{" "}
-                        {Number(job.noOfDays) && Number(job.dailyWorkingHours)
-                            ? Number(job.noOfDays) * Number(job.dailyWorkingHours)
-                            : "--"}
-                    </div>
 
                     <textarea
                         value={jobSummary}
@@ -352,27 +386,6 @@ ${keyResponsibilities}
                         placeholder="Key Responsibilities"
                         className="w-full p-3 border rounded-md outline-none h-24"
                     />
-                    <div>
-                        <label className="block text-gray-600 mb-1">
-                            Working Time (From – To)
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <input
-                                type="time"
-                                name="workFrom"
-                                value={job.workFrom}
-                                onChange={handleChange}
-                                className="p-3 border rounded-md outline-none"
-                            />
-                            <input
-                                type="time"
-                                name="workTo"
-                                value={job.workTo}
-                                onChange={handleChange}
-                                className="p-3 border rounded-md outline-none"
-                            />
-                        </div>
-                    </div>
 
                     {/* Skills */}
                     <div>
@@ -421,12 +434,17 @@ ${keyResponsibilities}
 
                     <input
                         name="salary"
-                        value={job.salary}
-                        onChange={handleChange}
-                        placeholder="Salary (in ₹)"
-                        type="number"
-                        className="w-full p-3 border rounded-md outline-none"
+                        value={
+                            job.salary
+                                ? `₹${job.salary.toLocaleString("en-IN")}`
+                                : ""
+                        }
+                        readOnly
+                        placeholder="Total Monthly Salary (auto-calculated)"
+                        className="w-full p-3 border rounded-md outline-none bg-gray-100 cursor-not-allowed"
+                        title="Salary is auto-calculated based on hours and payment per hour"
                     />
+
 
                     {/* Buttons */}
                     <div className="flex justify-between mt-6">
