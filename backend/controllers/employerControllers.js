@@ -29,14 +29,13 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
   // 3. Hash password (Same as before)
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 4. Create Employer (NOW marked as unverified by default in Schema)
+  // 4. Create Employer
   const employer = new Employer({
     name,
     email,
     password: hashedPassword,
     phone,
     companyName: companyName || "",
-    // isVerified: false // (This should be default in your schema)
   });
   
   const savedEmployer = await employer.save();
@@ -61,13 +60,13 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
     // 8. Response (NO TOKEN)
     res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',
-      email: savedEmployer.email // Helpful for the frontend to auto-fill the verify form
+      email: savedEmployer.email,
+      employerId: savedEmployer._id // <-- ADDED THIS LINE
     });
 
   } catch (error) {
-    // CRITICAL: If email/OTP fails, delete the user so they aren't stuck in limbo.
+    // CRITICAL: If email/OTP fails, delete the user.
     await Employer.deleteOne({ _id: savedEmployer._id });
-    // Optional: also delete the OTP if it was created but email failed
     await OTP.deleteOne({ employerId: savedEmployer._id });
     
     console.error("Registration failed during OTP step:", error);
