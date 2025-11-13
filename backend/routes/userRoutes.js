@@ -13,4 +13,5 @@ router.patch("/:id", updateUser);
 router.get("/:id", userDetails);
 
 router.post("/verifyotp",verifyUserOTP);
+
 export default router;
