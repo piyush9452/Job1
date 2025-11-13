@@ -29,6 +29,21 @@ export default function CreateJob() {
     const [skillsInput, setSkillsInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(false);
+    const [showMonthlyHours, setShowMonthlyHours] = useState(false);
+    const [suggestions, setSuggestions] = useState([]);
+    const [typingTimeout, setTypingTimeout] = useState(null);
+    const [step, setStep] = useState(1);
+
+
+    const skillSuggestions = [
+        "React", "Redux", "Node.js", "Express", "MongoDB", "JavaScript",
+        "TypeScript", "Python", "Django", "Flask", "HTML", "CSS",
+        "Tailwind CSS", "Bootstrap", "Git", "GitHub", "Docker",
+        "Kubernetes", "AWS", "Azure", "Firebase", "Next.js", "Vue.js",
+        "SQL", "PostgreSQL", "MySQL", "C++", "Java"
+    ];
+
+
 
     useEffect(() => {
         const totalHours = Number(job.noOfDays) * Number(job.dailyWorkingHours);
@@ -46,16 +61,37 @@ export default function CreateJob() {
         setJob({ ...job, [e.target.name]: e.target.value });
     };
 
+    const handleSkillInputChange = (e) => {
+        const value = e.target.value;
+        setSkillsInput(value);
+
+        if (typingTimeout) clearTimeout(typingTimeout);
+
+        const timeout = setTimeout(() => {
+            if (value.trim().length > 0) {
+                const filtered = skillSuggestions.filter((skill) =>
+                    skill.toLowerCase().includes(value.toLowerCase())
+                );
+                setSuggestions(filtered.slice(0, 5)); // show top 5 results
+            } else {
+                setSuggestions([]);
+            }
+        }, 300); // debounce delay
+
+        setTypingTimeout(timeout);
+    };
+
     const handleSkills = () => {
-        const skill = skillsInput.trim();
-        if (skill && !job.skillsRequired.includes(skill)) {
-            setJob({
-                ...job,
-                skillsRequired: [...job.skillsRequired, skill],
-            });
+        if (skillsInput.trim() !== "") {
+            if (!job.skillsRequired.includes(skillsInput.trim())) {
+                setJob({ ...job, skillsRequired: [...job.skillsRequired, skillsInput.trim()] });
+            }
             setSkillsInput("");
+            setSuggestions([]);
         }
     };
+
+
 
     const handleSubmit = async () => {
         try {
@@ -124,276 +160,311 @@ ${keyResponsibilities}
         } finally {
             setLoading(false);
         }
-
     };
 
     return (
         <div className="flex flex-col py-20 md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
-            {/* LEFT SECTION: FORM */}
             <div className="w-full md:w-1/2 bg-white p-8 rounded-xl shadow-md border border-gray-200 overflow-y-auto">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Create a Job</h1>
-
-                <div className="space-y-4">
-                    <input
-                        name="title"
-                        value={job.title}
-                        onChange={handleChange}
-                        placeholder="Job Title"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-                    <div>
-                        <label className="block text-gray-600 mb-1">Duration</label>
-                        <div className="w-full p-3 border rounded-md">
-                            <label className="mr-4">
-                                <input
-                                    type="radio"
-                                    name="durationType"
-                                    value="Day"
-                                    checked={job.durationType === "Day"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                Day
-                            </label>
-                            <label className="mr-4">
-                                <input
-                                    type="radio"
-                                    name="durationType"
-                                    value="Week"
-                                    checked={job.durationType === "Week"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                Week
-                            </label>
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="durationType"
-                                    value="Month"
-                                    checked={job.durationType === "Month"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                Month
-                            </label>
-                        </div>
-                    </div>
-                    <input
-                        type="number"
-                        name="noOfDays"
-                        value={job.noOfDays}
-                        onChange={handleChange}
-                        placeholder="No. of Days (e.g. 5)"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-                    <input
-                        type="number"
-                        name="dailyWorkingHours"
-                        value={job.dailyWorkingHours}
-                        onChange={handleChange}
-                        placeholder="Daily Working Hours"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-                    <div className="grid grid-cols-2 gap-3">
+                {step ===1 &&(
+                    <div className="space-y-4">
+                        <input
+                            name="title"
+                            value={job.title}
+                            onChange={handleChange}
+                            placeholder="Job Title"
+                            className="w-full p-3 border rounded-md outline-none"
+                        />
                         <div>
-                            <label className="block text-gray-600 mb-1">Start Date</label>
-                            <input
-                                type="date"
-                                name="startDate"
-                                value={job.startDate}
-                                onChange={handleChange}
-                                className="w-full p-3 border rounded-md outline-none"
-                            />
+                            <label className="block text-gray-600 mb-1">Duration</label>
+                            <div className="w-full p-3 border rounded-md">
+                                <label className="mr-4">
+                                    <input
+                                        type="radio"
+                                        name="durationType"
+                                        value="Day"
+                                        checked={job.durationType === "Day"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Day
+                                </label>
+                                <label className="mr-4">
+                                    <input
+                                        type="radio"
+                                        name="durationType"
+                                        value="Week"
+                                        checked={job.durationType === "Week"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Week
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="durationType"
+                                        value="Month"
+                                        checked={job.durationType === "Month"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Month
+                                </label>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-gray-600 mb-1">End Date</label>
-                            <input
-                                type="date"
-                                name="endDate"
-                                value={job.endDate}
-                                onChange={handleChange}
-                                className="w-full p-3 border rounded-md outline-none"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-gray-600 mb-1">Mode</label>
-                        <div className="w-full p-3 border rounded-md">
-                            <label className="mr-4">
-                                <input
-                                    type="radio"
-                                    name="mode"
-                                    value="Online"
-                                    checked={job.mode === "Online"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                Online
-                            </label>
-                            <label className="mr-4">
-                                <input
-                                    type="radio"
-                                    name="mode"
-                                    value="Offline"
-                                    checked={job.mode === "Offline"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                Offline
-                            </label>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-gray-600 mb-1">
-                            Working Time (From – To)
-                        </label>
+                        <input
+                            type="number"
+                            name="noOfDays"
+                            value={job.noOfDays}
+                            onChange={handleChange}
+                            placeholder="No. of Days (e.g. 5)"
+                            className="w-full p-3 border rounded-md outline-none"
+                        />
+                        <input
+                            type="number"
+                            name="dailyWorkingHours"
+                            value={job.dailyWorkingHours}
+                            onChange={handleChange}
+                            placeholder="Daily Working Hours"
+                            className="w-full p-3 border rounded-md outline-none"
+                        />
                         <div className="grid grid-cols-2 gap-3">
-                            <input
-                                type="time"
-                                name="workFrom"
-                                value={job.workFrom}
-                                onChange={handleChange}
-                                className="p-3 border rounded-md outline-none"
-                            />
-                            <input
-                                type="time"
-                                name="workTo"
-                                value={job.workTo}
-                                onChange={handleChange}
-                                className="p-3 border rounded-md outline-none"
-                            />
+                            <div>
+                                <label className="block text-gray-600 mb-1">Start Date</label>
+                                <input
+                                    type="date"
+                                    name="startDate"
+                                    value={job.startDate}
+                                    onChange={handleChange}
+                                    className="w-full p-3 border rounded-md outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-gray-600 mb-1">End Date</label>
+                                <input
+                                    type="date"
+                                    name="endDate"
+                                    value={job.endDate}
+                                    onChange={handleChange}
+                                    className="w-full p-3 border rounded-md outline-none"
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <label className="block text-gray-600 mb-1">JobType</label>
-                    <div className="w-full p-3 border rounded-md">
-                        <label>
-                            <input
-                                type="radio"
-                                name="jobType"
-                                value="daily"
-                                checked={job.jobType === "daily"}
-                                onChange={handleChange}
-                                className="mr-2"
-                            />
-                            Daily
-                        </label>
-                        <label className="ml-4">
-                            <input
-                                type="radio"
-                                name="jobType"
-                                value="short-term"
-                                checked={job.jobType === "short-term"}
-                                onChange={handleChange}
-                                className="mr-2"
-                            />
-                            Short-term
-                        </label>
-                        <label className="ml-4">
-                            <input
-                                type="radio"
-                                name="jobType"
-                                value="part-time"
-                                checked={job.jobType === "part-time"}
-                                onChange={handleChange}
-                                className="mr-2"
-                            />
-                            Part-time
-                        </label>
-                    </div>
-                    <input
-                        type="number"
-                        name="noOfPeopleRequired"
-                        value={job.noOfPeopleRequired}
-                        onChange={handleChange}
-                        placeholder="No. of People Required (e.g. 4)"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-                    <div>
-                        <label className="block text-gray-600 mb-1">Gender Preference</label>
+                        <div>
+                            <label className="block text-gray-600 mb-1">Mode</label>
+                            <div className="w-full p-3 border rounded-md">
+                                <label className="mr-4">
+                                    <input
+                                        type="radio"
+                                        name="mode"
+                                        value="Online"
+                                        checked={job.mode === "Online"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Online
+                                </label>
+                                <label className="mr-4">
+                                    <input
+                                        type="radio"
+                                        name="mode"
+                                        value="Offline"
+                                        checked={job.mode === "Offline"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Offline
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-gray-600 mb-1">
+                                Working Time (From – To)
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input
+                                    type="time"
+                                    name="workFrom"
+                                    value={job.workFrom}
+                                    onChange={handleChange}
+                                    className="p-3 border rounded-md outline-none"
+                                />
+                                <input
+                                    type="time"
+                                    name="workTo"
+                                    value={job.workTo}
+                                    onChange={handleChange}
+                                    className="p-3 border rounded-md outline-none"
+                                />
+                            </div>
+                        </div>
+                        <label className="block text-gray-600 mb-1">JobType</label>
                         <div className="w-full p-3 border rounded-md">
-                            <label className="mr-4">
-                                <input
-                                    type="radio"
-                                    name="genderPreference"
-                                    value="No Preference"
-                                    checked={job.genderPreference === "No Preference"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                No Preference
-                            </label>
-                            <label className="mr-4">
-                                <input
-                                    type="radio"
-                                    name="genderPreference"
-                                    value="Male"
-                                    checked={job.genderPreference === "Male"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                Male
-                            </label>
-                            <label className="mr-4">
-                                <input
-                                    type="radio"
-                                    name="genderPreference"
-                                    value="Female"
-                                    checked={job.genderPreference === "Female"}
-                                    onChange={handleChange}
-                                    className="mr-2"
-                                />
-                                Female
-                            </label>
                             <label>
                                 <input
                                     type="radio"
-                                    name="genderPreference"
-                                    value="Other"
-                                    checked={job.genderPreference === "Other"}
+                                    name="jobType"
+                                    value="daily"
+                                    checked={job.jobType === "daily"}
                                     onChange={handleChange}
                                     className="mr-2"
                                 />
-                                Other
+                                Daily
+                            </label>
+                            <label className="ml-4">
+                                <input
+                                    type="radio"
+                                    name="jobType"
+                                    value="short-term"
+                                    checked={job.jobType === "short-term"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Short-term
+                            </label>
+                            <label className="ml-4">
+                                <input
+                                    type="radio"
+                                    name="jobType"
+                                    value="part-time"
+                                    checked={job.jobType === "part-time"}
+                                    onChange={handleChange}
+                                    className="mr-2"
+                                />
+                                Part-time
                             </label>
                         </div>
+                        <input
+                            type="number"
+                            name="noOfPeopleRequired"
+                            value={job.noOfPeopleRequired}
+                            onChange={handleChange}
+                            placeholder="No. of People Required (e.g. 4)"
+                            className="w-full p-3 border rounded-md outline-none"
+                        />
+                        <div>
+                            <label className="block text-gray-600 mb-1">Gender Preference</label>
+                            <div className="w-full p-3 border rounded-md">
+                                <label className="mr-4">
+                                    <input
+                                        type="radio"
+                                        name="genderPreference"
+                                        value="No Preference"
+                                        checked={job.genderPreference === "No Preference"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    No Preference
+                                </label>
+                                <label className="mr-4">
+                                    <input
+                                        type="radio"
+                                        name="genderPreference"
+                                        value="Male"
+                                        checked={job.genderPreference === "Male"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Male
+                                </label>
+                                <label className="mr-4">
+                                    <input
+                                        type="radio"
+                                        name="genderPreference"
+                                        value="Female"
+                                        checked={job.genderPreference === "Female"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Female
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="genderPreference"
+                                        value="Other"
+                                        checked={job.genderPreference === "Other"}
+                                        onChange={handleChange}
+                                        className="mr-2"
+                                    />
+                                    Other
+                                </label>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={
+                                    showMonthlyHours &&
+                                    Number(job.noOfDays) &&
+                                    Number(job.dailyWorkingHours)
+                                        ? `${Number(job.noOfDays) * Number(job.dailyWorkingHours)} hrs`
+                                        : ""
+                                }
+                                readOnly
+                                placeholder="Total Monthly Hours"
+                                className="flex-1 p-3 border rounded-md outline-none bg-gray-100 cursor-not-allowed"
+                            />
+                            <button
+                                onClick={() => setShowMonthlyHours(!showMonthlyHours)}
+                                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm whitespace-nowrap"
+                            >
+                                {showMonthlyHours ? "Hide" : "Show"} Hours
+                            </button>
+                        </div>
+
+                        <input
+                            type="number"
+                            name="paymentPerHour"
+                            value={job.paymentPerHour}
+                            onChange={handleChange}
+                            placeholder="Payment per Hour (₹)"
+                            className="w-full p-3 border rounded-md outline-none"
+                        />
+                        <div/>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => setStep(2)}
+                                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
-                    <div className="w-full p-3 border rounded-md bg-gray-100">
-                        Total Monthly Hours:{" "}
-                        {Number(job.noOfDays) && Number(job.dailyWorkingHours)
-                            ? Number(job.noOfDays) * Number(job.dailyWorkingHours)
-                            : "--"}
-                    </div>
-                    <input
-                        type="number"
-                        name="paymentPerHour"
-                        value={job.paymentPerHour}
-                        onChange={handleChange}
-                        placeholder="Payment per Hour (₹)"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
 
-                    <textarea
-                        value={jobSummary}
-                        onChange={(e) => setJobSummary(e.target.value)}
-                        placeholder="Job Summary"
-                        className="w-full p-3 border rounded-md outline-none h-24"
-                    />
+                )}
+                {step === 2 && (
+                    <div className="space-y-4">
+                        <div className=" mt-6 flex justify-end">
+                            <button
+                                onClick={() => setStep(1)}
+                                className="bg-gray-200 px-6 py-2 rounded-md hover:bg-gray-300"
+                            >
+                                Previous
+                            </button>
+                        </div>
 
-                    <textarea
-                        value={keyResponsibilities}
-                        onChange={(e) => setKeyResponsibilities(e.target.value)}
-                        placeholder="Key Responsibilities"
-                        className="w-full p-3 border rounded-md outline-none h-24"
-                    />
+                        <textarea
+                            value={jobSummary}
+                            onChange={(e) => setJobSummary(e.target.value)}
+                            placeholder="Job Summary"
+                            className="w-full p-3 border rounded-md outline-none h-24"
+                        />
 
-                    {/* Skills */}
-                    <div>
-                        <div className="flex gap-2">
+                        <textarea
+                            value={keyResponsibilities}
+                            onChange={(e) => setKeyResponsibilities(e.target.value)}
+                            placeholder="Key Responsibilities"
+                            className="w-full p-3 border rounded-md outline-none h-24"
+                        />
+
+                        {/* Skills */}
+                        <div className="flex gap-2 relative">
                             <input
                                 type="text"
                                 value={skillsInput}
-                                onChange={(e) => setSkillsInput(e.target.value)}
+                                onChange={handleSkillInputChange}
                                 placeholder="Add skill (e.g. React)"
                                 className="flex-1 p-3 border rounded-md outline-none"
                             />
@@ -403,91 +474,105 @@ ${keyResponsibilities}
                             >
                                 Add
                             </button>
+
+                            {/* Suggestions Dropdown */}
+                            {suggestions.length > 0 && (
+                                <ul className="absolute top-12 left-0 w-full bg-white border rounded-md shadow-md z-10">
+                                    {suggestions.map((s, index) => (
+                                        <li
+                                            key={index}
+                                            onClick={() => {
+                                                if (!job.skillsRequired.includes(s)) {
+                                                    setJob({ ...job, skillsRequired: [...job.skillsRequired, s] });
+                                                }
+                                                setSkillsInput("");
+                                                setSuggestions([]);
+                                            }}
+                                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                        >
+                                            {s}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            {job.skillsRequired.map((skill, index) => (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                                >
-                  {skill}
-                </span>
-                            ))}
-                        </div>
-                    </div>
-
-                    <input
-                        name="location"
-                        value={job.location}
-                        onChange={handleChange}
-                        placeholder="Location"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-
-                    <input
-                        name="pinCode"
-                        value={job.pinCode}
-                        onChange={handleChange}
-                        placeholder="Pin Code"
-                        className="w-full p-3 border rounded-md outline-none"
-                    />
-
-                    <input
-                        name="salary"
-                        value={
-                            job.salary
-                                ? `₹${job.salary.toLocaleString("en-IN")}`
-                                : ""
-                        }
-                        readOnly
-                        placeholder="Total Monthly Salary (auto-calculated)"
-                        className="w-full p-3 border rounded-md outline-none bg-gray-100 cursor-not-allowed"
-                        title="Salary is auto-calculated based on hours and payment per hour"
-                    />
 
 
-                    {/* Buttons */}
-                    <div className="flex justify-between mt-6">
-                        <button
-                            onClick={() => {
-                                setJob({
-                                    ...job,
-                                    description: `
+                        <input
+                            name="location"
+                            value={job.location}
+                            onChange={handleChange}
+                            placeholder="Location"
+                            className="w-full p-3 border rounded-md outline-none"
+                        />
+
+                        <input
+                            name="pinCode"
+                            value={job.pinCode}
+                            onChange={handleChange}
+                            placeholder="Pin Code"
+                            className="w-full p-3 border rounded-md outline-none"
+                        />
+
+                        <input
+                            name="salary"
+                            value={
+                                job.salary
+                                    ? `₹${job.salary.toLocaleString("en-IN")}`
+                                    : ""
+                            }
+                            readOnly
+                            placeholder="Total Monthly Salary (auto-calculated)"
+                            className="w-full p-3 border rounded-md outline-none bg-gray-100 cursor-not-allowed"
+                            title="Salary is auto-calculated based on hours and payment per hour"
+                        />
+
+
+                        {/* Buttons */}
+                        <div className="flex justify-between mt-6">
+                            <button
+                                onClick={() => {
+                                    setJob({
+                                        ...job,
+                                        description: `
 Job Summary:
 ${jobSummary}
 
 Key Responsibilities:
 ${keyResponsibilities}
                   `.trim(),
-                                });
-                                setPreview(true);
-                            }}
-                            className="bg-gray-200 px-6 py-2 rounded-md hover:bg-gray-300"
-                        >
-                            Preview
-                        </button>
+                                    });
+                                    setPreview(true);
+                                }}
+                                className="bg-gray-200 px-6 py-2 rounded-md hover:bg-gray-300"
+                            >
+                                Preview
+                            </button>
 
-                        <button
-                            onClick={handleSubmit}
-                            disabled={loading}
-                            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-                        >
-                            {loading ? "Posting..." : "Post Job"}
-                        </button>
+                            <button
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+                            >
+                                {loading ? "Posting..." : "Post Job"}
+                            </button>
+                        </div>
                     </div>
+                    )}
+
+                {/* RIGHT SECTION: LIVE PREVIEW */}
+                <div className="w-full md:w-1/2">
+                    {preview ? (
+                        <JobPreviewCard job={job} onClose={() => setPreview(false)} />
+                    ) : (
+                        <div className="flex items-center justify-center h-full mt-2 text-gray-500">
+                            Click “Preview” to see your job summary
+                        </div>
+                    )}
                 </div>
-            </div>
 
-            {/* RIGHT SECTION: LIVE PREVIEW */}
-            <div className="w-full md:w-1/2">
-                {preview ? (
-                    <JobPreviewCard job={job} onClose={() => setPreview(false)} />
-                ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                        Click “Preview” to see your job summary
-                    </div>
-                )}
             </div>
         </div>
+
     );
 }
