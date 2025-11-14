@@ -24,7 +24,8 @@ const VerifyOTP = () => {
             const res = await axios.post("https://jobone-mrpy.onrender.com/employer/verifyotp", { email, otp });
 
             // Save token in localStorage
-            localStorage.setItem("employerToken", res.token);
+            localStorage.setItem("employerToken", JSON.stringify({ token: res.data.token }));
+            console.log(res.data.token)
 
             setMessage("✅ Verification successful! Redirecting...");
             setTimeout(() => navigate("/"), 1500);

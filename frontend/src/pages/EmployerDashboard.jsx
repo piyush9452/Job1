@@ -12,9 +12,9 @@ export default function EmployerDashboard() {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const employerInfo = JSON.parse(localStorage.getItem("employerInfo"));
+                const employerInfo = JSON.parse(localStorage.getItem("employerToken"));
                 const token = employerInfo?.token;
-                const employerID = employerInfo?._id;
+                const employerID = employerInfo?.id;
                 console.log(employerID);
 
 
@@ -23,7 +23,7 @@ export default function EmployerDashboard() {
                     return;
                 }
 
-                // ✅ Fixed API call — using only token for authentication
+                // Fixed API call — using only token for authentication
                 const { data } = await axios.get(
                     `https://jobone-mrpy.onrender.com/jobs/employer/${employerID}`,
                     {
