@@ -96,8 +96,31 @@ export default function CreateJob() {
     const handleSubmit = async () => {
         try {
             setLoading(true);
-            const employerInfo = JSON.parse(localStorage.getItem("employerInfo"));
+
+            // ✅ Fix: safely parse the token
+            const storedData = localStorage.getItem("employerToken");
+            if (!storedData) {
+                alert("No employer token found. Please log in again.");
+                setLoading(false);
+                return;
+            }
+
+            let employerInfo;
+            try {
+                employerInfo = JSON.parse(storedData);
+            } catch (err) {
+                console.error("Invalid token in localStorage:", err);
+                alert("Invalid session. Please log in again.");
+                setLoading(false);
+                return;
+            }
+
             const token = employerInfo?.token;
+            if (!token) {
+                alert("No token found in employer info. Please log in again.");
+                setLoading(false);
+                return;
+            }
 
             const combinedDescription = `
 Job Summary:
@@ -105,7 +128,7 @@ ${jobSummary}
 
 Key Responsibilities:
 ${keyResponsibilities}
-      `.trim();
+        `.trim();
 
             const payload = {
                 ...job,
@@ -161,6 +184,7 @@ ${keyResponsibilities}
             setLoading(false);
         }
     };
+
 
     return (
         <div className="flex flex-col py-20 md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
