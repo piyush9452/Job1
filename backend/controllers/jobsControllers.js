@@ -135,6 +135,24 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
 });
 
 
+
+export const getEmployerCreatedJobs = expressAsyncHandler(async (req, res) => {
+  // 1. req.employerId is attached by the 'protectEmployer' middleware
+  const employerId = req.employerId;
+  try{
+    const jobs = await Job.find({ postedBy: employerId }).sort({ postedAt: -1 });
+    res.status(200).json(jobs);
+  }
+  catch(error){
+    res.status(500).json({ message: "Server error", error: error.message });
+
+  }
+ 
+});
+
+
+
+
 export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const jobs = await Job.find({ postedBy: id });

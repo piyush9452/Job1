@@ -9,6 +9,8 @@ const rules = [
   body('email', 'A valid email is required').isEmail().normalizeEmail(),
   body('password', 'Password must be 6+ characters').isLength({ min: 6 })
 ];
+
+
 router.post("/register",rules, registerEmployer);
 
 router.post("/verifyotp", verifyOTP);
