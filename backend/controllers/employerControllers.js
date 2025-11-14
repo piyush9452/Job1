@@ -150,40 +150,58 @@ export const loginEmployer = expressAsyncHandler(async (req, res) => {
 
 
 export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
-  // 1. Find the employer using the ID from the 'protectEmployer' middleware
-  const employer = await Employer.findById(req.employerId);
+  // 1. Find employer, but select all fields EXCEPT password
+  const employer = await Employer.findById(req.employerId).select('-password');
 
   if (employer) {
-    // 2. Update only the fields that are provided in the body
-    // If req.body.name exists, use it. Otherwise, keep the old employer.name
-    employer.name = req.body.name || employer.name;
-    employer.phone = req.body.phone || employer.phone;
-    employer.companyWebsite = req.body.companyWebsite || employer.companyWebsite;
-    employer.location = req.body.location || employer.location;
-    employer.industry = req.body.industry || employer.industry;
-    employer.description = req.body.description || employer.description;
-    employer.profilePicture = req.body.profilePicture || employer.profilePicture;
+    // 2. Check each field for updates (the correct way)
+    if (req.body.name !== undefined) {
+      employer.name = req.body.name;
+    }
+    if (req.body.phone !== undefined) {
+      employer.phone = req.body.phone;
+    }
+    if (req.body.companyName !== undefined) { 
+      employer.companyName = req.body.companyName;
+    }
+    if (req.body.companyWebsite !== undefined) { 
+      employer.companyWebsite = req.body.companyWebsite;
+    }
+    if (req.body.location !== undefined) { 
+      employer.location = req.body.location;
+    }
+    if (req.body.industry !== undefined) { 
+      employer.industry = req.body.industry;
+    }
+    if (req.body.description !== undefined) { 
+      employer.description = req.body.description;
+    }
+    if (req.body.profilePicture !== undefined) {
+      employer.profilePicture = req.body.profilePicture;
+    }
     
-    // Note: We do NOT update email or password here.
-    // Those should be separate, dedicated endpoints.
-
     // 3. Save the updated employer
     const updatedEmployer = await employer.save();
 
-    // 4. Return the updated data (excluding the password)
-    res.status(200).json({
-      _id: updatedEmployer._id,
-      name: updatedEmployer.name,
-      email: updatedEmployer.email,
-      phone: updatedEmployer.phone,
-      companyWebsite: updatedEmployer.companyWebsite,
-      location: updatedEmployer.location,
-      industry: updatedEmployer.industry,
-      description: updatedEmployer.description,
-      profilePicture: updatedEmployer.profilePicture,
-    });
+    // 4. Return the full, updated employer object
+    res.status(200).json(updatedEmployer);
   } else {
     res.status(404);
     throw new Error('Employer not found');
   }
+});
+
+export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => {
+ 
+  const { id } = req.params;
+
+  const employer = await Employer.findById(id).select('-password');
+  
+  if (employer) {
+    res.status(200).json(employer);
+  } else {
+    res.status(404);
+    throw new Error('Employer not found');
+  }
+
 });
