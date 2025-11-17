@@ -447,27 +447,33 @@ ${keyResponsibilities}
                             className="w-full p-3 border rounded-md outline-none"
                         />
                         <div/>
-                        <div className="flex justify-end">
-                            <button
-                                onClick={() => setStep(2)}
-                                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
-                            >
-                                Next
-                            </button>
-                        </div>
+
                     </div>
 
                 )}
+                <div className="flex justify-center gap-8 my-4">
+                    {/* Previous */}
+                    <button
+                        onClick={() => setStep(1)}
+                        className="text-gray-700 hover:text-blue-600 transition-colors duration-200
+                   font-medium flex items-center gap-1"
+                    >
+                        ❮❮❮❮ Previous
+                    </button>
+
+                    {/* Next */}
+                    <button
+                        onClick={() => setStep(2)}
+                        className="text-gray-700 hover:text-blue-600 transition-colors duration-200
+                   font-medium flex items-center gap-1"
+                    >
+                        Next ❯❯❯❯
+                    </button>
+                </div>
+
+
                 {step === 2 && (
                     <div className="space-y-4">
-                        <div className=" mt-6 flex justify-end">
-                            <button
-                                onClick={() => setStep(1)}
-                                className="bg-gray-200 px-6 py-2 rounded-md hover:bg-gray-300"
-                            >
-                                Previous
-                            </button>
-                        </div>
 
                         <textarea
                             value={jobSummary}
@@ -520,8 +526,28 @@ ${keyResponsibilities}
                                 </ul>
                             )}
                         </div>
-
-
+                        {/* Added Skills Display Section */}
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            {job.skillsRequired.map((skill, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full shadow-sm"
+                                >
+                                    <span>{skill}</span>
+                                    <button
+                                        onClick={() => {
+                                            const updatedSkills = job.skillsRequired.filter(
+                                                (_, i) => i !== index
+                                            );
+                                            setJob({ ...job, skillsRequired: updatedSkills });
+                                        }}
+                                        className="ml-2 text-blue-600 hover:text-red-600 font-bold"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                         <input
                             name="location"
                             value={job.location}
@@ -583,18 +609,16 @@ ${keyResponsibilities}
                         </div>
                     </div>
                     )}
-
-                {/* RIGHT SECTION: LIVE PREVIEW */}
-                <div className="w-full md:w-1/2">
-                    {preview ? (
-                        <JobPreviewCard job={job} onClose={() => setPreview(false)} />
-                    ) : (
-                        <div className="flex items-center justify-center h-full mt-2 text-gray-500">
-                            Click “Preview” to see your job summary
-                        </div>
-                    )}
-                </div>
-
+            </div>
+            {/* RIGHT SECTION: LIVE PREVIEW */}
+            <div className="w-full md:w-1/2">
+                {preview ? (
+                    <JobPreviewCard job={job} onClose={() => setPreview(false)} />
+                ) : (
+                    <div className="flex items-center justify-center h-full mt-2 text-gray-500">
+                        Click “Preview” to see your job summary
+                    </div>
+                )}
             </div>
         </div>
 

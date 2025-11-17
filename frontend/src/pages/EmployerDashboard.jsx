@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PlusCircle } from "lucide-react";
 import axios from "axios";
@@ -25,7 +25,7 @@ export default function EmployerDashboard() {
 
                 // Fixed API call — using only token for authentication
                 const { data } = await axios.get(
-                    `https://jobone-mrpy.onrender.com/jobs/employer/${employerID}`,
+                    `https://jobone-mrpy.onrender.com/jobs/employerjobs`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
                     }
@@ -125,9 +125,10 @@ export default function EmployerDashboard() {
                                 onClick={() => navigate(`/job/${job._id}`)}
                                 className="cursor-pointer bg-white shadow-md rounded-xl p-5 hover:shadow-xl hover:border hover:border-blue-300 transition"
                             >
-                                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                                <span className="text-lg font-semibold text-gray-800 mb-10 mr-30 ">
                                     {job.title}
-                                </h3>
+                                </span>
+                                <Link to="/jobapplicants"><span className="text-blue-600 text-sm hover:underline ">View Applicants</span></Link>
                                 <p className="text-sm text-gray-600 line-clamp-3">
                                     {job.description}
                                 </p>
