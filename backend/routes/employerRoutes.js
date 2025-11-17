@@ -1,6 +1,8 @@
 import express from "express";
-import { registerEmployer,loginEmployer,verifyOTP } from "../controllers/employerControllers.js";
+import { registerEmployer,loginEmployer,verifyOTP,getPublicEmployerProfile ,updateEmployerProfile} from "../controllers/employerControllers.js";
 import { body } from 'express-validator';
+import protect from "../middleware/authorization.js";
+import { protectEmployer } from "../middleware/employercheck.js";
 
 const router = express.Router();
 
@@ -15,6 +17,10 @@ router.post("/register",rules, registerEmployer);
 
 router.post("/verifyotp", verifyOTP);
 router.post("/login", loginEmployer);
+
+router.post("/updateProfile",protectEmployer,updateEmployerProfile)
+
+router.get("/profile/:id", getPublicEmployerProfile);
 
 
 

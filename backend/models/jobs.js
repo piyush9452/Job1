@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const JobSchema = new mongoose.Schema({
   title: { type: String, required: true }, // Job title
   description: { type: String, required: true }, //
-  jobType: { type: String, enum: ["daily", "short-term", "part-time"], required: true },
+  jobType: { type: String, enum: ["daily", "weekly", "monthly"], required: true },
   skillsRequired: { type: [String], default: [] },
   location: { type: String, required: true }, // city/area
   pinCode: { type: Number }, // optional
