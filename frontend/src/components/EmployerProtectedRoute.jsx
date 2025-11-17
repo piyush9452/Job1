@@ -16,7 +16,7 @@ export default function EmployerProtectedRoute({ children }) {
 
     if (!isAuthenticated) {
         alert("Please login as employer to continue");
-        return <Navigate to="/employerlogin" replace />;
+        return <Navigate to="/login" replace />;
     }
 
     return children;

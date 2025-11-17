@@ -7,6 +7,25 @@ import Employer from '../models/employer.js'; // Adjust path as needed
 import {protectEmployer} from '../middleware/employercheck.js';
 import OTP from '../models/verification.js';
 import sendEmail from '../utils/emailVerification.js';
+import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
+import crypto from 'crypto';
+import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
+
+let s3Client;
+
+const getS3Client = () => {
+  if (!s3Client) {
+    // This code will now run *after* dotenv.config()
+    s3Client = new S3Client({
+      region: process.env.AWS_BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+  }
+  return s3Client;
+};
 
 
 export const registerEmployer = expressAsyncHandler(async (req, res) => {
@@ -205,3 +224,112 @@ export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => 
   }
 
 });
+
+
+
+
+export const getPresignedUploadUrl = expressAsyncHandler(async (req, res) => {
+  // 1. Get the S3 client using our new function
+  const client = getS3Client(); 
+
+  const employerId = req.employerId;
+  const randomBytes = crypto.randomBytes(16).toString('hex');
+  const fileName = `doc-${employerId}-${randomBytes}`;
+  const key = `verification_documents/${fileName}`;
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+  });
+
+  // 2. Use the client variable
+  const url = await getSignedUrl(client, command, { expiresIn: 600 });
+  
+  res.status(200).json({ uploadUrl: url, key: key });
+});
+
+
+
+
+
+export const saveDocumentKey = expressAsyncHandler(async (req, res) => {
+  const { key } = req.body;
+  const employerIdFromToken = req.employerId;
+
+  if (!key) {
+    res.status(400);
+    throw new Error("Document key is required");
+  }
+  
+  const employer = await Employer.findById(employerIdFromToken);
+  if (!employer) {
+    res.status(400);
+    throw new Error("Employer not found");
+  }
+
+  // --- THIS IS THE FIX ---
+  // Save only the key, not the full URL.
+  employer.verificationDocument = key; 
+  await employer.save();
+
+  res.status(200).json({ 
+    message: "Verification document saved successfully.", 
+    documentKey: key // Send back the key
+  });
+});
+
+
+
+export const getViewableDocumentUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client(); // Use your lazy-loaded client
+  const employer = await Employer.findById(req.employerId);
+
+  if (!employer) {
+    res.status(404);
+    throw new Error("Employer not found");
+  }
+
+  if (!employer.verificationDocument) {
+    res.status(404);
+    throw new Error("No document has been uploaded");
+  }
+
+  // Get the key from the database
+  const key = employer.verificationDocument; 
+
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+  });
+
+  // Create a temporary (5 minute) URL to view the file
+  const url = await getSignedUrl(client, command, { expiresIn: 300 });
+
+  res.status(200).json({ viewableUrl: url });
+});
+
+
+const handleDownloadDocument = async () => {
+  try {
+    const token = JSON.parse(localStorage.getItem('employerInfo')).token;
+    
+    // 1. Ask your server for the temporary download link
+    const res = await axios.get(
+      'http://localhost:5000/employer/download-document', // Calls the new route
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    // 2. Get the temporary URL from the response
+    const { downloadableUrl } = res.data;
+
+    // 3. Open the link. The browser will automatically open a "Save As" dialog.
+    window.open(downloadableUrl);
+
+  } catch (error) {
+    alert("Could not get document: " + error.response?.data?.message);
+  }
+};
+
+

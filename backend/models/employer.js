@@ -32,7 +32,11 @@ const employer = new mongoose.Schema({
         rating: { type: Number, min: 1, max: 5 },
         review: { type: String },
         }
-    ]
+    ],
+    verificationDocument: {
+    type: String, // This will store the final S3 URL
+    default: ""
+  },
     
 },{
     // ADDED: This automatically handles 'createdAt' and 'updatedAt'

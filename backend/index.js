@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
 //importing cors module to handle cross-origin requests
 import cors from 'cors';
 
@@ -11,7 +12,7 @@ import jobsRoutes from './routes/jobsRoutes.js';
 import applicationRoutes from './routes/applicationRoutes.js';
 import employerRoutes from './routes/employerRoutes.js';
 
-dotenv.config();
+
 connectDB();
 
 const app = express();
