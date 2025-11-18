@@ -7,9 +7,10 @@ import Employer from '../models/employer.js'; // Adjust path as needed
 import {protectEmployer} from '../middleware/employercheck.js';
 import OTP from '../models/verification.js';
 import sendEmail from '../utils/emailVerification.js';
-import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
+import {S3Client, PutObjectCommand, GetObjectCommand} from '@aws-sdk/client-s3';
 import crypto from 'crypto';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
+import mime from 'mime-types';
 
 let s3Client;
 
@@ -229,20 +230,33 @@ export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => 
 
 
 export const getPresignedUploadUrl = expressAsyncHandler(async (req, res) => {
-  // 1. Get the S3 client using our new function
-  const client = getS3Client(); 
-
+  const client = getS3Client();
   const employerId = req.employerId;
+  
+  // 1. Get fileType from the request body (e.g., "application/pdf")
+  const { fileType } = req.body; 
+  
+  if (!fileType) {
+    res.status(400);
+    throw new Error("File type is required");
+  }
+
+  // 2. Determine the correct extension (e.g., ".pdf")
+  // If you don't want to install mime-types, you can just split the string 'image/png'
+  const extension = fileType.split('/')[1]; 
+  
   const randomBytes = crypto.randomBytes(16).toString('hex');
-  const fileName = `doc-${employerId}-${randomBytes}`;
+  
+  // 3. Add extension to the filename so browsers recognize it
+  const fileName = `doc-${employerId}-${randomBytes}.${extension}`;
   const key = `verification_documents/${fileName}`;
 
   const command = new PutObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: key,
+    ContentType: fileType, // 4. Tell S3 exactly what this file is
   });
 
-  // 2. Use the client variable
   const url = await getSignedUrl(client, command, { expiresIn: 600 });
   
   res.status(200).json({ uploadUrl: url, key: key });
@@ -280,6 +294,8 @@ export const saveDocumentKey = expressAsyncHandler(async (req, res) => {
 
 
 
+
+
 export const getViewableDocumentUrl = expressAsyncHandler(async (req, res) => {
   const client = getS3Client(); // Use your lazy-loaded client
   const employer = await Employer.findById(req.employerId);
@@ -309,27 +325,70 @@ export const getViewableDocumentUrl = expressAsyncHandler(async (req, res) => {
 });
 
 
-const handleDownloadDocument = async () => {
-  try {
-    const token = JSON.parse(localStorage.getItem('employerInfo')).token;
-    
-    // 1. Ask your server for the temporary download link
-    const res = await axios.get(
-      'http://localhost:5000/employer/download-document', // Calls the new route
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
 
-    // 2. Get the temporary URL from the response
-    const { downloadableUrl } = res.data;
 
-    // 3. Open the link. The browser will automatically open a "Save As" dialog.
-    window.open(downloadableUrl);
 
-  } catch (error) {
-    alert("Could not get document: " + error.response?.data?.message);
+export const getDownloadableDocumentUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client(); // Use your lazy-loaded client
+  const employer = await Employer.findById(req.employerId);
+
+  if (!employer) {
+    res.status(404);
+    throw new Error("Employer not found");
   }
-};
+
+  if (!employer.verificationDocument) {
+    res.status(404);
+    throw new Error("No document has been uploaded");
+  }
+
+  // Get the key from the database
+  const key = employer.verificationDocument; 
+
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+
+    // --- THIS IS THE MAGIC LINE ---
+    // It forces the browser to download the file instead of displaying it.
+    ResponseContentDisposition: 'attachment',
+  });
+
+  // Create a temporary (5 minute) URL to download the file
+  const url = await getSignedUrl(client, command, { expiresIn: 300 });
+
+  res.status(200).json({ downloadableUrl: url });
+});
+
+
+
+
+
+
+
+
+
+// const handleDownloadDocument = async () => {
+//   try {
+//     const token = JSON.parse(localStorage.getItem('employerInfo')).token;
+    
+//     // 1. Ask your server for the temporary download link
+//     const res = await axios.get(
+//       'http://localhost:5000/employer/download-document', // Calls the new route
+//       {
+//         headers: { Authorization: `Bearer ${token}` }
+//       }
+//     );
+
+//     // 2. Get the temporary URL from the response
+//     const { downloadableUrl } = res.data;
+
+//     // 3. Open the link. The browser will automatically open a "Save As" dialog.
+//     window.open(downloadableUrl);
+
+//   } catch (error) {
+//     alert("Could not get document: " + error.response?.data?.message);
+//   }
+// };
 
 
