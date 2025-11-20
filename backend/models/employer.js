@@ -25,6 +25,12 @@ const employer = new mongoose.Schema({
       type: String,
       default: "",
     },
+    googleId: { type: String }, // To link to Google
+  authProvider: { 
+    type: String, 
+    enum: ["local", "google"], 
+    default: "local" 
+  },
     isVerified: { type: Boolean, default: false },
   ratingsReceived:[
         {

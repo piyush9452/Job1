@@ -11,6 +11,9 @@ import {S3Client, PutObjectCommand, GetObjectCommand} from '@aws-sdk/client-s3';
 import crypto from 'crypto';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import mime from 'mime-types';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 let s3Client;
 
@@ -364,31 +367,107 @@ export const getDownloadableDocumentUrl = expressAsyncHandler(async (req, res) =
 
 
 
+export const continueWithGoogle = expressAsyncHandler(async (req, res) => {
+  const { credential } = req.body; // Google ID Token
 
+  // 1. Verify Token with Google
+  const ticket = await client.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const { email, name, picture, sub: googleId } = ticket.getPayload();
 
+  // 2. Check if email exists in DB
+  const employer = await Employer.findOne({ email });
 
+  if (employer) {
+    // --- SCENARIO A: USER EXISTS ---
 
-// const handleDownloadDocument = async () => {
-//   try {
-//     const token = JSON.parse(localStorage.getItem('employerInfo')).token;
+    // CASE 1: They registered via Password (local) originally
+    if (employer.authProvider === 'local') {
+      res.status(409); // Conflict
+      throw new Error("Account exists with this email. Please login with your password.");
+    }
+
+    // CASE 2: They registered via Google before -> LOGIN THEM IN
+    const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
     
-//     // 1. Ask your server for the temporary download link
-//     const res = await axios.get(
-//       'http://localhost:5000/employer/download-document', // Calls the new route
-//       {
-//         headers: { Authorization: `Bearer ${token}` }
-//       }
-//     );
+    // Optional: Update picture/name if changed on Google
+    return res.status(200).json({ 
+      status: 'LOGIN_SUCCESS',
+      token,
+      employerId: employer._id,
+      message: 'Logged in successfully' 
+    });
+  } else {
+    // --- SCENARIO B: NEW USER ---
+    // We CANNOT create the account yet because we need Phone & Company.
+    // We send the Google data back to frontend to pre-fill the form.
+    
+    return res.status(202).json({ 
+      status: 'NEED_PROFILE_COMPLETION',
+      googleData: {
+        email,
+        name,
+        picture,
+        googleId // Send this back so we can verify it again in step 2
+      },
+      message: 'Please complete your profile' 
+    });
+  }
+});
 
-//     // 2. Get the temporary URL from the response
-//     const { downloadableUrl } = res.data;
 
-//     // 3. Open the link. The browser will automatically open a "Save As" dialog.
-//     window.open(downloadableUrl);
+export const completeGoogleSignup = expressAsyncHandler(async (req, res) => {
+  // Frontend sends: credential (again for security), phone, companyName
+  const { credential, phone, companyName } = req.body;
 
-//   } catch (error) {
-//     alert("Could not get document: " + error.response?.data?.message);
-//   }
-// };
+  // 1. RE-Verify Token (Security: prevents spoofing the email)
+  const ticket = await client.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const { email, name, picture, sub: googleId } = ticket.getPayload();
 
+  // 2. Double check duplicate (just in case)
+  const userExists = await Employer.findOne({ email });
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists.");
+  }
+  
+  const phoneExists = await Employer.findOne({ phone });
+  if (phoneExists) {
+    res.status(400);
+    throw new Error("Phone number already in use.");
+  }
 
+  // 3. Create dummy password (since they use Google)
+  const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+  const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+  // 4. Create Employer
+  const employer = new Employer({
+    name,
+    email,
+    password: hashedPassword, // Dummy hashed password
+    phone,
+    companyName,
+    profilePicture: picture,
+    googleId,
+    authProvider: 'google',
+    isVerified: true // Google emails are verified by definition
+  });
+
+  const savedEmployer = await employer.save();
+
+  // 5. Generate Token
+  const token = jwt.sign({ employer: { id: savedEmployer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+  res.status(201).json({ 
+    status: 'REGISTER_SUCCESS',
+    token,
+    employerId: savedEmployer._id,
+    message: 'Account created successfully' 
+  });
+});
