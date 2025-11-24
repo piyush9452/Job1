@@ -169,29 +169,38 @@ export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
 export const updateJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
+  
   if (!job) return res.status(404).json({ message: "Job not found" });
-  // Ensure the authenticated user is the owner of the job
-  if (job.postedBy.toString() !== req.user._id.toString()) {
+
+  // FIX: Use req.employerId, NOT req.user._id
+  if (job.postedBy.toString() !== req.employerId.toString()) {
     return res.status(403).json({ message: "Not authorized to update this job" });
   }
+
   const updatedJob = await Job.findByIdAndUpdate(id, req.body, { new: true });
   res.status(200).json({ message: "Job updated successfully", job: updatedJob });
 });
 
+
+
 export const deleteJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
+  
   if (!job) return res.status(404).json({ message: "Job not found" });
-  // Ensure the authenticated user is the owner of the job
-  if (job.postedBy.toString() !== req.user._id.toString()) {
+
+  // FIX: Use req.employerId, NOT req.user._id
+  if (job.postedBy.toString() !== req.employerId.toString()) {
     return res.status(403).json({ message: "Not authorized to delete this job" });
   }
 
   await Job.deleteOne({ _id: id });
 
-  await User.findByIdAndUpdate(req.user._id, {
-  $pull: { createdJobs: id },
-});
+  // FIX: You must also update the EMPLOYER model, not the User model
+  // Import Employer at the top of your file if not already imported
+  await Employer.findByIdAndUpdate(req.employerId, {
+    $pull: { createdJobs: id },
+  });
 
   res.status(200).json({ message: "Job deleted successfully" });
 });

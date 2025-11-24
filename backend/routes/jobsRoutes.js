@@ -6,6 +6,9 @@ import express from "express";
 
 const router = express.Router();
 
+
+
+
 router.post("/",protectEmployer, createJob);
 
 
@@ -14,9 +17,11 @@ router.get("/employerJobs",protectEmployer,getEmployerCreatedJobs);
 // jobs created by a specific employer changed now the path has been changed to employer
 router.get("/employer/:id",protectEmployer, jobCreatedByUser);
 
-router.get("/:id", getJob);
+
 
 router.get("/", getJobs);
+
+router.get("/:id", getJob);
 
 router.get("/userApplied/:id",protect,);
 

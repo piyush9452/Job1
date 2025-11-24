@@ -84,9 +84,10 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
     res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',
       email: savedEmployer.email,
-      employerId: savedEmployer._id // <-- ADDED THIS LINE
+      employerId: savedEmployer._id,
+      savedEmployer // <-- ADDED THIS LINE
     });
-
+    
   } catch (error) {
     // CRITICAL: If email/OTP fails, delete the user.
     await Employer.deleteOne({ _id: savedEmployer._id });
@@ -102,41 +103,25 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
 
 
 export const verifyOTP = expressAsyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
+  // ... (validation and finding OTP logic) ...
 
-  // 1. Find the employer first to get their ID
-  const employer = await Employer.findOne({ email });
-  if (!employer) {
-      res.status(400);
-      throw new Error("Employer not found");
-  }
-
-  // 2. Look for their OTP in the separate collection
-  const otpRecord = await OTP.findOne({
-      employerId: employer._id,
-      otp: otp,
-  });
-
-  if (!otpRecord) {
-      res.status(400);
-      // If it's not found, it either didn't exist OR it already auto-expired.
-      throw new Error("Invalid or expired OTP.");
-  }
-
-  // 3. OTP found! Mark employer as verified.
+  // Mark Verified
   employer.isVerified = true;
   await employer.save();
 
-  // 4. (Optional but good) Manually delete the OTP now so it can't be used again
-  // even before the 10 minutes are up.
+  // Clean up OTP
   await OTP.deleteOne({ _id: otpRecord._id });
 
-  // 5. Generate token and log them in
+  // Generate Token
   const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
-  res.status(200).json({ message: "Verified!", token });
+  
+  // --- FIX: Send back the ID too ---
+  res.status(200).json({ 
+      message: "Account verified!", 
+      token,
+      employerId: employer._id // <--- ADD THIS
+  });
 });
-
-
 
 
 export const loginEmployer = expressAsyncHandler(async (req, res) => {
@@ -144,18 +129,23 @@ export const loginEmployer = expressAsyncHandler(async (req, res) => {
 
   const employer = await Employer.findOne({ email });
 
-  
   const isMatch = employer 
     ? await bcrypt.compare(password, employer.password) 
     : false;
 
-  // 2. Use ONE generic error message
   if (!employer || !isMatch) {
-    res.status(401); // Use 401 Unauthorized
+    res.status(401);
     throw new Error("Invalid credentials");
   }
 
-  // 3. Create and return JWT
+  // --- FIX 1: BLOCK UNVERIFIED USERS ---
+  if (!employer.isVerified) {
+    res.status(401);
+    // Optional: You could trigger a resend OTP logic here if you wanted
+    throw new Error("Account not verified. Please verify your email first.");
+  }
+
+  // 3. Create JWT
   const payload = {
     employer: {
       id: employer.id,
@@ -168,7 +158,12 @@ export const loginEmployer = expressAsyncHandler(async (req, res) => {
     { expiresIn: "5h" }
   );
 
-  res.status(200).json({ token });
+  // --- FIX 2: SEND THE ID FOR FRONTEND ---
+  res.status(200).json({ 
+    token,
+    employerId: employer._id, // Frontend needs this for 'employerInfo'
+    email: employer.email     // Optional but good to have
+  });
 });
 
 

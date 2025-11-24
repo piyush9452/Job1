@@ -78,24 +78,7 @@ export const createUser = expressAsyncHandler(async (req, res) => {
 
 
 export const verifyUserOTP = expressAsyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-
-  const user = await User.findOne({ email });
-  if (!user) {
-    res.status(400);
-    throw new Error("User not found");
-  }
-
-  // Look for OTP in the UserOTP collection
-  const otpRecord = await UserOTP.findOne({
-    userId: user._id,
-    otp: otp,
-  });
-
-  if (!otpRecord) {
-    res.status(400);
-    throw new Error("Invalid or expired OTP.");
-  }
+  // ... (existing validation logic) ...
 
   // Mark Verified
   user.isVerified = true;
@@ -104,10 +87,15 @@ export const verifyUserOTP = expressAsyncHandler(async (req, res) => {
   // Clean up OTP
   await UserOTP.deleteOne({ _id: otpRecord._id });
 
-  // Generate Token & Login
+  // Generate Token
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
   
-  res.status(200).json({ message: "Account verified!", token });
+  // --- FIX: Return userId along with token ---
+  res.status(200).json({ 
+      message: "Account verified!", 
+      token,
+      userId: user._id // <--- ADDED THIS
+  });
 });
 
 
@@ -115,28 +103,27 @@ export const verifyUserOTP = expressAsyncHandler(async (req, res) => {
 
 
 
-
 export const loginUser = expressAsyncHandler(async (req, res) => {
-
     const { email, password } = req.body;
 
-    // Check if user exists+
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ message: "User not found" });
+    if (!user) return res.status(400).json({ message: "User not found" });
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Generate JWT
+    // --- FIX: Block unverified users ---
+    if (!user.isVerified) {
+        return res.status(401).json({ message: "Account not verified. Please verify email." });
+    }
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
-      process.env.JWT_SECRET, // store secret in .env
+      process.env.JWT_SECRET,
       { expiresIn: "120h" }
     );
 
+    // Response structure looks good
     res.status(200).json({
       message: "Login successful",
       token,
@@ -146,9 +133,7 @@ export const loginUser = expressAsyncHandler(async (req, res) => {
         email: user.email
       }
     });
-
 });
-
 
 
 
