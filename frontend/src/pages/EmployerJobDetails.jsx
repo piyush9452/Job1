@@ -41,9 +41,8 @@ export default function EmployerJobDetails() {
         if (!window.confirm("Are you sure you want to delete this job?")) return;
 
         try {
-            const stored = localStorage.getItem("employerToken");
-            const employerInfo = stored ? JSON.parse(stored) : null;
-            const token = employerInfo?.token;
+            const token = localStorage.getItem("employerToken");
+
 
             await axios.delete(
                 `https://jobone-mrpy.onrender.com/jobs/${id}`,

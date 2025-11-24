@@ -5,25 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="337125a7-a3d3-40d4-80ae-af0fda59f289" name="Changes" comment="changes made">
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerEditProfile.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerJobDetails.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/EmployerProtectedRoute.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/EmployerProtectedRoute.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/JobDetailsModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/JobDetailsModal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ProtectedRoute.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ProtectedRoute.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/ApplyPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/ApplyPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerDashboard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerOTP.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerOTP.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerProfile.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerProfile.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerRegister.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerRegister.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerJobDetails.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerJobDetails.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/MyApplications.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/MyApplications.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Profile.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Profile.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/UserOTP.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/UserOTP.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/UserRegister.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/UserRegister.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/vite.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,6 +162,7 @@
       <workItem from="1763788501292" duration="82000" />
       <workItem from="1763810199582" duration="10428000" />
       <workItem from="1763961608562" duration="84000" />
+      <workItem from="1763981464638" duration="1802000" />
     </task>
     <task id="LOCAL-00001" summary="changes made">
       <option name="closed" value="true" />
@@ -410,7 +396,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763382322795</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="changes made">
+      <option name="closed" value="true" />
+      <created>1763981537978</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1763981537978</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

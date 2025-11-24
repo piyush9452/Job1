@@ -4,7 +4,7 @@ export default function ProtectedRoute({ children }) {
     const location = useLocation();
 
     // Your app stores user authenticity ONLY using userToken
-    const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("employerToken");
 
     // Authenticated only if token exists
     const isAuthenticated = !!token;
