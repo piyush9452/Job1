@@ -6,28 +6,37 @@ export default function MyApplications() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        console.log("RAW TOKEN:", localStorage.getItem("userToken"));
+        console.log("RAW USER INFO:", localStorage.getItem("userInfo"));
+
+        try {
+            console.log("PARSED USER:", JSON.parse(localStorage.getItem("userInfo")));
+        } catch (e) {
+            console.log("ERROR PARSING USER:", e);
+        }
         const fetchApplications = async () => {
             try {
-                const storedUser = JSON.parse(localStorage.getItem("userInfo"));
-                const token = storedUser?.token;
-                const userId = storedUser?._id;
+                const token = localStorage.getItem("userToken");
+                const user = JSON.parse(localStorage.getItem("userInfo"));
+                const userId = user?.id;
 
-                if (!token) {
+                if (!token || !userId) {
                     alert("Please log in to view your applications.");
                     return;
                 }
 
-                const { data } = await axios.get(`https://jobone-mrpy.onrender.com/applications/${userId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                // Use the 'applications' array from backend response
+                const { data } = await axios.get(
+                    `https://jobone-mrpy.onrender.com/applications/${userId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                console.log("API DATA:", data);
                 setApplications(data.applications || []);
             } catch (error) {
                 console.error("Error fetching applications:", error);
-                alert("You have not applied to any jobs yet");
             } finally {
                 setLoading(false);
             }
@@ -35,6 +44,7 @@ export default function MyApplications() {
 
         fetchApplications();
     }, []);
+
 
     if (loading) {
         return <div className="text-center py-20 text-gray-600">Loading your applications...</div>;

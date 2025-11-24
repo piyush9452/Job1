@@ -12,10 +12,13 @@ import Jobs from "./pages/Jobs";
 import CreateJob from "./pages/CreateJob";
 import EmployerRegister from "./pages/EmployerRegister";
 import EmployerDashboard from "./pages/EmployerDashboard";
+import EmployerProfile from "./pages/EmployerProfile";
+import EmployerEditProfile from "./pages/EmployerEditProfile.jsx";
 import Profile from "./pages/Profile.jsx";
 import Register from "./pages/Register.jsx";
 import ApplyPage from "./pages/ApplyPage";
 import EmployerOTP from "./pages/EmployerOTP";
+import EmployerJobDetails from "./pages/EmployerJobDetails";
 import UserOTP from "./pages/UserOTP";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
 
@@ -43,8 +46,11 @@ function App() {
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
             <Route path="/createjob" element={<EmployerProtectedRoute><CreateJob /></EmployerProtectedRoute>} />
             <Route path="/employerregister" element={<EmployerRegister />} />
+            <Route path="/employerprofile" element={<EmployerProfile />} />
+            <Route path="/employereditprofile" element={<EmployerEditProfile />} />
             <Route path="/employerdashboard" element={<EmployerDashboard />} />
             <Route path="/employerotp" element={<EmployerOTP />} />
+            <Route path="/job/:jobID" element={<EmployerJobDetails />} />
             <Route path="/userotp" element={<UserOTP />} />
             <Route path="/apply/:jobId" element={<ApplyPage />} />
         </Routes>

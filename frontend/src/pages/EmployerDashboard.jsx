@@ -12,7 +12,16 @@ export default function EmployerDashboard() {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const employerInfo = JSON.parse(localStorage.getItem("employerToken"));
+                const stored = localStorage.getItem("employerToken");
+
+                let employerInfo = null;
+
+                try {
+                    employerInfo = stored ? JSON.parse(stored) : null;
+                } catch (e) {
+                    console.error("❌ Invalid token in localStorage:", e.message);
+                    employerInfo = null;
+                }
                 const token = employerInfo?.token;
                 const employerID = employerInfo?.id;
                 console.log(employerID);
@@ -25,7 +34,7 @@ export default function EmployerDashboard() {
 
                 // Fixed API call — using only token for authentication
                 const { data } = await axios.get(
-                    `https://jobone-mrpy.onrender.com/jobs/employerjobs`,
+                    `https://jobone-mrpy.onrender.com/jobs/employerJobs`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
                     }
@@ -107,7 +116,7 @@ export default function EmployerDashboard() {
                 </div>
             </motion.div>
 
-            {/* 📋 My Job Posts Section */}
+            {/* My Job Posts Section */}
             <div className="max-w-5xl mx-auto mt-14">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-5">My Job Posts</h2>
 
@@ -125,10 +134,9 @@ export default function EmployerDashboard() {
                                 onClick={() => navigate(`/job/${job._id}`)}
                                 className="cursor-pointer bg-white shadow-md rounded-xl p-5 hover:shadow-xl hover:border hover:border-blue-300 transition"
                             >
-                                <span className="text-lg font-semibold text-gray-800 mb-10 mr-30 ">
+                                <h3 className="text-lg font-semibold text-gray-800  mr-30 ">
                                     {job.title}
-                                </span>
-                                <Link to="/jobapplicants"><span className="text-blue-600 text-sm hover:underline ">View Applicants</span></Link>
+                                </h3>
                                 <p className="text-sm text-gray-600 line-clamp-3">
                                     {job.description}
                                 </p>

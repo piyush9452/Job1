@@ -8,7 +8,7 @@ const UserVerifyOTP = () => {
     const location = useLocation();
 
     // If registration page passed email through navigate()
-    const initialEmail = location.state?.email || "";
+    const initialEmail = location.state?.email;
 
     const [email, setEmail] = useState(initialEmail);
     const [otp, setOtp] = useState("");
@@ -22,10 +22,9 @@ const UserVerifyOTP = () => {
 
         try {
             const res = await axios.post("https://jobone-mrpy.onrender.com/user/verifyotp", { email, otp });
-
             // Save JWT token in localStorage
             localStorage.setItem("userToken", res.data.token);
-
+            console.log(res.data.token);
             setMessage("✅ Account verified successfully! Redirecting...");
             setTimeout(() => navigate("/"), 1500);
         } catch (err) {

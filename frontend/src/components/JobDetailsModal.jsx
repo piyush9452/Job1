@@ -16,7 +16,7 @@ export default function JobDetailsModal({ job, onClose }) {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+    const userInfo = localStorage.getItem("userToken");
     const recruiterName = userInfo?.name || "Recruiter";
 
     const [summaryPart, responsibilitiesPart] = job.description
@@ -35,7 +35,7 @@ export default function JobDetailsModal({ job, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 sm:p-6 overflow-auto">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 py-100 sm:p-6 overflow-auto">
             <div className="bg-white rounded-2xl shadow-lg w-full max-w-full sm:max-w-3xl relative p-6 sm:p-8 flex flex-col">
                 {/* Close Button */}
                 <button
