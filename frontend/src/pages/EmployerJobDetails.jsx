@@ -13,22 +13,24 @@ export default function EmployerJobDetails() {
     useEffect(() => {
         const fetchJob = async () => {
             try {
-                const stored = localStorage.getItem("employerToken");
-                const employerInfo = stored ? JSON.parse(stored) : null;
-                const token = employerInfo?.token;
+                const token = localStorage.getItem("employerToken");  // FIXED
 
-                if (!token) return alert("Session expired. Please log in again.");
+                if (!token) {
+                    alert("Session expired. Please log in again.");
+                    return navigate("/employerlogin");
+                }
 
                 const { data } = await axios.get(
                     `https://jobone-mrpy.onrender.com/jobs/${id}`,
                     {
-                        headers: { Authorization: `Bearer ${token}` },
+                        headers: { Authorization: `Bearer ${token}` }, // FIXED
                     }
                 );
 
                 setJob(data);
             } catch (err) {
                 console.error("Failed to load job", err);
+                setJob(null);
             } finally {
                 setLoading(false);
             }
@@ -37,17 +39,17 @@ export default function EmployerJobDetails() {
         fetchJob();
     }, [id]);
 
+
     const handleDelete = async () => {
         if (!window.confirm("Are you sure you want to delete this job?")) return;
 
         try {
-            const token = localStorage.getItem("employerToken");
-
+            const token = localStorage.getItem("employerToken"); // FIXED
 
             await axios.delete(
-                `https://jobone-mrpy.onrender.com/jobs/${id}`,
+                `https://jobone-mrpy.onrender.com/jobs/${id}`,  // FIXED jobID
                 {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: { Authorization: `Bearer ${token}` }, // FIXED
                 }
             );
 
@@ -67,8 +69,9 @@ export default function EmployerJobDetails() {
         );
     }
 
-    if (!job) return <div className="p-10 text-center text-gray-600">Job not found.</div>;
-
+    if (!job) {
+        return <div className="p-10 text-center text-gray-600">Job not found.</div>;
+    }
     return (
         <div className="max-w-4xl mx-auto py-20 px-6">
             <motion.div

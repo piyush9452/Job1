@@ -340,23 +340,23 @@ ${keyResponsibilities}
                                 <input
                                     type="radio"
                                     name="jobType"
-                                    value="short-term"
+                                    value="weekly"
                                     checked={job.jobType === "short-term"}
                                     onChange={handleChange}
                                     className="mr-2"
                                 />
-                                Short-term
+                                Weekly
                             </label>
                             <label className="ml-4">
                                 <input
                                     type="radio"
                                     name="jobType"
-                                    value="part-time"
+                                    value="monthly"
                                     checked={job.jobType === "part-time"}
                                     onChange={handleChange}
                                     className="mr-2"
                                 />
-                                Part-time
+                                Monthly
                             </label>
                         </div>
                         <input
