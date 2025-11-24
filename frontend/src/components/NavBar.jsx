@@ -10,13 +10,13 @@ export default function Navbar() {
     const userMenuRef = useRef(null);
 
     // Get user & employer info from localStorage
-    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    const employerInfo = JSON.parse(localStorage.getItem("employerInfo"));
+    const userInfo = localStorage.getItem("userToken");
+    const employerInfo = localStorage.getItem("employerToken");
 
     // Logout handler (for both)
     const handleLogout = () => {
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("employerInfo");
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("employerToken");
         navigate("/login");
     };
 

@@ -22,14 +22,18 @@ export default function Login() {
                     : "https://jobone-mrpy.onrender.com/user/login";
 
             const { data } = await axios.post(endpoint, { email, password });
-            console.log("Login success:", data); // ✅ check what backend returns
+            console.log(data); // ✅ check what backend returns
 
             // store different keys based on user type
             if (activeTab === "employer") {
-                localStorage.setItem("employerInfo", JSON.stringify(data));
+                localStorage.setItem("employerToken", JSON.stringify(data));
+                localStorage.setItem("employerInfo", JSON.stringify(data.employer));
                 navigate("/employerdashboard"); // redirect to employer dashboard
             } else {
-                localStorage.setItem("userInfo", JSON.stringify(data));
+                localStorage.setItem("userToken", data.token);
+                console.log(data.token);
+                localStorage.setItem("userInfo", JSON.stringify(data.user));
+
                 navigate("/");
             }
         } catch (err) {

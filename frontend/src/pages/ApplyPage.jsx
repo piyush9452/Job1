@@ -38,9 +38,11 @@ export default function ApplyPage() {
         setFeedback("");
 
         try {
-            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-            if (!userInfo?.token) {
-                setFeedback("You must be logged in to apply.");
+            const token = localStorage.getItem("userToken");
+            const user = JSON.parse(localStorage.getItem("userInfo"));
+
+            if (!token || !user?.id) {
+                setFeedback("You must be logged in as user to apply.");
                 setLoading(false);
                 return;
             }
@@ -54,7 +56,7 @@ export default function ApplyPage() {
                 "https://jobone-mrpy.onrender.com/applications",
                 payload,
                 {
-                    headers: { Authorization: `Bearer ${userInfo.token}` },
+                    headers: { Authorization: `Bearer ${token}` },
                 }
             );
 
@@ -69,6 +71,7 @@ export default function ApplyPage() {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="min-h-screen bg-gray-50 flex justify-center items-center py-20 px-4">

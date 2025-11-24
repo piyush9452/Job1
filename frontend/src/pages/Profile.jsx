@@ -19,7 +19,7 @@ const Profile = () => {
                     return;
                 }
 
-                const userId = storedUser.user._id || storedUser.user.id;
+                const userId = storedUser.user.id;
                 const token = storedUser.token;
 
                 const { data } = await axios.get(

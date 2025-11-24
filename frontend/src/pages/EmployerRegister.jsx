@@ -48,7 +48,6 @@ const EmployerRegister = () => {
             // Save token to localStorage
             localStorage.setItem("employerInfo", JSON.stringify(data));
 
-            setSuccess("Employer account created successfully!");
             setLoading(false);
 
             // Redirect to Employer Dashboard after successful registration

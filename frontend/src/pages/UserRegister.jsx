@@ -22,8 +22,7 @@ export default function UserRegister() {
                 phone,
             });
             // Assuming backend sends back a token
-            localStorage.setItem("userInfo", JSON.stringify(data));
-            navigate("/userotp"); // Redirect after registration
+            navigate("/userotp", { state: { email } });
         } catch (err) {
             setError(err.response?.data?.message || "Registration failed");
         }
