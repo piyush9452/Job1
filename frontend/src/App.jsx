@@ -21,6 +21,7 @@ import EmployerOTP from "./pages/EmployerOTP";
 import EmployerJobDetails from "./pages/EmployerJobDetails";
 import UserOTP from "./pages/UserOTP";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
+import DocumentUploadPage from './pages/EmployerDOC.jsx'
 
 
 
@@ -53,6 +54,7 @@ function App() {
             <Route path="/job/:jobID" element={<EmployerJobDetails />} />
             <Route path="/userotp" element={<UserOTP />} />
             <Route path="/apply/:jobId" element={<ApplyPage />} />
+            <Route path="/employerdocupload" element={<DocumentUploadPage />} />
         </Routes>
     </Router>
   )
