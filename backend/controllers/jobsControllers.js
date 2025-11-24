@@ -195,3 +195,35 @@ export const deleteJob = expressAsyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Job deleted successfully" });
 });
+
+
+
+export const getJobApplicants = expressAsyncHandler(async (req, res) => {
+  const jobId = req.params.id;
+
+  // 1. Find the Job
+  const job = await Job.findById(jobId);
+
+  if (!job) {
+    res.status(404);
+    throw new Error("Job not found");
+  }
+
+  // 2. SECURITY CHECK: Is the logged-in employer the owner?
+  // req.employerId comes from your 'protectEmployer' middleware
+  if (job.postedBy.toString() !== req.employerId.toString()) {
+    res.status(403); // Forbidden
+    throw new Error("Not authorized to view applicants for this job");
+  }
+
+  // 3. Populate the applicants array
+  // This replaces the User IDs with the actual User documents
+  await job.populate({
+    path: 'applicants',
+    // Select ONLY the fields you need. Do NOT send the password hash!
+    select: 'name email phone resume skills experience education profilePicture' 
+  });
+
+  // 4. Return the populated list
+  res.status(200).json(job.applicants);
+});
