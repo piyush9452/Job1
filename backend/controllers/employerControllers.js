@@ -102,24 +102,52 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
 //-----------------------------------------------------------------------------------------------------------------
 
 
-export const verifyOTP = expressAsyncHandler(async (req, res) => {
-  // ... (validation and finding OTP logic) ...
 
-  // Mark Verified
+
+export const verifyOTP = expressAsyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  // 1. Find the employer first to get their ID
+  const employer = await Employer.findOne({ email });
+  
+  if (!employer) {
+    res.status(404);
+    throw new Error("Employer not found");
+  }
+
+  // 2. Look for their OTP in the separate collection
+  // We match BOTH employerId and the specific OTP code
+  const otpRecord = await OTP.findOne({
+    employerId: employer._id,
+    otp: otp,
+  });
+
+  if (!otpRecord) {
+    res.status(400);
+    throw new Error("Invalid or expired OTP.");
+  }
+
+  // 3. Mark Verified
   employer.isVerified = true;
   await employer.save();
 
-  // Clean up OTP
+  // 4. Clean up OTP (Prevent reuse)
   await OTP.deleteOne({ _id: otpRecord._id });
 
-  // Generate Token
-  const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
+  // 5. Generate Token & Login immediately
+  const token = jwt.sign(
+    { employer: { id: employer._id } }, 
+    process.env.JWT_SECRET, 
+    { expiresIn: '5h' }
+  );
   
-  // --- FIX: Send back the ID too ---
+  // 6. Send Response
+  // CRITICAL: Sending 'employerId' allows frontend to save { token, id } structure
   res.status(200).json({ 
-      message: "Account verified!", 
+      message: "Account verified successfully!", 
       token,
-      employerId: employer._id // <--- ADD THIS
+      employerId: employer._id,
+      email: employer.email 
   });
 });
 
