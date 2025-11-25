@@ -7,7 +7,6 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import EditProfile from "./pages/EditProfile.jsx";
 import MyApplications from "./pages/MyApplications";
-import JobPosts from "./pages/JobPosts.jsx";
 import Jobs from "./pages/Jobs";
 import CreateJob from "./pages/CreateJob";
 import EmployerRegister from "./pages/EmployerRegister";
@@ -43,7 +42,6 @@ function App() {
             <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
             <Route path="/editprofile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
             <Route path="/myapplications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
-            <Route path="/jobposts" element={<ProtectedRoute><JobPosts /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
             <Route path="/createjob" element={<EmployerProtectedRoute><CreateJob /></EmployerProtectedRoute>} />
             <Route path="/employerregister" element={<EmployerRegister />} />
