@@ -5,7 +5,19 @@ const JobSchema = new mongoose.Schema({
   description: { type: String, required: true }, //
   jobType: { type: String, enum: ["daily", "weekly", "monthly"], required: true },
   skillsRequired: { type: [String], default: [] },
-  location: { type: String, required: true }, // city/area
+  location: {
+    type: {
+      type: String, 
+      enum: ['Point'], 
+      default: 'Point',
+    },
+    coordinates: {
+      type: [Number], // [Longitude, Latitude] - Mongo expects this order
+      required: true,
+      index: '2dsphere' // Crucial for "find nearby" queries later
+    },
+    address: { type: String, required: true } // The readable string (e.g. "HMP House, MP Nagar")
+  },// city/area
   pinCode: { type: Number }, // optional
   salary: { type: Number, required: true }, // payment for the job
   durationType: { type: String, enum: ["Day", "Week", "Month"], required: true },
