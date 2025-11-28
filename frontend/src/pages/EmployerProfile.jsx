@@ -213,12 +213,19 @@ export default function EmployerProfile() {
                   </span>
                 )}
               </div>
-              {!profile.verificationDocument && (
+              {!profile.verificationDocument ? (
                 <button
                   onClick={() => navigate("/employerdocupload")}
                   className="w-full mt-2 text-xs bg-blue-50 text-blue-600 py-2 rounded hover:bg-blue-100 transition"
                 >
                   Upload Document Now
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate("/employerdocupload")}
+                  className="w-full mt-2 text-xs bg-blue-50 text-blue-600 py-2 rounded hover:bg-blue-100 transition"
+                >
+                  View Uploaded Document
                 </button>
               )}
             </div>

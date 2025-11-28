@@ -14,13 +14,13 @@ const Profile = () => {
         setLoading(true);
         const storedUser = JSON.parse(localStorage.getItem("userInfo"));
         console.log("Stored User:", storedUser);
-        if (!storedUser || !storedUser.email) {
+        if (!storedUser) {
           alert("Please log in first!");
           setLoading(false);
           return;
         }
 
-        const userId = storedUser.id;
+        const userId = storedUser.userId;
         const token = storedUser.token;
 
         const { data } = await axios.get(

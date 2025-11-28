@@ -120,7 +120,7 @@ export default function CreateJob() {
     // --- FIX 1: Read from the correct key "employerInfo" ---
     const storedData = localStorage.getItem("employerInfo");
 
-    if (!storedData || storedData === "undefined") {
+    if (!storedData) {
       alert("No employer session found. Please log in again.");
       // navigate("/login"); // Uncomment if you want auto-redirect
       setLoading(false);
