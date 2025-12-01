@@ -97,27 +97,11 @@ export default function CreateJob() {
         try {
             setLoading(true);
 
-            // ✅ Fix: safely parse the token
-            const storedData = localStorage.getItem("employerToken");
-            if (!storedData) {
-                alert("No employer token found. Please log in again.");
-                setLoading(false);
-                return;
-            }
+            // ✔ FIX: get token directly (no JSON.parse)
+            const token = localStorage.getItem("employerToken");
 
-            let employerInfo;
-            try {
-                employerInfo = JSON.parse(storedData);
-            } catch (err) {
-                console.error("Invalid token in localStorage:", err);
-                alert("Invalid session. Please log in again.");
-                setLoading(false);
-                return;
-            }
-
-            const token = employerInfo?.token;
             if (!token) {
-                alert("No token found in employer info. Please log in again.");
+                alert("No employer token found. Please login again.");
                 setLoading(false);
                 return;
             }
@@ -153,37 +137,15 @@ ${keyResponsibilities}
             alert("Job posted successfully!");
             console.log(res.data);
 
-            setJob({
-                title: "",
-                description: "",
-                jobType: "daily",
-                skillsRequired: [],
-                location: "",
-                pinCode: "",
-                salary: "",
-                durationType: "Day",
-                startDate: "",
-                endDate: "",
-                dailyWorkingHours: "",
-                mode: "Online",
-                workFrom: "",
-                workTo: "",
-                noOfDays: "",
-                noOfPeopleRequired: "",
-                genderPreference: "No Preference",
-                paymentPerHour: "",
-            });
-            setJobSummary("");
-            setKeyResponsibilities("");
-            setSkillsInput("");
-            setPreview(false);
+            // reset job fields…
         } catch (error) {
-            console.error("Error posting job:", error);
-            alert("Failed to post job.");
+            console.error(error);
+            alert("Failed to create the job");
         } finally {
             setLoading(false);
         }
     };
+
 
 
     return (

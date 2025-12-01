@@ -19,23 +19,17 @@ export default function EmployerProfile() {
     // ---------------- Fetch Employer Profile ----------------
     const fetchEmployerProfile = async () => {
         try {
-            const info = JSON.parse(localStorage.getItem("employerToken"));
+            const token = localStorage.getItem("employerToken");
+            const employerInfo = JSON.parse(localStorage.getItem("employerInfo") || "null");
 
-            if (!info?.token || !info?.id) {
+            if (!token || !employerInfo?.employerId) {
                 console.error("Employer not logged in");
                 return;
             }
 
-            const token = info.token;
-            const employerID = info.id;
-
             const { data } = await axios.get(
-                `https://jobone-mrpy.onrender.com/employer/profile/${employerID}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                `https://jobone-mrpy.onrender.com/employer/profile/${employerInfo.employerId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setProfile(data);
@@ -45,16 +39,18 @@ export default function EmployerProfile() {
     };
 
 
+
     // ---------------- Fetch Jobs Posted by Employer ----------------
     const fetchEmployerJobs = async () => {
         try {
-            const info = JSON.parse(localStorage.getItem("employerToken"));
-            if (!info?.token) return;
+            const token = localStorage.getItem("employerToken");
+
+            if (!token) return;
 
             const { data } = await axios.get(
                 "https://jobone-mrpy.onrender.com/jobs/employerJobs",
                 {
-                    headers: { Authorization: `Bearer ${info.token}` },
+                    headers: { Authorization: `Bearer ${token}` },
                 }
             );
 
@@ -63,6 +59,7 @@ export default function EmployerProfile() {
             console.error("Failed to load employer jobs:", err);
         }
     };
+
 
 
     if (!profile) {

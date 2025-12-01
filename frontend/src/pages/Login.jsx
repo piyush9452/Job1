@@ -27,7 +27,7 @@ export default function Login() {
             // store different keys based on user type
             if (activeTab === "employer") {
                 localStorage.setItem("employerToken", data.token);
-                localStorage.setItem("employerInfo", JSON.stringify(data.employer));
+                localStorage.setItem("employerInfo", JSON.stringify(employer._id));
                 navigate("/employerdashboard"); // redirect to employer dashboard
             } else {
                 localStorage.setItem("userToken", data.token);

@@ -43,13 +43,13 @@ function App() {
             <Route path="/editprofile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
             <Route path="/myapplications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
             <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
-            <Route path="/createjob" element={<EmployerProtectedRoute><CreateJob /></EmployerProtectedRoute>} />
+            <Route path={"/createjob"} element={<EmployerProtectedRoute><CreateJob /></EmployerProtectedRoute>} />
             <Route path="/employerregister" element={<EmployerRegister />} />
             <Route path="/employerprofile" element={<EmployerProfile />} />
             <Route path="/employereditprofile" element={<EmployerEditProfile />} />
             <Route path="/employerdashboard" element={<EmployerDashboard />} />
             <Route path="/employerotp" element={<EmployerOTP />} />
-            <Route path="/job/:jobID" element={<EmployerJobDetails />} />
+            <Route path="/job/:id" element={<EmployerJobDetails />} />
             <Route path="/userotp" element={<UserOTP />} />
             <Route path="/apply/:jobId" element={<ApplyPage />} />
             <Route path="/employerdocupload" element={<DocumentUploadPage />} />
