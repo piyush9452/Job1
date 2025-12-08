@@ -20,7 +20,7 @@ router.get("/employer/:id",protectEmployer, jobCreatedByUser);
 
 
 router.get("/", getJobs);
-router.get("/nearbyJobs", getJobsNearby);
+router.get("/nearby", getJobsNearby);
 
 router.get("/:id", getJob);
 
