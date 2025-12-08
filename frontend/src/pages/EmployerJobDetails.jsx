@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
+
 
 export default function EmployerJobDetails() {
   const { id } = useParams();
@@ -92,6 +93,12 @@ export default function EmployerJobDetails() {
         <hr className="my-5" />
 
         <div className="mb-6">
+            <button
+                onClick={() => navigate(`/job/${job._id}/applicants`)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+                View Applicants
+            </button>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
             Job Description
           </h2>
