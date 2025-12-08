@@ -25,6 +25,7 @@ import Applicants from "./pages/Applicants.jsx";
 import PublicProfile from "./pages/PublicProfile.jsx";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import TestLocation from "./pages/TestLocation.jsx";
 
 function App() {
   return (
@@ -95,6 +96,7 @@ function App() {
         <Route path="/employerdocupload" element={<DocumentUploadPage />} />
         <Route path="/profile/:userId" element={<PublicProfile />} />
           <Route path="/job/:id/applicants" element={<Applicants />} />
+          <Route path="/testlocation" element={<TestLocation />} />
       </Routes>
     </Router>
   );
