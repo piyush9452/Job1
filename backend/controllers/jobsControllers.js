@@ -289,6 +289,7 @@ export const getJobsNearby = expressAsyncHandler(async (req, res) => {
       }
     }
   });
+  console.log(jobs);
 
   res.status(200).json(jobs);
 });
