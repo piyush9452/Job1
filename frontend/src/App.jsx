@@ -93,7 +93,7 @@ function App() {
         <Route path="/userotp" element={<UserOTP />} />
         <Route path="/apply/:jobId" element={<ApplyPage />} />
         <Route path="/employerdocupload" element={<DocumentUploadPage />} />
-          <Route path="/profile/:userId" element={<PublicProfile />} />
+        <Route path="/profile/:userId" element={<PublicProfile />} />
           <Route path="/job/:id/applicants" element={<Applicants />} />
       </Routes>
     </Router>
