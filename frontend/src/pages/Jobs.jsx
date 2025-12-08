@@ -1,300 +1,426 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { FaSearch, FaTimes, FaFilter } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import JobDetailsModal from "../components/JobDetailsModal";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search,
+  MapPin,
+  Briefcase,
+  Clock,
+  IndianRupee,
+  Filter,
+  X,
+  ChevronDown,
+  Building2,
+  Globe,
+} from "lucide-react";
+import JobDetailsModal from "../components/JobDetailsModal"; // Assuming this exists
 
 export default function Jobs() {
-    const location = useLocation();
-    const queryParams = new URLSearchParams(location.search);
-    const initialTitle = queryParams.get("title") || "";
-    const initialLocation = queryParams.get("location") || "";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
 
-    const [filters, setFilters] = useState({
-        profile: initialTitle,
-        location: initialLocation,
-        stipend: 0,
-        workFromHome: false,
-        partTime: false,
-    });
+  // Initial Filters
+  const [filters, setFilters] = useState({
+    profile: queryParams.get("title") || "",
+    location: queryParams.get("location") || "",
+    stipend: 0,
+    workFromHome: false,
+    partTime: false,
+    jobType: "all", // 'daily', 'short-term', 'part-time', 'all'
+  });
 
-    const [allJobs, setAllJobs] = useState([]);
-    const [selectedJob, setSelectedJob] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [showFilters, setShowFilters] = useState(false); // Mobile toggle
+  const [allJobs, setAllJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
 
-    useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                setLoading(true);
-                const res = await axios.get("https://jobone-mrpy.onrender.com/jobs");
-                setAllJobs(res.data.data || []);
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load jobs.");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchJobs();
-    }, []);
+  // --- 1. FETCH JOBS ---
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        // Fetching all jobs (Client-side filtering for now as per your logic)
+        const res = await axios.get("https://jobone-mrpy.onrender.com/jobs");
 
-    const filteredJobs = allJobs.filter((job) => {
-        const title = job.title?.toLowerCase() || "";
-        const location = job.location?.toLowerCase() || "";
-        const salary = Number(job.salary) || 0;
-        const jobType = job.jobType?.toLowerCase() || "";
+        // Support both response structures just in case
+        const jobsData = res.data.data || res.data;
+        setAllJobs(Array.isArray(jobsData) ? jobsData : []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load jobs. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
 
-        const matchProfile = filters.profile
-            ? title.includes(filters.profile.toLowerCase())
-            : true;
-        const matchLocation = filters.location
-            ? location.includes(filters.location.toLowerCase())
-            : true;
-        const matchSalary = filters.stipend ? salary >= Number(filters.stipend) : true;
-        const matchWFH = filters.workFromHome
-            ? jobType.includes("home") || location.includes("remote")
-            : true;
-        const matchPartTime = filters.partTime ? jobType === "part-time" : true;
+  // --- 2. FILTER LOGIC (FIXED) ---
+  const filteredJobs = allJobs.filter((job) => {
+    // Helper to handle the new Location Object vs Old String
+    const jobLocation =
+      typeof job.location === "object"
+        ? job.location?.address?.toLowerCase() || ""
+        : job.location?.toLowerCase() || "";
 
-        return matchProfile && matchLocation && matchSalary && matchWFH && matchPartTime;
-    });
+    const title = job.title?.toLowerCase() || "";
+    const salary = Number(job.salary) || 0;
+    const jobType = job.jobType?.toLowerCase() || "";
+    const mode = job.mode?.toLowerCase() || "";
 
-    if (loading)
-        return (
-            <div className="flex justify-center items-center min-h-screen text-gray-600">
-                Loading jobs...
-            </div>
-        );
+    const matchProfile = filters.profile
+      ? title.includes(filters.profile.toLowerCase()) ||
+        job.description?.toLowerCase().includes(filters.profile.toLowerCase())
+      : true;
 
-    if (error)
-        return (
-            <div className="flex justify-center items-center min-h-screen text-red-600">
-                {error}
-            </div>
-        );
+    const matchLocation = filters.location
+      ? jobLocation.includes(filters.location.toLowerCase())
+      : true;
+
+    const matchSalary = filters.stipend
+      ? salary >= Number(filters.stipend)
+      : true;
+
+    // Enhanced logic for checkboxes
+    const matchWFH = filters.workFromHome
+      ? mode === "online" || title.includes("remote")
+      : true;
+
+    const matchPartTime = filters.partTime ? jobType === "part-time" : true;
 
     return (
-        <div className="p-4 md:p-8 py-20 md:pt-[100px] bg-gray-50">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800 flex justify-between items-center">
-                Job Results
-                {/* Mobile filter button */}
-                <button
-                    className="md:hidden fixed top-20 right-4 bg-white px-3 py-2 rounded shadow z-50 flex items-center gap-2"
-                    onClick={() => setShowFilters(true)}
-                >
-                    <FaFilter /> Filters
-                </button>
-            </h2>
-
-            <div className="flex flex-col md:flex-row min-h-screen gap-6">
-                {/* Sidebar Overlay for Mobile */}
-                {showFilters && (
-                    <div
-                        className="fixed inset-0 bg-black bg-opacity-50 z-40"
-                        onClick={() => setShowFilters(false)}
-                    ></div>
-                )}
-
-                {/* Filter Sidebar */}
-                {/* Explanation of the class changes:
-                    - For mobile we keep `fixed` so the sidebar slides in from the left (as before).
-                    - For md+ screens we use `md:sticky md:top-20 md:z-10` so the sidebar sits below the navbar
-                      (adjust top-20 to match your navbar height) and will scroll under the navbar rather than over it.
-                    - We lower the sidebar z-index on md (`md:z-10`) so the navbar (give it z-50) stays on top.
-                */}
-                <aside
-                    className={`
-                        fixed top-20 left-0 h-[calc(100vh-5rem)] w-3/4 max-w-xs bg-white shadow-md p-5 space-y-6 z-40 transform transition-transform duration-300
-                        ${showFilters ? "translate-x-0" : "-translate-x-full"}
-                        md:translate-x-0 md:sticky md:top-20 md:h-auto md:w-1/4 md:max-w-none md:shadow-none md:z-10 rounded-lg
-                    `}
-                >
-                    {/* Close button for mobile */}
-                    <div className="flex justify-between items-center md:hidden mb-4">
-                        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                            <span className="text-blue-600">⚙️</span> Filters
-                        </h2>
-                        <button onClick={() => setShowFilters(false)} className="text-gray-600">
-                            <FaTimes />
-                        </button>
-                    </div>
-
-                    <div className="hidden md:block">
-                        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                            <span className="text-blue-600">⚙️</span> Filters
-                        </h2>
-                    </div>
-
-                    {/* Profile Filter */}
-                    <div>
-                        <label className="block text-gray-600 mb-1">Profile</label>
-                        <input
-                            type="text"
-                            placeholder="e.g. Marketing"
-                            value={filters.profile}
-                            onChange={(e) => setFilters({ ...filters, profile: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    {/* Location Filter */}
-                    <div>
-                        <label className="block text-gray-600 mb-1">Location</label>
-                        <input
-                            type="text"
-                            placeholder="e.g. Delhi"
-                            value={filters.location}
-                            onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    {/* Work type checkboxes */}
-                    <div className="space-y-2">
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                className="accent-blue-600"
-                                checked={filters.workFromHome}
-                                onChange={(e) =>
-                                    setFilters({ ...filters, workFromHome: e.target.checked })
-                                }
-                            />{" "}
-                            Work from home
-                        </label>
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                className="accent-blue-600"
-                                checked={filters.partTime}
-                                onChange={(e) =>
-                                    setFilters({ ...filters, partTime: e.target.checked })
-                                }
-                            />{" "}
-                            Part-time
-                        </label>
-                    </div>
-
-                    {/* Stipend Range */}
-                    <div>
-                        <label className="block text-gray-600 mb-2">
-                            Desired minimum monthly stipend (₹)
-                        </label>
-                        <input
-                            type="range"
-                            min="0"
-                            max="10000"
-                            step="1000"
-                            value={filters.stipend}
-                            onChange={(e) =>
-                                setFilters({ ...filters, stipend: e.target.value })
-                            }
-                            className="w-full accent-blue-600"
-                        />
-                        <p className="text-sm text-gray-500 mt-1">₹{filters.stipend}</p>
-                    </div>
-
-                    <button
-                        className="text-blue-600 text-sm hover:underline"
-                        onClick={() =>
-                            setFilters({
-                                profile: "",
-                                location: "",
-                                stipend: 0,
-                                workFromHome: false,
-                                partTime: false,
-                            })
-                        }
-                    >
-                        Clear all
-                    </button>
-
-                    {/* Keyword Search */}
-                    <div className="border-t pt-4">
-                        <h3 className="font-semibold text-gray-700 mb-2">Keyword Search</h3>
-                        <div className="flex items-center border border-gray-300 rounded-lg">
-                            <input
-                                type="text"
-                                placeholder="e.g. Design, Infosys"
-                                className="w-full px-3 py-2 rounded-l-lg focus:outline-none"
-                            />
-                            <button className="bg-blue-600 px-4 py-2 text-white rounded-r-lg">
-                                <FaSearch />
-                            </button>
-                        </div>
-                    </div>
-                </aside>
-
-                {/* Job List */}
-                <main className="flex-1 p-0 md:p-8 space-y-6">
-                    {filteredJobs.length === 0 ? (
-                        <p className="text-gray-500 text-center mt-10">No jobs found.</p>
-                    ) : (
-                        filteredJobs.map((job, index) => {
-                            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-                            const recruiterName = userInfo?.name || "Recruiter";
-
-                            const postedDate = job.createdAt ? new Date(job.createdAt) : null;
-                            const timeAgo = postedDate
-                                ? (() => {
-                                    const diff = (Date.now() - postedDate.getTime()) / 1000;
-                                    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-                                    if (diff < 86400)
-                                        return `${Math.floor(diff / 3600)} hours ago`;
-                                    return `${Math.floor(diff / 86400)} days ago`;
-                                })()
-                                : "Recently posted";
-
-                            return (
-                                <div
-                                    key={index}
-                                    onClick={() => setSelectedJob(job)}
-                                    className="bg-white rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4"
-                                >
-                                    <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-lg font-bold flex-shrink-0">
-                                        {recruiterName?.charAt(0).toUpperCase()}
-                                    </div>
-
-                                    <div className="flex-1 w-full">
-                                        <h3 className="text-lg font-semibold text-gray-800">{job.title}</h3>
-                                        <div className="flex flex-wrap items-center gap-2 text-gray-500 text-sm mt-1">
-                                            <span className="flex items-center gap-1">💼 {recruiterName}</span>
-                                            <span>•</span>
-                                            <span className="flex items-center gap-1">
-                        📍 {job.location || "Remote"}
-                      </span>
-                                            <span>•</span>
-                                            <span className="flex items-center gap-1">⏰ {timeAgo}</span>
-                                            <span>•</span>
-                                            <span className="flex items-center gap-1">
-                        💰 ₹{job.salary ? job.salary.toLocaleString() : "N/A"}
-                      </span>
-                                        </div>
-
-                                        <div className="flex gap-2 mt-3 flex-wrap">
-                                            {job.jobType && (
-                                                <span className="px-3 py-1 text-sm rounded-full bg-blue-50 text-blue-700 font-medium">
-                          {job.jobType}
-                        </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="text-gray-400 hover:text-blue-500 self-start sm:self-auto mt-2 sm:mt-0">
-                                        <i className="fa-regular fa-star"></i>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-
-                    {selectedJob && (
-                        <JobDetailsModal job={selectedJob} onClose={() => setSelectedJob(null)} />
-                    )}
-                </main>
-            </div>
-        </div>
+      matchProfile && matchLocation && matchSalary && matchWFH && matchPartTime
     );
+  });
+
+  // --- HELPERS ---
+  const formatTimeAgo = (dateString) => {
+    if (!dateString) return "Recently";
+    const diff = (Date.now() - new Date(dateString).getTime()) / 1000;
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pt-20 pb-12 px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto">
+        {/* HEADER & MOBILE FILTER TOGGLE */}
+        <div className="flex justify-between items-end mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+              Find Your Next Role
+            </h1>
+            <p className="text-gray-500 mt-2">
+              Browse {filteredJobs.length} open positions matching your
+              criteria.
+            </p>
+          </div>
+          <button
+            className="md:hidden flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 text-gray-700 font-medium active:scale-95 transition-transform"
+            onClick={() => setShowMobileFilters(true)}
+          >
+            <Filter size={18} /> Filters
+          </button>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* --- SIDEBAR FILTERS --- */}
+          <aside
+            className={`
+            fixed inset-y-0 left-0 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 p-6 overflow-y-auto
+            md:relative md:translate-x-0 md:w-1/4 md:shadow-none md:bg-transparent md:p-0 md:h-auto md:overflow-visible
+            ${showMobileFilters ? "translate-x-0" : "-translate-x-full"}
+          `}
+          >
+            <div className="flex justify-between items-center md:hidden mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Filters</h2>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-8 md:sticky md:top-24">
+              {/* Search Inputs */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
+                    Keywords
+                  </label>
+                  <div className="relative">
+                    <Search
+                      className="absolute left-3 top-3 text-gray-400"
+                      size={16}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Job title or keyword"
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-sm"
+                      value={filters.profile}
+                      onChange={(e) =>
+                        setFilters({ ...filters, profile: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
+                    Location
+                  </label>
+                  <div className="relative">
+                    <MapPin
+                      className="absolute left-3 top-3 text-gray-400"
+                      size={16}
+                    />
+                    <input
+                      type="text"
+                      placeholder="City or Zip code"
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-sm"
+                      value={filters.location}
+                      onChange={(e) =>
+                        setFilters({ ...filters, location: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* Salary Range */}
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4 block">
+                  Min Salary (Monthly)
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="200000"
+                  step="5000"
+                  value={filters.stipend}
+                  onChange={(e) =>
+                    setFilters({ ...filters, stipend: e.target.value })
+                  }
+                  className="w-full accent-blue-600 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between mt-2 text-sm font-medium text-gray-700">
+                  <span>₹{Number(filters.stipend).toLocaleString()}</span>
+                  <span className="text-gray-400">₹2L+</span>
+                </div>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* Checkboxes */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div
+                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                      filters.workFromHome
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-gray-300 bg-white group-hover:border-blue-400"
+                    }`}
+                  >
+                    {filters.workFromHome && (
+                      <span className="text-white text-xs font-bold">✓</span>
+                    )}
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="hidden"
+                    checked={filters.workFromHome}
+                    onChange={(e) =>
+                      setFilters({ ...filters, workFromHome: e.target.checked })
+                    }
+                  />
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                    Work from home
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div
+                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                      filters.partTime
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-gray-300 bg-white group-hover:border-blue-400"
+                    }`}
+                  >
+                    {filters.partTime && (
+                      <span className="text-white text-xs font-bold">✓</span>
+                    )}
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="hidden"
+                    checked={filters.partTime}
+                    onChange={(e) =>
+                      setFilters({ ...filters, partTime: e.target.checked })
+                    }
+                  />
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                    Part-time only
+                  </span>
+                </label>
+              </div>
+
+              <button
+                onClick={() =>
+                  setFilters({
+                    profile: "",
+                    location: "",
+                    stipend: 0,
+                    workFromHome: false,
+                    partTime: false,
+                    jobType: "all",
+                  })
+                }
+                className="w-full py-2.5 text-sm font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 hover:text-gray-700 rounded-xl transition-colors"
+              >
+                Reset Filters
+              </button>
+            </div>
+          </aside>
+
+          {/* --- MOBILE OVERLAY --- */}
+          {showMobileFilters && (
+            <div
+              className="fixed inset-0 bg-black/20 z-40 md:hidden backdrop-blur-sm"
+              onClick={() => setShowMobileFilters(false)}
+            />
+          )}
+
+          {/* --- JOB LIST --- */}
+          <main className="flex-1 w-full">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl h-40 animate-pulse shadow-sm border border-gray-100"
+                  ></div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-red-100">
+                <p className="text-red-500 font-medium">{error}</p>
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+                <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="text-gray-400" size={24} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  No jobs found
+                </h3>
+                <p className="text-gray-500 mt-1">
+                  Try adjusting your filters or search query.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filteredJobs.map((job) => {
+                  // Handle location object vs string
+                  const displayLocation =
+                    typeof job.location === "object"
+                      ? job.location.address
+                      : job.location || "Remote";
+
+                  return (
+                    <motion.div
+                      key={job._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                      className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group relative overflow-hidden"
+                      onClick={() => setSelectedJob(job)}
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        {/* Left: Info */}
+                        <div className="flex gap-4">
+                          {/* Company Logo Placeholder */}
+                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center text-2xl shrink-0">
+                            {job.postedByName ? (
+                              job.postedByName.charAt(0)
+                            ) : (
+                              <Building2 size={24} className="text-blue-400" />
+                            )}
+                          </div>
+
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                              {job.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1">
+                              {job.companyName || "Company Confidential"}
+                              {/* <span className="w-1 h-1 rounded-full bg-gray-300 mx-1"></span> */}
+                            </p>
+                            <p className="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1">
+                              {job.postedByName || "Company Confidential"}
+                              {/* <span className="w-1 h-1 rounded-full bg-gray-300 mx-1"></span> */}
+                            </p>
+
+                            <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                              <span className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                                <MapPin size={14} className="text-gray-400" />
+                                {displayLocation}
+                              </span>
+                              <span className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                                <Briefcase
+                                  size={14}
+                                  className="text-gray-400"
+                                />
+                                <span className="capitalize">
+                                  {job.jobType}
+                                </span>
+                              </span>
+                              <span className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                                <IndianRupee
+                                  size={14}
+                                  className="text-gray-400"
+                                />
+                                {job.salary?.toLocaleString() ||
+                                  "Not disclosed"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Metadata */}
+                        <div className="flex flex-row sm:flex-col justify-between items-end sm:items-end min-w-fit">
+                          <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                            {formatTimeAgo(job.createdAt)}
+                          </span>
+                          <button className="text-sm font-semibold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+
+      {/* JOB DETAILS MODAL */}
+      <AnimatePresence>
+        {selectedJob && (
+          <JobDetailsModal
+            job={selectedJob}
+            onClose={() => setSelectedJob(null)}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

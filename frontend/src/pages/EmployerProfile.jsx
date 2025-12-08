@@ -284,7 +284,7 @@ export default function EmployerProfile() {
                         {job.jobType}
                       </span>
                       <span>•</span>
-                      <span>{job.location}</span>
+                      <span>{job.location.address}</span>
                     </div>
                     <p className="text-sm text-gray-600 line-clamp-2 mb-3">
                       {job.description}

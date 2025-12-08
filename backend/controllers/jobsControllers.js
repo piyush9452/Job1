@@ -6,7 +6,21 @@ import Employer from "../models/employer.js"; // Adjust path as needed
 
 
 export const createJob = expressAsyncHandler(async (req, res) => {
-  // ... validation ...
+  // 1. Validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400);
+    throw new Error(errors.array()[0].msg);
+  }
+
+  // 2. Fetch the Employer (MISSING IN YOUR CODE)
+  // We need this to get the name/image AND to push the job ID later
+  const employer = await Employer.findById(req.employerId).select('name profilePicture createdJobs');
+
+  if (!employer) {
+    res.status(404);
+    throw new Error('Employer not found');
+  }
 
   const { 
     title, description, jobType, skillsRequired, 
@@ -14,22 +28,18 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     dailyWorkingHours, mode, workFrom, workTo, 
     noOfDays, noOfPeopleRequired, genderPreference, 
     paymentPerHour, pinCode,
-    // New fields from frontend map
     latitude, longitude, address 
   } = req.body;
 
-  // 1. Construct the Location Object
-  // If map wasn't used, you might want a fallback or throw error
+  // 3. Construct Location
   let locationData;
   if (latitude && longitude) {
     locationData = {
       type: 'Point',
-      coordinates: [parseFloat(longitude), parseFloat(latitude)], // Note: Longitude first!
+      coordinates: [parseFloat(longitude), parseFloat(latitude)],
       address: address || "Location not specified"
     };
   } else {
-    // Fallback for "Remote" or if map skipped (Optional)
-    // Ideally, force them to pick a location for "Offline/Hybrid"
     if (mode !== 'Online') {
         res.status(400);
         throw new Error("Please pick a location on the map.");
@@ -41,27 +51,30 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     };
   }
 
+  // 4. Create Job
   const newJob = new Job({
     title, description, jobType, skillsRequired, 
     salary, durationType, startDate, endDate, 
     dailyWorkingHours, mode, workFrom, workTo, 
     noOfDays, noOfPeopleRequired, genderPreference, 
     paymentPerHour, pinCode,
-    
-    location: locationData, // <--- Save the object
+    location: locationData,
 
     postedBy: req.employerId,
-    postedByName: employer.name,
+    postedByName: employer.name, // ✅ NOW THIS WORKS
     postedByImage: employer.profilePicture || '', 
+    postedByCompany: employer.companyName || '',
   });
 
   const savedJob = await newJob.save();
   
-  // ... add to employer list ...
+  // 5. Link Job to Employer (MISSING IN YOUR CODE)
+  // Without this, the job won't show up in "My Jobs"
+  employer.createdJobs.push(savedJob._id);
+  await employer.save();
   
   res.status(201).json(savedJob);
 });
-
 
 
 export const getJob = expressAsyncHandler(async (req, res) => {

@@ -34,6 +34,7 @@ const JobSchema = new mongoose.Schema({
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Employer", required: true },
   postedByImage: { type: String }, 
   postedByName: { type: String },
+  postedByCompany:{type: String ,default: "" },
   postedAt: { type: Date, default: Date.now },
   expiringAt: { type: Date }, // optional
   status: { type: String, enum: ["open", "in-progress", "completed"], default: "open" },

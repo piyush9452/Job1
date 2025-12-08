@@ -164,7 +164,7 @@ export default function EmployerDashboard() {
                   {job.description}
                 </p>
                 <div className="mt-3 text-blue-600 font-medium text-sm">
-                  {job.location || "Remote"}
+                  {job.location.address || "Remote"}
                 </div>
               </motion.div>
             ))}
