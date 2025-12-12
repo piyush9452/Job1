@@ -177,7 +177,8 @@ export default function EditProfile() {
 
     try {
       const storedUser = JSON.parse(localStorage.getItem("userInfo"));
-      const { token, id } = storedUser;
+      const { token } = storedUser;
+      const id = storedUser?.userId;
 
       // Construct Payload exactly matching Schema
       const payload = {
@@ -509,7 +510,7 @@ export default function EditProfile() {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all flex justify-center items-center gap-2 disabled:opacity-70"
+              className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <Loader2 className="animate-spin" />
