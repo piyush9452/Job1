@@ -14,7 +14,7 @@ import {
   Building2,
   Globe,
 } from "lucide-react";
-import JobDetailsModal from "../components/JobDetailsModal"; // Assuming this exists
+import JobDetailsModal from "../components/JobDetailsModal";
 
 export default function Jobs() {
   const location = useLocation();
@@ -28,7 +28,7 @@ export default function Jobs() {
     stipend: 0,
     workFromHome: false,
     partTime: false,
-    jobType: "all", // 'daily', 'short-term', 'part-time', 'all'
+    jobType: "all",
   });
 
   const [allJobs, setAllJobs] = useState([]);
@@ -37,15 +37,11 @@ export default function Jobs() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
 
-  // --- 1. FETCH JOBS ---
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        // Fetching all jobs (Client-side filtering for now as per your logic)
         const res = await axios.get("https://jobone-mrpy.onrender.com/jobs");
-
-        // Support both response structures just in case
         const jobsData = res.data.data || res.data;
         setAllJobs(Array.isArray(jobsData) ? jobsData : []);
       } catch (err) {
@@ -58,9 +54,8 @@ export default function Jobs() {
     fetchJobs();
   }, []);
 
-  // --- 2. FILTER LOGIC (FIXED) ---
+  // Filter Logic
   const filteredJobs = allJobs.filter((job) => {
-    // Helper to handle the new Location Object vs Old String
     const jobLocation =
       typeof job.location === "object"
         ? job.location?.address?.toLowerCase() || ""
@@ -83,12 +78,9 @@ export default function Jobs() {
     const matchSalary = filters.stipend
       ? salary >= Number(filters.stipend)
       : true;
-
-    // Enhanced logic for checkboxes
     const matchWFH = filters.workFromHome
       ? mode === "online" || title.includes("remote")
       : true;
-
     const matchPartTime = filters.partTime ? jobType === "part-time" : true;
 
     return (
@@ -96,7 +88,6 @@ export default function Jobs() {
     );
   });
 
-  // --- HELPERS ---
   const formatTimeAgo = (dateString) => {
     if (!dateString) return "Recently";
     const diff = (Date.now() - new Date(dateString).getTime()) / 1000;
@@ -109,7 +100,6 @@ export default function Jobs() {
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-12 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        {/* HEADER & MOBILE FILTER TOGGLE */}
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
@@ -129,13 +119,11 @@ export default function Jobs() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
-          {/* --- SIDEBAR FILTERS --- */}
+          {/* Sidebar Filters */}
           <aside
-            className={`
-            fixed inset-y-0 left-0 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 p-6 overflow-y-auto
-            md:relative md:translate-x-0 md:w-1/4 md:shadow-none md:bg-transparent md:p-0 md:h-auto md:overflow-visible
-            ${showMobileFilters ? "translate-x-0" : "-translate-x-full"}
-          `}
+            className={`fixed inset-y-0 left-0 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 p-6 overflow-y-auto md:relative md:translate-x-0 md:w-1/4 md:shadow-none md:bg-transparent md:p-0 md:h-auto md:overflow-visible ${
+              showMobileFilters ? "translate-x-0" : "-translate-x-full"
+            }`}
           >
             <div className="flex justify-between items-center md:hidden mb-6">
               <h2 className="text-xl font-bold text-gray-800">Filters</h2>
@@ -148,7 +136,6 @@ export default function Jobs() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-8 md:sticky md:top-24">
-              {/* Search Inputs */}
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
@@ -191,10 +178,7 @@ export default function Jobs() {
                   </div>
                 </div>
               </div>
-
               <hr className="border-gray-100" />
-
-              {/* Salary Range */}
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4 block">
                   Min Salary (Monthly)
@@ -215,26 +199,12 @@ export default function Jobs() {
                   <span className="text-gray-400">₹2L+</span>
                 </div>
               </div>
-
               <hr className="border-gray-100" />
-
-              {/* Checkboxes */}
               <div className="space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer group">
-                  <div
-                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                      filters.workFromHome
-                        ? "bg-blue-600 border-blue-600"
-                        : "border-gray-300 bg-white group-hover:border-blue-400"
-                    }`}
-                  >
-                    {filters.workFromHome && (
-                      <span className="text-white text-xs font-bold">✓</span>
-                    )}
-                  </div>
                   <input
                     type="checkbox"
-                    className="hidden"
+                    className="accent-blue-600 w-4 h-4"
                     checked={filters.workFromHome}
                     onChange={(e) =>
                       setFilters({ ...filters, workFromHome: e.target.checked })
@@ -244,22 +214,10 @@ export default function Jobs() {
                     Work from home
                   </span>
                 </label>
-
                 <label className="flex items-center gap-3 cursor-pointer group">
-                  <div
-                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                      filters.partTime
-                        ? "bg-blue-600 border-blue-600"
-                        : "border-gray-300 bg-white group-hover:border-blue-400"
-                    }`}
-                  >
-                    {filters.partTime && (
-                      <span className="text-white text-xs font-bold">✓</span>
-                    )}
-                  </div>
                   <input
                     type="checkbox"
-                    className="hidden"
+                    className="accent-blue-600 w-4 h-4"
                     checked={filters.partTime}
                     onChange={(e) =>
                       setFilters({ ...filters, partTime: e.target.checked })
@@ -270,7 +228,6 @@ export default function Jobs() {
                   </span>
                 </label>
               </div>
-
               <button
                 onClick={() =>
                   setFilters({
@@ -289,7 +246,6 @@ export default function Jobs() {
             </div>
           </aside>
 
-          {/* --- MOBILE OVERLAY --- */}
           {showMobileFilters && (
             <div
               className="fixed inset-0 bg-black/20 z-40 md:hidden backdrop-blur-sm"
@@ -297,7 +253,7 @@ export default function Jobs() {
             />
           )}
 
-          {/* --- JOB LIST --- */}
+          {/* Job List */}
           <main className="flex-1 w-full">
             {loading ? (
               <div className="space-y-4">
@@ -327,12 +283,10 @@ export default function Jobs() {
             ) : (
               <div className="grid gap-4">
                 {filteredJobs.map((job) => {
-                  // Handle location object vs string
                   const displayLocation =
                     typeof job.location === "object"
                       ? job.location.address
                       : job.location || "Remote";
-
                   return (
                     <motion.div
                       key={job._id}
@@ -343,30 +297,25 @@ export default function Jobs() {
                       onClick={() => setSelectedJob(job)}
                     >
                       <div className="flex flex-col sm:flex-row justify-between gap-4">
-                        {/* Left: Info */}
                         <div className="flex gap-4">
-                          {/* Company Logo Placeholder */}
-                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center text-2xl shrink-0">
-                            {job.postedByName ? (
+                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center text-2xl shrink-0 text-blue-600 font-bold">
+                            {job.postedByCompany ? (
+                              job.postedByCompany.charAt(0)
+                            ) : job.postedByName ? (
                               job.postedByName.charAt(0)
                             ) : (
-                              <Building2 size={24} className="text-blue-400" />
+                              <Building2 size={24} />
                             )}
                           </div>
-
                           <div>
                             <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                               {job.title}
                             </h3>
                             <p className="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1">
-                              {job.companyName || "Company Confidential"}
-                              {/* <span className="w-1 h-1 rounded-full bg-gray-300 mx-1"></span> */}
+                              {job.postedByCompany ||
+                                job.postedByName ||
+                                "Company Confidential"}
                             </p>
-                            <p className="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1">
-                              {job.postedByName || "Company Confidential"}
-                              {/* <span className="w-1 h-1 rounded-full bg-gray-300 mx-1"></span> */}
-                            </p>
-
                             <div className="flex flex-wrap gap-3 text-sm text-gray-600">
                               <span className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
                                 <MapPin size={14} className="text-gray-400" />
@@ -392,8 +341,6 @@ export default function Jobs() {
                             </div>
                           </div>
                         </div>
-
-                        {/* Right: Metadata */}
                         <div className="flex flex-row sm:flex-col justify-between items-end sm:items-end min-w-fit">
                           <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
                             {formatTimeAgo(job.createdAt)}
@@ -412,7 +359,6 @@ export default function Jobs() {
         </div>
       </div>
 
-      {/* JOB DETAILS MODAL */}
       <AnimatePresence>
         {selectedJob && (
           <JobDetailsModal
