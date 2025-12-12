@@ -196,8 +196,6 @@ export const userDetails = expressAsyncHandler(async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     return res.status(200).json(user);
-
-
   
 })
 
