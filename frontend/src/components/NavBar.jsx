@@ -70,7 +70,7 @@ export default function Navbar() {
                     </Link>
 
                     {/* Job links only for users */}
-                    {!employerInfo && (
+                    {!employerInfo && !userInfo && (
                         <>
                             <Link to="/jobs" className="text-gray-700 hover:text-blue-700">
                                 Find part-time Jobs
@@ -125,6 +125,9 @@ export default function Navbar() {
                     ) : userInfo ? (
                         // ✅ User Logged In
                         <>
+                            <Link to="/jobs" className="text-gray-700 hover:text-blue-700">
+                                Find part-time Jobs
+                            </Link>
                             <div className="relative" ref={userMenuRef}>
                                 <FaUserCircle
                                     className="text-gray-700 hover:text-blue-700 text-3xl cursor-pointer"

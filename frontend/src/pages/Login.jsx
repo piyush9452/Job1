@@ -34,7 +34,7 @@ export default function Login() {
         console.log(data.token);
         localStorage.setItem("userInfo", JSON.stringify(data));
 
-        navigate("/");
+        navigate("/userdashboard");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");

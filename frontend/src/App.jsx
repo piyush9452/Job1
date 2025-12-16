@@ -23,6 +23,7 @@ import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
 import DocumentUploadPage from "./pages/EmployerDOC.jsx";
 import Applicants from "./pages/Applicants.jsx";
 import PublicProfile from "./pages/PublicProfile.jsx";
+import UserDashboard from "./pages/UserDashboard.jsx";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -95,6 +96,7 @@ function App() {
         <Route path="/employerdocupload" element={<DocumentUploadPage />} />
           <Route path="/profile/:userId" element={<PublicProfile />} />
           <Route path="/job/:id/applicants" element={<Applicants />} />
+          <Route path="/userdashboard" element={<UserDashboard />} />
       </Routes>
     </Router>
   );
