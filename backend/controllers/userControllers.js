@@ -180,10 +180,8 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(updatedUser);
+    return res.status(200).json(updatedUser);
 
-    console.error("Update error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
   
 });
 
@@ -197,9 +195,7 @@ export const userDetails = expressAsyncHandler(async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json(user);
-
-    res.status(500).json({ error: err.message });
+    return res.status(200).json(user);
   
 })
 

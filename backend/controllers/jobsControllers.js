@@ -268,3 +268,28 @@ export const getJobApplicants = expressAsyncHandler(async (req, res) => {
   // 4. Return the populated list
   res.status(200).json(job.applicants);
 });
+
+
+
+export const getJobsNearby = expressAsyncHandler(async (req, res) => {
+  const { lat, lng, dist } = req.query;
+
+  // Reality Check: We can't search without a center point
+  if (!lat || !lng) {
+    return res.status(400).json({ message: "Latitude and Longitude are required" });
+  }
+
+  const radiusKm = dist || 50; // Default to 50km if not sent
+  const radiusRadians = radiusKm / 6378.1; // Convert km to radians (Earth's radius)
+
+  const jobs = await Job.find({
+    location: {
+      $geoWithin: {
+        $centerSphere: [[parseFloat(lng), parseFloat(lat)], radiusRadians]
+      }
+    }
+  });
+  console.log(jobs);
+
+  res.status(200).json(jobs);
+});

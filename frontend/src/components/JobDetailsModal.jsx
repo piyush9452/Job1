@@ -1,173 +1,242 @@
 import React, { useState } from "react";
-import {
-    FaTimes,
-    FaMapMarkerAlt,
-    FaMoneyBillWave,
-    FaClock,
-    FaBuilding,
-} from "react-icons/fa";
-import { BsFacebook, BsWhatsapp, BsLinkedin } from "react-icons/bs";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import axios from "axios"; // Import axios
+import {
+  X,
+  MapPin,
+  Briefcase,
+  IndianRupee,
+  Clock,
+  Calendar,
+  Building2,
+  Users,
+  CheckCircle2,
+  Globe,
+  ArrowRight,
+  Share2,
+} from "lucide-react";
 
 export default function JobDetailsModal({ job, onClose }) {
-    if (!job) return null;
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+  if (!job) return null;
 
-    const userInfo = localStorage.getItem("userToken");
-    const recruiterName = userInfo?.name || "Recruiter";
+  const handleApplyClick = async () => {
+    // Make async
+    setLoading(true);
 
-    const [summaryPart, responsibilitiesPart] = job.description
-        ? job.description.split("Key Responsibilities:")
-        : ["", ""];
-    const jobSummary = summaryPart.replace("Job Summary:", "").trim();
-    const keyResponsibilities = responsibilitiesPart
-        ? responsibilitiesPart
-            .split("\n")
-            .filter((line) => line.trim().length > 0)
-            .map((r) => r.trim())
-        : [];
+    try {
+      const storedUserInfo = localStorage.getItem("userInfo");
+      if (!storedUserInfo) {
+        alert("Please log in to apply.");
+        navigate("/login");
+        return;
+      }
 
-    const handleApplyClick = () => {
-        navigate(`/apply/${job._id}`, { state: { job } });
-    };
+      const userInfo = JSON.parse(storedUserInfo);
+      const token = userInfo?.token;
 
-    return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4 py-100 sm:p-6 overflow-auto">
-            <div className="bg-white rounded-2xl shadow-lg w-full max-w-full sm:max-w-3xl relative p-6 sm:p-8 flex flex-col">
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-50"
-                    aria-label="Close job details"
+      if (!token) {
+        alert("Session expired. Please log in again.");
+        navigate("/login");
+        return;
+      }
+
+      // Make the POST request to apply
+      await axios.post(
+        "https://jobone-mrpy.onrender.com/applications",
+        { jobId: job._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("Application submitted successfully!");
+      onClose(); // Close modal on success
+    } catch (error) {
+      console.error("Application failed:", error);
+      alert(error.response?.data?.message || "Failed to apply for job.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const displayLocation =
+    typeof job.location === "object"
+      ? job.location.address
+      : job.location || "Remote";
+  const companyName =
+    job.postedByCompany || job.postedByName || "Company Confidential";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col relative"
+      >
+        {/* Sticky Header */}
+        <div className="flex justify-between items-start p-6 border-b border-gray-100 bg-white sticky top-0 z-10">
+          <div className="flex gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600 shadow-sm">
+              {companyName.charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+                {job.title}
+              </h2>
+              <div className="flex items-center gap-2 text-gray-500 font-medium mt-1">
+                <Building2 size={16} />
+                {companyName}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+                Salary
+              </p>
+              <p className="font-bold text-gray-900 flex items-center gap-1">
+                <IndianRupee size={14} />{" "}
+                {job.salary?.toLocaleString() || "N/A"}
+              </p>
+              <p className="text-xs text-blue-600 mt-1 font-medium">
+                ₹{job.paymentPerHour}/hr
+              </p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+                Type
+              </p>
+              <p className="font-bold text-gray-900 capitalize">
+                {job.jobType}
+              </p>
+              <p className="text-xs text-blue-600 mt-1 font-medium capitalize">
+                {job.mode}
+              </p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+                Schedule
+              </p>
+              <p className="font-bold text-gray-900">
+                {job.dailyWorkingHours} Hrs/Day
+              </p>
+              <p className="text-xs text-blue-600 mt-1 font-medium">
+                {job.noOfDays} Days
+              </p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+                Location
+              </p>
+              <p
+                className="font-bold text-gray-900 truncate"
+                title={displayLocation}
+              >
+                {displayLocation.split(",")[0]}
+              </p>
+              <p
+                className="text-xs text-gray-500 mt-1 truncate"
+                title={displayLocation}
+              >
+                {displayLocation}
+              </p>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Briefcase className="text-blue-500" size={20} /> Job Description
+            </h3>
+            <div className="text-gray-600 leading-relaxed whitespace-pre-wrap prose-sm">
+              {job.description}
+            </div>
+          </div>
+
+          {/* Dates & Openings */}
+          <div className="flex flex-wrap gap-6 bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+            <div>
+              <p className="text-xs font-bold text-blue-800 uppercase mb-1">
+                Start Date
+              </p>
+              <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Calendar size={16} className="text-blue-400" />
+                {new Date(job.startDate).toLocaleDateString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-blue-800 uppercase mb-1">
+                End Date
+              </p>
+              <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Calendar size={16} className="text-blue-400" />
+                {new Date(job.endDate).toLocaleDateString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-blue-800 uppercase mb-1">
+                Openings
+              </p>
+              <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Users size={16} className="text-blue-400" />
+                {job.noOfPeopleRequired} Spots
+              </p>
+            </div>
+          </div>
+
+          {/* Skills */}
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <CheckCircle2 className="text-green-500" size={20} /> Required
+              Skills
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {job.skillsRequired?.map((skill, index) => (
+                <span
+                  key={index}
+                  className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium border border-gray-200"
                 >
-                    <FaTimes size={20} />
-                </button>
-
-                {/* Job Header */}
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
-                    {job.title}
-                </h2>
-                <p className="text-gray-600 mb-4 flex items-center gap-2 text-sm sm:text-base">
-                    <FaBuilding className="text-gray-500" /> {recruiterName}
-                </p>
-
-                {/* Meta Info */}
-                <div className="flex flex-wrap items-center gap-4 text-gray-500 text-xs sm:text-sm mb-6">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        <FaMapMarkerAlt className="text-red-500" />{" "}
-                        {job.location || "Location not specified"}
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        <FaClock className="text-blue-500" />{" "}
-                        {job.jobType || "Type not specified"}
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        <FaMoneyBillWave className="text-green-500" /> ₹
-                        {job.salary ? job.salary.toLocaleString() : "Not specified"}
-                    </div>
-                </div>
-
-                {/* Job Description */}
-                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
-                    Job Description
-                </h3>
-                <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-line text-sm sm:text-base">
-                    {jobSummary || job.description || "No job description provided."}
-                </p>
-
-                {/* Key Responsibilities */}
-                {keyResponsibilities.length > 0 && (
-                    <>
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
-                            Key Responsibilities
-                        </h3>
-                        <ul className="list-disc ml-4 sm:ml-6 text-gray-700 space-y-1 sm:space-y-2 mb-4 text-sm sm:text-base">
-                            {keyResponsibilities.map((r, i) => (
-                                <li key={i}>{r}</li>
-                            ))}
-                        </ul>
-                    </>
-                )}
-
-                {/* Skills */}
-                {job.skillsRequired?.length > 0 && (
-                    <>
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
-                            Required Skills
-                        </h3>
-                        <div className="flex flex-wrap gap-2 mb-6">
-                            {job.skillsRequired.map((skill, index) => (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm"
-                                >
                   {skill}
                 </span>
-                            ))}
-                        </div>
-                    </>
-                )}
-
-                {/* Share Section */}
-                <h4 className="font-semibold text-gray-800 mb-3 text-sm sm:text-base">
-                    Share This Job
-                </h4>
-                <div className="flex flex-wrap gap-3 mb-6">
-                    <a
-                        href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-[#1877F2] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm hover:bg-[#0f6ae1]"
-                    >
-                        <BsFacebook size={16} />{" "}
-                        <span className="hidden sm:inline">Facebook</span>
-                    </a>
-                    <a
-                        href={`https://wa.me/?text=Check this job: ${window.location.href}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-[#25D366] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm hover:bg-[#1ebe5a]"
-                    >
-                        <BsWhatsapp size={16} />{" "}
-                        <span className="hidden sm:inline">WhatsApp</span>
-                    </a>
-                    <a
-                        href={`https://www.linkedin.com/shareArticle?mini=true&url=${window.location.href}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-[#0A66C2] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm hover:bg-[#0959a8]"
-                    >
-                        <BsLinkedin size={16} />{" "}
-                        <span className="hidden sm:inline">LinkedIn</span>
-                    </a>
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
-                    <button
-                        onClick={onClose}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg w-full sm:w-auto"
-                    >
-                        Close
-                    </button>
-
-                    {/* Redirect to Apply Page */}
-                    <button
-                        onClick={handleApplyClick}
-                        disabled={loading}
-                        className={`${
-                            loading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700"
-                        } text-white px-5 py-2 rounded-lg w-full sm:w-auto`}
-                    >
-                        {loading ? "Applying..." : "Apply Now"}
-                    </button>
-                </div>
+              ))}
             </div>
+          </div>
         </div>
-    );
+
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-4">
+          <button
+            onClick={handleApplyClick}
+            disabled={loading}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-blue-200 transition-all transform active:scale-95 flex justify-center items-center gap-2"
+          >
+            {loading ? (
+              "Processing..."
+            ) : (
+              <>
+                Apply Now <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+          <button className="p-3.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-colors">
+            <Share2 size={20} />
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
 }
