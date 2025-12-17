@@ -30,7 +30,7 @@ const UserVerifyOTP = () => {
       localStorage.setItem("userInfo", JSON.stringify(res.data));
       console.log(res.data.token);
       setMessage("✅ Account verified successfully! Redirecting...");
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/editprofile2"), 1500);
     } catch (err) {
       setMessage(
         err.response?.data?.message || "❌ Invalid or expired OTP. Try again."

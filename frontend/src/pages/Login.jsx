@@ -144,12 +144,12 @@ export default function Login() {
         {/* Register Links */}
         <p className="text-center text-gray-600 text-sm mt-4">
           New to Job1? Register{" "}
-          <Link to="/userregister" className="text-blue-600 hover:underline">
+          <Link to="/register" className="text-blue-600 hover:underline">
             (User
           </Link>{" "}
           /{" "}
           <Link
-            to="/employerregister"
+            to="/employerregisteroption"
             className="text-blue-600 hover:underline"
           >
             Employer)

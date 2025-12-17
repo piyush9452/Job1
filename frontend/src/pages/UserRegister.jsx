@@ -11,6 +11,39 @@ export default function UserRegister() {
     const [password, setPassword] = useState("");
     const [phone, setPhone] = useState("");
     const [error, setError] = useState("");
+    const [countryCode, setCountryCode] = useState("+91");
+    const countryCodes = [
+        { name: "India", code: "+91", flag: "🇮🇳" },
+        { name: "United States", code: "+1", flag: "🇺🇸" },
+        { name: "United Kingdom", code: "+44", flag: "🇬🇧" },
+        { name: "Canada", code: "+1", flag: "🇨🇦" },
+        { name: "Australia", code: "+61", flag: "🇦🇺" },
+
+        { name: "Germany", code: "+49", flag: "🇩🇪" },
+        { name: "France", code: "+33", flag: "🇫🇷" },
+        { name: "Italy", code: "+39", flag: "🇮🇹" },
+        { name: "Spain", code: "+34", flag: "🇪🇸" },
+        { name: "Netherlands", code: "+31", flag: "🇳🇱" },
+
+        { name: "Brazil", code: "+55", flag: "🇧🇷" },
+        { name: "Mexico", code: "+52", flag: "🇲🇽" },
+        { name: "Argentina", code: "+54", flag: "🇦🇷" },
+        { name: "Chile", code: "+56", flag: "🇨🇱" },
+
+        { name: "China", code: "+86", flag: "🇨🇳" },
+        { name: "Japan", code: "+81", flag: "🇯🇵" },
+        { name: "South Korea", code: "+82", flag: "🇰🇷" },
+        { name: "Singapore", code: "+65", flag: "🇸🇬" },
+
+        { name: "United Arab Emirates", code: "+971", flag: "🇦🇪" },
+        { name: "Saudi Arabia", code: "+966", flag: "🇸🇦" },
+        { name: "Israel", code: "+972", flag: "🇮🇱" },
+
+        { name: "South Africa", code: "+27", flag: "🇿🇦" },
+        { name: "Nigeria", code: "+234", flag: "🇳🇬" },
+        { name: "Egypt", code: "+20", flag: "🇪🇬" },
+    ];
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -78,10 +111,21 @@ export default function UserRegister() {
                     {/* Phone */}
                     <div>
                         <label className="block mb-1 text-gray-600">Phone Number</label>
+                        <select
+                            value={countryCode}
+                            onChange={(e) => setCountryCode(e.target.value)}
+                            className="w-25  border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            {countryCodes.map((country) => (
+                                <option key={country.name} value={country.code}>
+                                    {country.flag} {country.code}
+                                </option>
+                            ))}
+                        </select>
                         <input
                             type="tel"
                             placeholder="Enter your phone number"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
+                            className=" mx-6 px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             required
@@ -91,7 +135,7 @@ export default function UserRegister() {
                     {/* Submit */}
                     <button
                         type="submit"
-                        className="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                        className=" w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                     >
                         Register
                     </button>

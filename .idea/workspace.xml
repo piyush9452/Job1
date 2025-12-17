@@ -5,15 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="337125a7-a3d3-40d4-80ae-af0fda59f289" name="Changes" comment="changes made">
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/UserDashboard.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/userdashboard/FeaturedJobs.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/userdashboard/Hero.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/userdashboard/JobCategories.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/EditProfile2.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerEditProfile2.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerRegisterOption.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/routes/AuthHome.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/FeaturedJobs.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/FeaturedJobs.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerOTP.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerOTP.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/EmployerRegister.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/EmployerRegister.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/UserOTP.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/UserOTP.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/UserRegister.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/UserRegister.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -187,7 +189,9 @@
       <workItem from="1765781036840" duration="193000" />
       <workItem from="1765795843813" duration="7933000" />
       <workItem from="1765863358259" duration="33000" />
-      <workItem from="1765879294109" duration="1513000" />
+      <workItem from="1765879294109" duration="7940000" />
+      <workItem from="1765951304609" duration="34000" />
+      <workItem from="1765966742973" duration="7643000" />
     </task>
     <task id="LOCAL-00001" summary="changes made">
       <option name="closed" value="true" />
@@ -477,7 +481,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765197338838</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="changes made">
+      <option name="closed" value="true" />
+      <created>1765880862778</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1765880862778</updated>
+    </task>
+    <option name="localTasksCounter" value="38" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
