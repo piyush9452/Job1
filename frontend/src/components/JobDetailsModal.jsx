@@ -55,7 +55,8 @@ export default function JobDetailsModal({ job, onClose }) {
       onClose(); // Close modal on success
     } catch (error) {
       console.error("Application failed:", error);
-      alert(error.response?.data?.message || "Failed to apply for job.");
+      console.log(error.response?.data?.message || "Failed to apply for job.");
+
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,8 @@ import Hero from "../userdashboard/Hero";
 import JobCategories from "../userdashboard/JobCategories";
 import FeaturedJobs from "../userdashboard/FeaturedJobs";
 import CompanyCard from "../components/CompanyCard";
+import JobsAroundMe from "../components/JobsAroundMe";
+
 
 export default function Home() {
     return (
@@ -14,6 +16,7 @@ export default function Home() {
             <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10">
                 <JobCategories />
             </div>
+            <JobsAroundMe />
             <FeaturedJobs />
 
             {/* Footer */}
