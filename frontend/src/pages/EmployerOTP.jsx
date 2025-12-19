@@ -32,7 +32,7 @@ const VerifyOTP = () => {
       console.log(res.data.token);
 
       setMessage("✅ Verification successful! Redirecting...");
-      setTimeout(() => navigate("employereditprofile2"), 1500);
+      setTimeout(() => navigate("/employereditprofile2"), 1500);
     } catch (err) {
       setMessage(
         err.response?.data?.message || "❌ Invalid or expired OTP. Try again."
