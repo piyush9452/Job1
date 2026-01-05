@@ -1,81 +1,73 @@
 import React from "react";
+import { motion } from "framer-motion";
+import { FaCode, FaChartLine, FaPalette, FaBullhorn, FaHeadset, FaMicrochip } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const categories = [
-    { name: "Accounting / Finance", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 1C9.243 1 7 3.243 7 6v1H5v4h2v10h10V11h2V7h-2V6c0-2.757-2.243-5-5-5zm-1 5h2c.552 0 1 .449 1 1v1H10V7c0-.551.448-1 1-1z"/>
-            </svg>
-        )},
-    { name: "Marketing", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M4 4v16h2v-7h3l5 7h2l-5-7c2.757 0 5-2.243 5-5s-2.243-5-5-5H4z"/>
-            </svg>
-        )},
-    { name: "Design", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2l4 8H8l4-8zm0 20l-4-8h8l-4 8zM2 12l8-4v8l-8-4zm20 0l-8 4V8l8 4z"/>
-            </svg>
-        )},
-    { name: "Development", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 17l-5-5 5-5v10zm8-10l5 5-5 5V7z"/>
-            </svg>
-        )},
-    { name: "Human Resource", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4 8 5.79 8 8s1.79 4 4 4zm-7 8c0-2.67 5.33-4 7-4s7 1.33 7 4v2H5v-2z"/>
-            </svg>
-        )},
-    { name: "Automotive Jobs", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M5 11l1.5-4.5h11L19 11H5zm1 2h12v5H6v-5zm3 6a1.5 1.5 0 11-.001-2.999A1.5 1.5 0 019 19zm6 0a1.5 1.5 0 11-.001-2.999A1.5 1.5 0 0115 19z"/>
-            </svg>
-        )},
-    { name: "Customer Service", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 1a11 11 0 00-11 11v5a4 4 0 004 4h2v-8H5v-1a7 7 0 1114 0v1h-2v8h2a4 4 0 004-4v-5a11 11 0 00-11-11z"/>
-            </svg>
-        )},
-    { name: "Health and Care", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M21 7h-6V3H9v4H3v6h6v8h6v-8h6V7z"/>
-            </svg>
-        )},
-    { name: "Project Management", icon: (
-            <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 11h5v-2h-5V6h-2v5H6v2h5v5h2z"/>
-            </svg>
-        )},
+    { name: "Development", count: "1.2k+ Jobs", icon: FaCode, color: "from-blue-500 to-cyan-400", size: "col-span-2 md:col-span-2" },
+    { name: "Marketing", count: "850 Jobs", icon: FaBullhorn, color: "from-purple-500 to-pink-500", size: "col-span-2 md:col-span-1" },
+    { name: "Design", count: "640 Jobs", icon: FaPalette, color: "from-orange-400 to-red-500", size: "col-span-2 md:col-span-1" },
+    { name: "Finance", count: "420 Jobs", icon: FaChartLine, color: "from-emerald-400 to-teal-500", size: "col-span-2 md:col-span-2" },
+    { name: "Tech Support", count: "310 Jobs", icon: FaHeadset, color: "from-indigo-500 to-blue-600", size: "col-span-2 md:col-span-1" },
+    { name: "AI & ML", count: "95 Jobs", icon: FaMicrochip, color: "from-amber-400 to-orange-600", size: "col-span-2 md:col-span-1" },
 ];
 
 export default function JobCategories() {
     const navigate = useNavigate();
-
     const handleCategoryClick = (category) => {
         navigate(`/jobs?title=${encodeURIComponent(category)}`);
     };
-
     return (
-        <section className="py-16 bg-white">
-            <div className="max-w-6xl mx-auto px-6 text-center">
-                <h2 className="text-3xl font-bold text-gray-900">Popular Job Categories</h2>
-                <p className="text-gray-500 mt-2">2020 jobs live - 293 added today.</p>
+        <section className="py-24 bg-[#F8FAFC]">
+            <div className="max-w-6xl mx-auto px-6">
 
-                <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+                    <div>
+                        <span className="text-blue-600 font-bold tracking-widest uppercase text-xs">Categories</span>
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 mt-2">
+                            Browse by <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Specialty</span>
+                        </h2>
+                    </div>
+                    <button className="text-blue-600 font-semibold hover:underline flex items-center gap-2">
+                        View all 24+ categories
+                    </button>
+                </div>
+
+                {/* Bento Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {categories.map((cat, index) => (
-                        <div
+                        <motion.div
                             key={index}
                             onClick={() => handleCategoryClick(cat.name)}
-                            className="group flex items-center space-x-4 p-6 border rounded-lg shadow-sm hover:shadow-lg transition duration-300 bg-white hover:bg-indigo-600 cursor-pointer"
+                            whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                            className={`${cat.size} group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-sm border border-slate-100 cursor-pointer`}
                         >
-                            <div className="p-3 bg-indigo-50 rounded-lg ">
-                                {cat.icon}
+                            {/* Decorative Background Glow */}
+                            <div className={`absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${cat.color} opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-20`} />
+
+                            <div className="relative z-10 flex flex-col h-full justify-between">
+                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg`}>
+                                    <cat.icon size={24} />
+                                </div>
+
+                                <div className="mt-8">
+                                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                        {cat.name}
+                                    </h3>
+                                    <p className="text-slate-500 font-medium text-sm mt-1">
+                                        {cat.count}
+                                    </p>
+                                </div>
                             </div>
-                            <h3 className="text-lg font-medium text-gray-800 group-hover:text-white transition">
-                                {cat.name}
-                            </h3>
-                        </div>
+
+                            {/* Arrow that appears on hover */}
+                            <div className="absolute bottom-8 right-8 opacity-0 translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
+                                <div className="p-2 rounded-full bg-slate-50 text-slate-400">
+                                    <FaCode className="rotate-45" />
+                                </div>
+                            </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>

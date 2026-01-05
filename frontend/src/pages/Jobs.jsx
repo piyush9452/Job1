@@ -31,6 +31,7 @@ export default function Jobs() {
     jobType: "all",
   });
 
+
   const [allJobs, setAllJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
