@@ -109,21 +109,7 @@ export default function Home() {
           </div>
 
           <div className="max-w-7xl mx-auto relative z-10">
-            <div className="text-center mb-16">
-              <span className="inline-flex items-center gap-1.5 text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full mb-4 border border-blue-100 shadow-sm">
-                <Sparkles size={12} className="text-blue-500" />
-                Discover
-              </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4 leading-tight">
-                Popular Categories
-              </h2>
-              <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
-                Explore thousands of jobs across trending sectors and find the
-                perfect role that matches your skills.
-              </p>
-            </div>
-
-            <JobCategories />
+              <JobCategories />
           </div>
         </section>
 

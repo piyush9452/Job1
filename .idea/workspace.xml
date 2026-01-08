@@ -5,17 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="337125a7-a3d3-40d4-80ae-af0fda59f289" name="Changes" comment="changes made">
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/CTA.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/LiveTicker.jsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/ProcessBento.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/CompanyCard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/CompanyCard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/Hero.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Hero.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/JobCategories.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/JobCategories.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/Testimonials.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Testimonials.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/VideoSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/VideoSection.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Home.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Home.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Jobs.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Jobs.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/UserDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/UserDashboard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/userdashboard/JobCategories.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/userdashboard/JobCategories.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -200,7 +192,11 @@
       <workItem from="1767065236053" duration="373000" />
       <workItem from="1767181487454" duration="3042000" />
       <workItem from="1767235562679" duration="259000" />
-      <workItem from="1767615179335" duration="3681000" />
+      <workItem from="1767615179335" duration="5509000" />
+      <workItem from="1767698667571" duration="144000" />
+      <workItem from="1767785137408" duration="5838000" />
+      <workItem from="1767839153529" duration="48000" />
+      <workItem from="1767874407372" duration="2139000" />
     </task>
     <task id="LOCAL-00001" summary="changes made">
       <option name="closed" value="true" />
@@ -522,7 +518,15 @@
       <option name="project" value="LOCAL" />
       <updated>1766145731246</updated>
     </task>
-    <option name="localTasksCounter" value="41" />
+    <task id="LOCAL-00041" summary="changes made">
+      <option name="closed" value="true" />
+      <created>1767623344002</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1767623344002</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
