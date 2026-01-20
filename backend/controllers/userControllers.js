@@ -2,6 +2,7 @@ import User from "../models/users.js";
 import jwt from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
 // import errorHandler from "../middleware/errorhandler.js";
+import { OAuth2Client } from 'google-auth-library';
 import bcrypt from "bcrypt";
 import admin from 'firebase-admin';
 
@@ -9,7 +10,7 @@ import admin from 'firebase-admin';
 // admin.initializeApp({
 //   credential: admin.credential.cert(require('./path/to/your/serviceAccountKey.json'))
 // });
-
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Create a new user
 import UserOTP from '../models/userVerification.js'; // <-- Import the new model
 import sendEmail from '../utils/emailVerification.js';
@@ -202,3 +203,61 @@ export const userDetails = expressAsyncHandler(async (req, res) => {
 
 
 
+export const googleLogin = expressAsyncHandler(async (req, res) => {
+  const { token: googleToken } = req.body;
+
+  // 1. Verify Google Token
+  const ticket = await client.verifyIdToken({
+    idToken: googleToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  
+  const { email, name, picture, sub: googleId } = ticket.getPayload();
+
+  // 2. Check if user exists
+  let user = await User.findOne({ email });
+
+  if (user) {
+    // LOGIN EXISTING USER
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+    
+    // Update profile pic if missing
+    if (!user.profilePicture) {
+        user.profilePicture = picture;
+        await user.save();
+    }
+
+    res.status(200).json({
+      message: "Google Login Successful",
+      token,
+      userId: user._id, // Ensure this matches what your frontend expects
+      user: { id: user._id, name: user.name, email: user.email }
+    });
+
+  } else {
+    // REGISTER NEW USER
+    // Note: You MUST make 'password' and 'phone' optional in your Schema for this to work
+    // or generate dummy values.
+    const randomPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture: picture,
+      isVerified: true, // Google emails are verified
+      authProvider: 'google' // Optional: track that they used google
+    });
+
+    const savedUser = await newUser.save();
+    const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+    res.status(201).json({
+      message: "Google Registration Successful",
+      token,
+      userId: savedUser._id,
+      user: { id: savedUser._id, name, email }
+    });
+  }
+});

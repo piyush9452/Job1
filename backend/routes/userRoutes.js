@@ -14,4 +14,6 @@ router.get("/:id", userDetails);
 
 router.post("/verifyotp",verifyUserOTP);
 
+router.post("/google-login", googleLogin);
+
 export default router;
