@@ -218,26 +218,27 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
   let user = await User.findOne({ email });
 
   if (user) {
-    // LOGIN EXISTING USER
+    // --- SCENARIO 1: EXISTING USER (LOGIN) ---
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
     
-    // Update profile pic if missing
     if (!user.profilePicture) {
         user.profilePicture = picture;
         await user.save();
     }
 
+    // Check if they have a phone number and skills
+    const isProfileComplete = user.phone && user.skills && user.skills.length > 0;
+
     res.status(200).json({
       message: "Google Login Successful",
       token,
-      userId: user._id, // Ensure this matches what your frontend expects
-      user: { id: user._id, name: user.name, email: user.email }
+      userId: user._id,
+      user: { id: user._id, name: user.name, email: user.email },
+      isProfileComplete: !!isProfileComplete // Send true/false
     });
 
   } else {
-    // REGISTER NEW USER
-    // Note: You MUST make 'password' and 'phone' optional in your Schema for this to work
-    // or generate dummy values.
+    // --- SCENARIO 2: NEW USER (REGISTER) ---
     const randomPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
@@ -246,18 +247,23 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
       email,
       password: hashedPassword,
       profilePicture: picture,
-      isVerified: true, // Google emails are verified
-      authProvider: 'google' // Optional: track that they used google
+      isVerified: true, 
+      authProvider: 'google',
+      phone: undefined // Explicitly undefined to avoid unique index issues if sparse
     });
 
     const savedUser = await newUser.save();
+    
     const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
 
+    // FIX: A new Google user is ALWAYS incomplete (no phone/skills yet)
+    // We send 'false' so frontend redirects to Edit Profile
     res.status(201).json({
       message: "Google Registration Successful",
       token,
       userId: savedUser._id,
-      user: { id: savedUser._id, name, email }
+      user: { id: savedUser._id, name, email },
+      isProfileComplete: false // <--- This forces the redirect
     });
   }
 });

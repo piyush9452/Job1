@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phone: { type: Number,unique: true },
+  phone: { type: Number, unique: true, sparse: true},
   isVerified: { type: Boolean, default: false },
   skills: [String],
   experience:[{
@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
   appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }], // jobs applied to
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  isProfileComplete:{ type: Boolean,default:false},
   resume: { type: String },
   education:[{
     degree: { type: String },

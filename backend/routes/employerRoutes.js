@@ -1,5 +1,5 @@
 import express from "express";
-import { registerEmployer,loginEmployer,verifyOTP,getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,getViewableDocumentUrl,getDownloadableDocumentUrl,continueWithGoogle,completeGoogleSignup} from "../controllers/employerControllers.js";
+import { registerEmployer,loginEmployer,verifyOTP,getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl} from "../controllers/employerControllers.js";
 import { getEmployerCreatedJobs } from "../controllers/jobsControllers.js";
 import { body } from 'express-validator';
 import protect from "../middleware/authorization.js";
@@ -34,9 +34,7 @@ router.get("/documentViewUrl", protectEmployer,getViewableDocumentUrl);
 
 router.get("/documentDownloadUrl", protectEmployer,getDownloadableDocumentUrl);
 
-router.post('/google-check', continueWithGoogle);
-
-router.post('/google-complete', completeGoogleSignup);
+router.post('/google-login', googleLoginEmployer);
 
 router.get("/createdJobs", protectEmployer,getEmployerCreatedJobs);
 
