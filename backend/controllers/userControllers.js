@@ -168,7 +168,7 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
     const userId = req.params.id; // get user id from URL
     const updates = req.body;     // only the fields provided
 
-    const notAllowed = ["email", "password", "phone"]; 
+    const notAllowed = ["email", "password"]; 
     notAllowed.forEach(field => delete updates[field]);
 
     const updatedUser = await User.findByIdAndUpdate(
