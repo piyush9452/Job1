@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
+import { GoogleLogin } from "@react-oauth/google";
 import login from "../assets/login.jpg"; // adjust path to your actual file
+import { useLocation } from "react-router-dom"; // Import this
+import { AlertTriangle, X } from "lucide-react"; // Import icons
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,6 +13,57 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const endpoint =
+        activeTab === "employer"
+          ? "https://jobone-mrpy.onrender.com/employer/google-login"
+          : "https://jobone-mrpy.onrender.com/user/google-login";
+
+      const { data } = await axios.post(endpoint, {
+        token: credentialResponse.credential,
+      });
+
+      // ---------------------------------------------------------
+      // EMPLOYER LOGIC
+      // ---------------------------------------------------------
+      if (activeTab === "employer") {
+        // 1. Strict LocalStorage Logic (As requested)
+        localStorage.setItem("employerToken", data.token);
+        localStorage.setItem("employerInfo", JSON.stringify(data));
+        console.log("Employer Data Saved:", data);
+
+        // 2. Check Profile Completion
+        if (data.isProfileComplete === false) {
+          // Redirect to Edit Profile with Popup
+          navigate("/employereditprofile", { state: { showWarning: true } });
+        } else {
+          // Redirect to Dashboard
+          navigate("/employerdashboard");
+        }
+      }
+      // ---------------------------------------------------------
+      // USER LOGIC
+      // ---------------------------------------------------------
+      else {
+        // 1. Strict LocalStorage Logic (As requested)
+        localStorage.setItem("userToken", data.token);
+        localStorage.setItem("userInfo", JSON.stringify(data));
+        console.log("User Data Saved:", data);
+
+        // 2. Check Profile Completion
+        if (data.isProfileComplete === false) {
+          navigate("/editprofile", { state: { showWarning: true } });
+        } else {
+          navigate("/"); // Or "/userdashboard" if that route exists
+        }
+      }
+    } catch (err) {
+      console.error("Google Login Error:", err);
+      setError("Google Login failed. Please try again.");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,10 +93,6 @@ export default function Login() {
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
-  };
-
-  const handleGoogleLogin = () => {
-    alert("Google login coming soon!");
   };
 
   return (
@@ -76,17 +126,15 @@ export default function Login() {
         </div>
 
         {/* Google Login (for both user and employer) */}
-        <button
-          onClick={handleGoogleLogin}
-          className="flex items-center justify-center w-full py-2 border rounded-md border-gray-300 hover:bg-gray-50 transition"
-        >
-          <FcGoogle className="text-xl mr-2" />
-          <span className="text-gray-700 text-sm font-medium">
-            {activeTab === "employer"
-              ? "Continue with Google (Employer)"
-              : "Continue with Google"}
-          </span>
-        </button>
+        <div className="flex justify-center w-full mb-4">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google Login Failed")}
+            theme="outline"
+            size="large"
+            width="320" // Adjust width to match your form
+          />
+        </div>
 
         <div className="flex items-center my-4">
           <hr className="flex-grow border-gray-300" />
