@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FcGoogle } from "react-icons/fc";
-import { GoogleLogin } from "@react-oauth/google";
-import login from "../assets/login.jpg"; // adjust path to your actual file
-import { useLocation } from "react-router-dom"; // Import this
-import { AlertTriangle, X } from "lucide-react"; // Import icons
+import { GoogleLogin } from "@react-oauth/google"; // Import Google Component
+import login from "../assets/login.jpg";
+import NetworkBackground from "../components/NetworkBackground";
+import BackgroundJoin from "../components/BackgroundJoin";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,7 +12,9 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // Added loading state
 
+  // --- GOOGLE LOGIN HANDLER ---
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const endpoint =
@@ -29,17 +30,15 @@ export default function Login() {
       // EMPLOYER LOGIC
       // ---------------------------------------------------------
       if (activeTab === "employer") {
-        // 1. Strict LocalStorage Logic (As requested)
+        // 1. Strict LocalStorage Logic
         localStorage.setItem("employerToken", data.token);
         localStorage.setItem("employerInfo", JSON.stringify(data));
         console.log("Employer Data Saved:", data);
 
         // 2. Check Profile Completion
         if (data.isProfileComplete === false) {
-          // Redirect to Edit Profile with Popup
           navigate("/employereditprofile", { state: { showWarning: true } });
         } else {
-          // Redirect to Dashboard
           navigate("/employerdashboard");
         }
       }
@@ -47,7 +46,7 @@ export default function Login() {
       // USER LOGIC
       // ---------------------------------------------------------
       else {
-        // 1. Strict LocalStorage Logic (As requested)
+        // 1. Strict LocalStorage Logic
         localStorage.setItem("userToken", data.token);
         localStorage.setItem("userInfo", JSON.stringify(data));
         console.log("User Data Saved:", data);
@@ -56,7 +55,7 @@ export default function Login() {
         if (data.isProfileComplete === false) {
           navigate("/editprofile", { state: { showWarning: true } });
         } else {
-          navigate("/"); // Or "/userdashboard" if that route exists
+          navigate("/");
         }
       }
     } catch (err) {
@@ -65,41 +64,41 @@ export default function Login() {
     }
   };
 
+  // --- MANUAL LOGIN HANDLER ---
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      // backend endpoint based on active tab
       const endpoint =
         activeTab === "employer"
           ? "https://jobone-mrpy.onrender.com/employer/login"
           : "https://jobone-mrpy.onrender.com/user/login";
 
       const { data } = await axios.post(endpoint, { email, password });
-      console.log(data); // ✅ check what backend returns
+      console.log("Manual Login Data:", data);
 
-      // store different keys based on user type
       if (activeTab === "employer") {
-        localStorage.setItem("employerToken", data.token); // add userId for consistency
+        localStorage.setItem("employerToken", data.token);
         localStorage.setItem("employerInfo", JSON.stringify(data));
-        console.log("this is required data");
-        navigate("/employerdashboard"); // redirect to employer dashboard
+        navigate("/employerdashboard");
       } else {
         localStorage.setItem("userToken", data.token);
-        console.log(data.token);
         localStorage.setItem("userInfo", JSON.stringify(data));
-
-        navigate("/userdashboard");
+        navigate("/");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div
       className="relative flex items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat px-4"
-      style={{ backgroundImage: `url(${login})` }}
+      style={{ backgroundColor: `transparent` }}
     >
+      <BackgroundJoin radius={50} force={-1} />
       <div className="w-full max-w-sm bg-white shadow-xl rounded-2xl p-6">
         {/* Tabs */}
         <div className="flex justify-around border-b mb-5">
@@ -125,14 +124,15 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Google Login (for both user and employer) */}
+        {/* --- GOOGLE LOGIN BUTTON --- */}
         <div className="flex justify-center w-full mb-4">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setError("Google Login Failed")}
             theme="outline"
             size="large"
-            width="320" // Adjust width to match your form
+            width="320" // Adjusts width to fit container
+            text="continue_with"
           />
         </div>
 
@@ -183,21 +183,26 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
+            disabled={loading}
+            className="w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition disabled:bg-blue-400"
           >
-            {activeTab === "employer" ? "Login as Employer" : "Login"}
+            {loading
+              ? "Logging in..."
+              : activeTab === "employer"
+                ? "Login as Employer"
+                : "Login"}
           </button>
         </form>
 
         {/* Register Links */}
         <p className="text-center text-gray-600 text-sm mt-4">
           New to Job1? Register{" "}
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to="/userregister" className="text-blue-600 hover:underline">
             (User
           </Link>{" "}
           /{" "}
           <Link
-            to="/employerregisteroption"
+            to="/employerregister"
             className="text-blue-600 hover:underline"
           >
             Employer)
