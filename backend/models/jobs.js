@@ -20,7 +20,7 @@ const JobSchema = new mongoose.Schema({
   },// city/area
   pinCode: { type: Number }, // optional
   salary: { type: Number, required: true }, // payment for the job
-  durationType: { type: String, enum: ["Daily", "Weekly", "Monthly"], required: true },
+  durationType: { type: String, enum: ["Day", "Week", "Month"], required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
   dailyWorkingHours: { type: Number, required: true },

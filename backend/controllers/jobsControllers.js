@@ -13,14 +13,24 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     throw new Error(errors.array()[0].msg);
   }
 
-  // 2. Fetch the Employer (MISSING IN YOUR CODE)
-  // We need this to get the name/image AND to push the job ID later
-  const employer = await Employer.findById(req.employerId).select('name profilePicture createdJobs');
+  // 2. Fetch the Employer
+  const employer = await Employer.findById(req.employerId);
 
   if (!employer) {
     res.status(404);
     throw new Error('Employer not found');
   }
+
+  // --- STRICT PROFILE CHECK ---
+  // Define what "Fully Completed" means for your platform
+  const requiredFields = ['companyName', 'phone', 'location', 'industry', 'description', 'companyWebsite'];
+  const missingFields = requiredFields.filter(field => !employer[field] || employer[field].trim() === '');
+
+  if (missingFields.length > 0) {
+    res.status(403); // Forbidden
+    throw new Error(`You must complete your profile before posting a job. Missing: ${missingFields.join(', ')}`);
+  }
+  // -----------------------------
 
   const { 
     title, description, jobType, skillsRequired, 
@@ -31,7 +41,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     latitude, longitude, address 
   } = req.body;
 
-  // 3. Construct Location
+  // 3. Construct Location (Same as before)
   let locationData;
   if (latitude && longitude) {
     locationData = {
@@ -61,20 +71,20 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     location: locationData,
 
     postedBy: req.employerId,
-    postedByName: employer.name, // ✅ NOW THIS WORKS
+    postedByName: employer.name, 
     postedByImage: employer.profilePicture || '', 
-    postedByCompany: employer.companyName || '',
+    postedByCompany: employer.companyName, // Now guaranteed to exist
   });
 
   const savedJob = await newJob.save();
   
-  // 5. Link Job to Employer (MISSING IN YOUR CODE)
-  // Without this, the job won't show up in "My Jobs"
+  // 5. Link to Employer
   employer.createdJobs.push(savedJob._id);
   await employer.save();
   
   res.status(201).json(savedJob);
 });
+
 
 
 export const getJob = expressAsyncHandler(async (req, res) => {
