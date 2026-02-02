@@ -73,10 +73,10 @@ export default function Navbar() {
                     {!employerInfo && !userInfo && (
                         <>
                             <Link to="/jobs" className="text-gray-700 hover:text-blue-700">
-                                Find part-time Jobs
+                                Find Part-time Jobs
                             </Link>
                             <Link to="/createjob" className="text-gray-700 hover:text-blue-700">
-                                Post part-time Jobs
+                                Post Part-time Jobs
                             </Link>
                         </>
                     )}
@@ -88,7 +88,7 @@ export default function Navbar() {
                                 to="/createjob"
                                 className="text-gray-700 hover:text-blue-700"
                             >
-                                Post a Job
+                                Post a Part-time  Job
                             </Link>
 
                             <div className="relative" ref={userMenuRef}>
@@ -126,7 +126,7 @@ export default function Navbar() {
                         // ✅ User Logged In
                         <>
                             <Link to="/jobs" className="text-gray-700 hover:text-blue-700">
-                                Find part-time Jobs
+                                Find Part-time Jobs
                             </Link>
                             <div className="relative" ref={userMenuRef}>
                                 <FaUserCircle
