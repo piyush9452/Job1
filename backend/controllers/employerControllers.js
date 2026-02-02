@@ -443,78 +443,67 @@ export const continueWithGoogle = expressAsyncHandler(async (req, res) => {
 
 // Ensure other imports (Employer, jwt, expressAsyncHandler, etc.) are present
 
-
 export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
   const { token: googleToken } = req.body;
 
-  if (!googleToken) {
-    res.status(400);
-    throw new Error("No Google token provided");
-  }
-
-  // 1. Verify Google Token
   const ticket = await client.verifyIdToken({
     idToken: googleToken,
     audience: process.env.GOOGLE_CLIENT_ID,
   });
-  
   const { email, name, picture, sub: googleId } = ticket.getPayload();
 
-  // 2. Find or Create Employer
   let employer = await Employer.findOne({ email });
 
   if (employer) {
     // --- EXISTING EMPLOYER ---
-    
-    // Optional: Update profile picture if missing or changed
+    const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
+
     if (!employer.profilePicture) {
         employer.profilePicture = picture;
         await employer.save();
     }
 
+    // Check if Company Name and Phone exist
+    const isProfileComplete = 
+        employer.phone && 
+        employer.companyName && 
+        employer.companyName.trim() !== "";
+
+    res.status(200).json({
+      message: "Google Login Successful",
+      token,
+      employerId: employer._id,
+      email: employer.email,
+      isProfileComplete: !!isProfileComplete
+    });
+
   } else {
-    // --- NEW EMPLOYER (SIGNUP) ---
-    
-    // Create a secure random password since they use Google
-    const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    // --- NEW EMPLOYER ---
+    const randomPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-    employer = new Employer({
+    const newEmployer = new Employer({
       name,
       email,
       password: hashedPassword,
       profilePicture: picture,
-      isVerified: true, // Google emails are pre-verified
-      googleId: googleId,
+      isVerified: true, 
       authProvider: 'google',
-      // Note: phone and companyName will be undefined/empty initially
+      googleId: googleId,
+      phone: undefined, 
+      companyName: ""   
     });
 
-    await employer.save();
+    const savedEmployer = await newEmployer.save();
+    const token = jwt.sign({ employer: { id: savedEmployer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+    // FIX: Force false for new employers
+    res.status(201).json({
+      message: "Google Registration Successful",
+      token,
+      employerId: savedEmployer._id,
+      email: savedEmployer.email,
+      isProfileComplete: false // <--- Forces the redirect to Edit Profile
+    });
   }
-
-  // 3. Generate Token
-  const token = jwt.sign(
-    { employer: { id: employer._id } }, 
-    process.env.JWT_SECRET, 
-    { expiresIn: '5h' }
-  );
-
-  // 4. Check Profile Completion
-  // Adjust these fields based on what YOU consider mandatory
-  const isProfileComplete = 
-      employer.phone && 
-      employer.companyName && 
-      employer.companyName.trim() !== "" &&
-      employer.phone.trim() !== "";
-
-  // 5. Send Response
-  res.status(200).json({
-    message: "Google Login Successful",
-    token,
-    employerId: employer._id,
-    email: employer.email,
-    name: employer.name,
-    isProfileComplete: !!isProfileComplete // Boolean flag for frontend redirect
-  });
 });

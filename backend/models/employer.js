@@ -7,8 +7,12 @@ const employer = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phone: { type: String,unique: true },
-  companyName: { type: String},
+  phone: { 
+    type: String, 
+    unique: true, 
+    sparse: true
+  },
+  companyName: { type: String, default:""},
   createdJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
   description: { type: String },
   profilePicture: { type: String },
