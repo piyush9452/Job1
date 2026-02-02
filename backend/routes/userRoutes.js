@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser,loginUser,updateUser,userDetails,verifyUserOTP} from "../controllers/userControllers.js";
+import { createUser,loginUser,updateUser,userDetails,verifyUserOTP,googleLogin} from "../controllers/userControllers.js";
 
 const router = express.Router();
 
@@ -13,5 +13,7 @@ router.patch("/:id", updateUser);
 router.get("/:id", userDetails);
 
 router.post("/verifyotp",verifyUserOTP);
+
+router.post("/google-login", googleLogin);
 
 export default router;

@@ -12,7 +12,6 @@ import crypto from 'crypto';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import mime from 'mime-types';
 import { OAuth2Client } from 'google-auth-library';
-
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 let s3Client;
@@ -441,56 +440,81 @@ export const continueWithGoogle = expressAsyncHandler(async (req, res) => {
 });
 
 
-export const completeGoogleSignup = expressAsyncHandler(async (req, res) => {
-  // Frontend sends: credential (again for security), phone, companyName
-  const { credential, phone, companyName } = req.body;
 
-  // 1. RE-Verify Token (Security: prevents spoofing the email)
+// Ensure other imports (Employer, jwt, expressAsyncHandler, etc.) are present
+
+
+export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
+  const { token: googleToken } = req.body;
+
+  if (!googleToken) {
+    res.status(400);
+    throw new Error("No Google token provided");
+  }
+
+  // 1. Verify Google Token
   const ticket = await client.verifyIdToken({
-    idToken: credential,
+    idToken: googleToken,
     audience: process.env.GOOGLE_CLIENT_ID,
   });
+  
   const { email, name, picture, sub: googleId } = ticket.getPayload();
 
-  // 2. Double check duplicate (just in case)
-  const userExists = await Employer.findOne({ email });
-  if (userExists) {
-    res.status(400);
-    throw new Error("User already exists.");
+  // 2. Find or Create Employer
+  let employer = await Employer.findOne({ email });
+
+  if (employer) {
+    // --- EXISTING EMPLOYER ---
+    
+    // Optional: Update profile picture if missing or changed
+    if (!employer.profilePicture) {
+        employer.profilePicture = picture;
+        await employer.save();
+    }
+
+  } else {
+    // --- NEW EMPLOYER (SIGNUP) ---
+    
+    // Create a secure random password since they use Google
+    const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    employer = new Employer({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture: picture,
+      isVerified: true, // Google emails are pre-verified
+      googleId: googleId,
+      authProvider: 'google',
+      // Note: phone and companyName will be undefined/empty initially
+    });
+
+    await employer.save();
   }
-  
-  const phoneExists = await Employer.findOne({ phone });
-  if (phoneExists) {
-    res.status(400);
-    throw new Error("Phone number already in use.");
-  }
 
-  // 3. Create dummy password (since they use Google)
-  const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-  const hashedPassword = await bcrypt.hash(randomPassword, 10);
+  // 3. Generate Token
+  const token = jwt.sign(
+    { employer: { id: employer._id } }, 
+    process.env.JWT_SECRET, 
+    { expiresIn: '5h' }
+  );
 
-  // 4. Create Employer
-  const employer = new Employer({
-    name,
-    email,
-    password: hashedPassword, // Dummy hashed password
-    phone,
-    companyName,
-    profilePicture: picture,
-    googleId,
-    authProvider: 'google',
-    isVerified: true // Google emails are verified by definition
-  });
+  // 4. Check Profile Completion
+  // Adjust these fields based on what YOU consider mandatory
+  const isProfileComplete = 
+      employer.phone && 
+      employer.companyName && 
+      employer.companyName.trim() !== "" &&
+      employer.phone.trim() !== "";
 
-  const savedEmployer = await employer.save();
-
-  // 5. Generate Token
-  const token = jwt.sign({ employer: { id: savedEmployer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
-
-  res.status(201).json({ 
-    status: 'REGISTER_SUCCESS',
+  // 5. Send Response
+  res.status(200).json({
+    message: "Google Login Successful",
     token,
-    employerId: savedEmployer._id,
-    message: 'Account created successfully' 
+    employerId: employer._id,
+    email: employer.email,
+    name: employer.name,
+    isProfileComplete: !!isProfileComplete // Boolean flag for frontend redirect
   });
 });

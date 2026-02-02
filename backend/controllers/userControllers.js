@@ -2,6 +2,7 @@ import User from "../models/users.js";
 import jwt from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
 // import errorHandler from "../middleware/errorhandler.js";
+import { OAuth2Client } from 'google-auth-library';
 import bcrypt from "bcrypt";
 import admin from 'firebase-admin';
 
@@ -9,7 +10,7 @@ import admin from 'firebase-admin';
 // admin.initializeApp({
 //   credential: admin.credential.cert(require('./path/to/your/serviceAccountKey.json'))
 // });
-
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Create a new user
 import UserOTP from '../models/userVerification.js'; // <-- Import the new model
 import sendEmail from '../utils/emailVerification.js';
@@ -167,7 +168,7 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
     const userId = req.params.id; // get user id from URL
     const updates = req.body;     // only the fields provided
 
-    const notAllowed = ["email", "password", "phone"]; 
+    const notAllowed = ["email", "password"]; 
     notAllowed.forEach(field => delete updates[field]);
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -202,3 +203,67 @@ export const userDetails = expressAsyncHandler(async (req, res) => {
 
 
 
+export const googleLogin = expressAsyncHandler(async (req, res) => {
+  const { token: googleToken } = req.body;
+
+  // 1. Verify Google Token
+  const ticket = await client.verifyIdToken({
+    idToken: googleToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  
+  const { email, name, picture, sub: googleId } = ticket.getPayload();
+
+  // 2. Check if user exists
+  let user = await User.findOne({ email });
+
+  if (user) {
+    // --- SCENARIO 1: EXISTING USER (LOGIN) ---
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+    
+    if (!user.profilePicture) {
+        user.profilePicture = picture;
+        await user.save();
+    }
+
+    // Check if they have a phone number and skills
+    const isProfileComplete = user.phone && user.skills && user.skills.length > 0;
+
+    res.status(200).json({
+      message: "Google Login Successful",
+      token,
+      userId: user._id,
+      user: { id: user._id, name: user.name, email: user.email },
+      isProfileComplete: !!isProfileComplete // Send true/false
+    });
+
+  } else {
+    // --- SCENARIO 2: NEW USER (REGISTER) ---
+    const randomPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture: picture,
+      isVerified: true, 
+      authProvider: 'google',
+      phone: undefined // Explicitly undefined to avoid unique index issues if sparse
+    });
+
+    const savedUser = await newUser.save();
+    
+    const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+    // FIX: A new Google user is ALWAYS incomplete (no phone/skills yet)
+    // We send 'false' so frontend redirects to Edit Profile
+    res.status(201).json({
+      message: "Google Registration Successful",
+      token,
+      userId: savedUser._id,
+      user: { id: savedUser._id, name, email },
+      isProfileComplete: false // <--- This forces the redirect
+    });
+  }
+});

@@ -12,6 +12,7 @@ const employer = new mongoose.Schema({
   createdJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
   description: { type: String },
   profilePicture: { type: String },
+  isProfileComplete:{ type: Boolean,default:false},
   companyWebsite: { 
       type: String,
       default: "",

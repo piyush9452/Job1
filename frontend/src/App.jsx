@@ -29,7 +29,7 @@ import PublicProfile from "./pages/PublicProfile.jsx";
 import EmployerRegisterOption from "./pages/EmployerRegisterOption.jsx";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
-import TestLocation from "./pages/testlocation.jsx";
+import TestLocation from "./pages/TestLocation.jsx";
 
 function App() {
   return (
