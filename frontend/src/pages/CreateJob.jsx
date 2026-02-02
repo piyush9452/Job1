@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 import LocationPicker from "../components/LocationPicker.jsx";
+import JobConfirmModal from "../components/JobConfirmModal.jsx";
+
 import {
   MapPin,
   CheckCircle,
@@ -56,8 +58,10 @@ export default function CreateJob() {
   // Validation States
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const skillSuggestions = [
+
+    const skillSuggestions = [
     "React",
     "Redux",
     "Node.js",
@@ -100,7 +104,80 @@ export default function CreateJob() {
     }
   }, [job.noOfDays, job.dailyWorkingHours, job.paymentPerHour]);
 
-  const validateField = (name, value) => {
+    useEffect(() => {
+        if (!job.startDate || !job.noOfDays) return;
+
+        const days = Number(job.noOfDays);
+        if (isNaN(days) || days < 1) return;
+
+        const start = new Date(job.startDate);
+        const calculatedEnd = new Date(start);
+
+        // endDate = startDate + (days - 1)
+        calculatedEnd.setDate(start.getDate() + days - 1);
+
+        const formattedEndDate = calculatedEnd.toISOString().split("T")[0];
+
+        setJob((prev) => ({
+            ...prev,
+            endDate: formattedEndDate,
+        }));
+
+        // Validation: same date only allowed if days === 1
+        if (days > 1 && formattedEndDate === job.startDate) {
+            setErrors((prev) => ({
+                ...prev,
+                endDate: "End date must be after start date for multiple days",
+            }));
+        } else {
+            setErrors((prev) => ({
+                ...prev,
+                endDate: "",
+            }));
+        }
+    }, [job.startDate, job.noOfDays]);
+
+    useEffect(() => {
+        if (!job.workFrom || !job.dailyWorkingHours) return;
+
+        const hours = Number(job.dailyWorkingHours);
+        if (isNaN(hours) || hours <= 0) return;
+
+        const [startHour, startMinute] = job.workFrom.split(":").map(Number);
+
+        if (isNaN(startHour) || isNaN(startMinute)) return;
+
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = startTotalMinutes + hours * 60;
+
+        const endHour = Math.floor((endTotalMinutes % 1440) / 60);
+        const endMinute = endTotalMinutes % 60;
+
+        const formattedEndTime = `${String(endHour).padStart(2, "0")}:${String(
+            endMinute
+        ).padStart(2, "0")}`;
+
+        setJob((prev) => ({
+            ...prev,
+            workTo: formattedEndTime,
+        }));
+
+        // Validation: start & end cannot be same
+        if (formattedEndTime === job.workFrom) {
+            setErrors((prev) => ({
+                ...prev,
+                workTo: "End time cannot be same as start time",
+            }));
+        } else {
+            setErrors((prev) => ({
+                ...prev,
+                workTo: "",
+            }));
+        }
+    }, [job.workFrom, job.dailyWorkingHours]);
+
+
+    const validateField = (name, value) => {
     let errorMsg = "";
     const requiredFields = [
       "title",
@@ -116,8 +193,22 @@ export default function CreateJob() {
     if (requiredFields.includes(name) && !value) {
       errorMsg = "This field is required";
     }
+    if (name === "endDate" && job.startDate && job.noOfDays) {
+            const start = new Date(job.startDate);
+            const end = new Date(value);
+            const days = Number(job.noOfDays);
 
-    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+            if (end < start) {
+                errorMsg = "End date cannot be before start date";
+            }
+
+            if (days > 1 && end.getTime() === start.getTime()) {
+                errorMsg = "End date must be after start date for multiple days";
+            }
+        }
+
+
+        setErrors((prev) => ({ ...prev, [name]: errorMsg }));
     return errorMsg;
   };
 
@@ -370,10 +461,10 @@ export default function CreateJob() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Duration
+                Nature of Work
               </label>
               <div className="flex gap-3">
-                {["Day", "Week", "Month"].map((type) => (
+                {["Daily", "Weekly", "Monthly"].map((type) => (
                   <label
                     key={type}
                     className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-center gap-2 transition-all ${
@@ -472,15 +563,17 @@ export default function CreateJob() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                   End Date <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={job.endDate}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={getInputClass("endDate")}
-                />
-                {touched.endDate && errors.endDate && (
+                  <input
+                      type="date"
+                      name="endDate"
+                      value={job.endDate}
+                      readOnly={Number(job.noOfDays) > 1}
+                      className={`${getInputClass("endDate")} ${
+                          Number(job.noOfDays) > 1 ? "bg-gray-100 cursor-not-allowed" : ""
+                      }`}
+                  />
+
+                  {touched.endDate && errors.endDate && (
                   <p className="text-red-500 text-xs mt-1 font-medium">
                     {errors.endDate}
                   </p>
@@ -538,13 +631,14 @@ export default function CreateJob() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                   End Time
                 </label>
-                <input
-                  type="time"
-                  name="workTo"
-                  value={job.workTo}
-                  onChange={handleChange}
-                  className={getInputClass("workTo")}
-                />
+                  <input
+                      type="time"
+                      name="workTo"
+                      value={job.workTo}
+                      readOnly
+                      className="w-full p-3 border rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
+                  />
+
               </div>
             </div>
 
@@ -856,7 +950,7 @@ export default function CreateJob() {
                 Preview
               </button>
               <button
-                onClick={handleSubmit}
+                  onClick={() => setShowConfirm(true)}
                 disabled={loading}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-blue-300 font-bold shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5"
               >
@@ -898,6 +992,20 @@ export default function CreateJob() {
           </div>
         </div>
       )}
+        {showConfirm && (
+            <JobConfirmModal
+                job={job}
+                summary={jobSummary}
+                responsibilities={keyResponsibilities}
+                loading={loading}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={() => {
+                    setShowConfirm(false);
+                    handleSubmit();
+                }}
+            />
+        )}
+
     </div>
   );
 }
