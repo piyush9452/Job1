@@ -91,8 +91,14 @@ export default function CreateJob() {
     "C++",
     "Java",
   ];
+    const durationOptions = [
+        { label: "Daily", value: "Day" },
+        { label: "Weekly", value: "Week" },
+        { label: "Monthly", value: "Month" },
+    ];
 
-  // Auto-calculate salary
+
+    // Auto-calculate salary
   useEffect(() => {
     const totalHours = Number(job.noOfDays) * Number(job.dailyWorkingHours);
     const totalSalary = totalHours * Number(job.paymentPerHour);
@@ -464,11 +470,11 @@ export default function CreateJob() {
                 Nature of Work
               </label>
               <div className="flex gap-3">
-                {["Daily", "Weekly", "Monthly"].map((type) => (
+                  {durationOptions.map(({ label, value }) => (
                   <label
-                    key={type}
+                    key={value}
                     className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-center gap-2 transition-all ${
-                      job.durationType === type
+                      job.durationType === value
                         ? "bg-blue-50 border-blue-500 text-blue-700 font-medium ring-1 ring-blue-500 shadow-sm"
                         : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
                     }`}
@@ -476,12 +482,12 @@ export default function CreateJob() {
                     <input
                       type="radio"
                       name="durationType"
-                      value={type}
-                      checked={job.durationType === type}
+                      value={value}
+                      checked={job.durationType === value}
                       onChange={handleChange}
                       className="hidden"
                     />
-                    {type}
+                    {label}
                   </label>
                 ))}
               </div>
