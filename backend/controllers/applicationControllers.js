@@ -1,5 +1,6 @@
 import errorHandler from "express-async-handler";
 import Application from "../models/applications.js";
+import Employer from "../models/employer.js";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
 
@@ -161,24 +162,52 @@ export const updateApplication = async (req, res) => {
 export const getJobApplications = errorHandler(async (req, res) => {
   const { jobId } = req.params;
 
-  // 1. Verify Job (using correct field 'postedBy')
+  // 1. Verify Job exists
   const job = await Job.findById(jobId);
   if (!job) {
     res.status(404);
     throw new Error("Job not found");
   }
 
-  // 2. Verify Employer Ownership
+  // 2. Security Check: Does this job belong to the logged-in employer?
+  // req.employerId comes from the protectEmployer middleware
   if (job.postedBy.toString() !== req.employerId.toString()) {
     res.status(403);
     throw new Error("Not authorized to view these applications");
   }
 
-  // 3. Find Applications (THE FIX IS HERE)
-  // We use 'job_id' to query and populate 'appliedBy'
+  // 3. Find Applications
   const applications = await Application.find({ job_id: jobId })
     .populate("appliedBy", "name email phone profilePicture skills experience education resume")
-    .sort({ createdAt: -1 });
+    .sort({ appliedAt: -1 });
 
   res.status(200).json(applications);
+});
+
+
+
+export const updateApplicationStatus = errorHandler(async (req, res) => {
+  const { id } = req.params; // Application ID
+  const { status } = req.body;
+
+  const application = await Application.findById(id);
+
+  if (!application) {
+    res.status(404);
+    throw new Error("Application not found");
+  }
+
+  // Security Check: Ensure the logged-in employer owns this application
+  if (application.jobHost.toString() !== req.employerId.toString()) {
+     res.status(403);
+     throw new Error("Not authorized to update this application");
+  }
+
+  application.status = status;
+  await application.save();
+
+  res.status(200).json({
+    message: "Status updated successfully",
+    application,
+  });
 });
