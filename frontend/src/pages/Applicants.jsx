@@ -8,6 +8,7 @@ import {
   Phone,
   Calendar,
   ChevronRight,
+  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -22,11 +23,7 @@ export default function JobApplicants() {
     const fetchApplicants = async () => {
       try {
         const stored = localStorage.getItem("employerInfo");
-        if (!stored) {
-          alert("Please log in.");
-          navigate("/login");
-          return;
-        }
+        if (!stored) return navigate("/login");
 
         const { token } = JSON.parse(stored);
 
@@ -37,14 +34,13 @@ export default function JobApplicants() {
         );
         setApplicants(data);
 
-        // 2. Get Job Title for header context
+        // 2. Get Job Title
         const jobRes = await axios.get(
           `https://jobone-mrpy.onrender.com/jobs/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
-        // Handle potentially different response structures
         setJobTitle(jobRes.data.title || jobRes.data.job?.title || "Job");
       } catch (err) {
         console.error("Failed to load applicants", err);
@@ -83,7 +79,6 @@ export default function JobApplicants() {
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 font-sans">
       <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <button
@@ -95,36 +90,43 @@ export default function JobApplicants() {
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
               Applicants for {jobTitle}
             </h1>
-            <p className="text-slate-500 mt-1">Review and manage candidates.</p>
           </div>
           <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-sm font-bold text-slate-600">
             Total: <span className="text-blue-600">{applicants.length}</span>
           </div>
         </div>
 
-        {/* APPLICANTS GRID */}
         {applicants.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-            <p className="text-slate-500 font-medium">
-              No applications received yet.
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="text-slate-300" size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">
+              No applications yet
+            </h3>
+            <p className="text-slate-500">
+              Candidates will appear here once they apply.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {applicants.map((app) => (
-              <motion.div
-                key={app._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -4 }}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
-              >
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-4">
+            {applicants.map((app) => {
+              // FIX: Use 'appliedBy' instead of 'applicant'
+              const candidate = app.appliedBy;
+              if (!candidate) return null; // Safety check
+
+              return (
+                <motion.div
+                  key={app._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                >
+                  <div className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
                       <img
                         src={
-                          app.applicant.profilePicture ||
+                          candidate.profilePicture ||
                           "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
                         }
                         alt="Avatar"
@@ -132,7 +134,7 @@ export default function JobApplicants() {
                       />
                       <div className="min-w-0">
                         <h3 className="font-bold text-lg text-slate-900 leading-tight truncate">
-                          {app.applicant.name}
+                          {candidate.name}
                         </h3>
                         <p className="text-xs text-slate-500 font-mono mt-0.5">
                           Applied:{" "}
@@ -140,55 +142,36 @@ export default function JobApplicants() {
                         </p>
                       </div>
                     </div>
+
+                    <div className="mb-4">{getStatusBadge(app.status)}</div>
+
+                    <div className="space-y-3 text-sm text-slate-600 mb-6">
+                      <div className="flex items-center gap-2">
+                        <Mail size={14} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{candidate.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone size={14} className="text-slate-400 shrink-0" />
+                        <span>{candidate.phone || "N/A"}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="mb-4">{getStatusBadge(app.status)}</div>
-
-                  <div className="space-y-3 text-sm text-slate-600 mb-6">
-                    <div className="flex items-center gap-2">
-                      <Mail size={14} className="text-slate-400 shrink-0" />
-                      <span className="truncate">{app.applicant.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone size={14} className="text-slate-400 shrink-0" />
-                      <span>{app.applicant.phone || "N/A"}</span>
-                    </div>
-                    {app.applicant.skills &&
-                      app.applicant.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {app.applicant.skills.slice(0, 3).map((skill, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs font-medium text-slate-600"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                          {app.applicant.skills.length > 3 && (
-                            <span className="px-2 py-0.5 bg-slate-50 text-slate-400 text-xs rounded font-medium">
-                              +{app.applicant.skills.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                  <div className="mt-auto border-t border-slate-100 p-4 bg-slate-50">
+                    <button
+                      onClick={() =>
+                        navigate(`/application/${app._id}`, {
+                          state: { application: app },
+                        })
+                      }
+                      className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-blue-600 font-bold py-2.5 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm"
+                    >
+                      View Full Profile <ChevronRight size={16} />
+                    </button>
                   </div>
-                </div>
-
-                {/* Footer Action */}
-                <div className="mt-auto border-t border-slate-100 p-4 bg-slate-50">
-                  <button
-                    onClick={() =>
-                      navigate(`/application/${app._id}`, {
-                        state: { application: app },
-                      })
-                    }
-                    className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-blue-600 font-bold py-2.5 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm"
-                  >
-                    View Full Profile <ChevronRight size={16} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

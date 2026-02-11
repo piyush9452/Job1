@@ -155,3 +155,30 @@ export const updateApplication = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+export const getJobApplications = expressAsyncHandler(async (req, res) => {
+  const { jobId } = req.params;
+
+  // 1. Verify Job (using correct field 'postedBy')
+  const job = await Job.findById(jobId);
+  if (!job) {
+    res.status(404);
+    throw new Error("Job not found");
+  }
+
+  // 2. Verify Employer Ownership
+  if (job.postedBy.toString() !== req.employerId.toString()) {
+    res.status(403);
+    throw new Error("Not authorized to view these applications");
+  }
+
+  // 3. Find Applications (THE FIX IS HERE)
+  // We use 'job_id' to query and populate 'appliedBy'
+  const applications = await Application.find({ job_id: jobId })
+    .populate("appliedBy", "name email phone profilePicture skills experience education resume")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json(applications);
+});
