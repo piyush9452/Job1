@@ -158,7 +158,7 @@ export const updateApplication = async (req, res) => {
 
 
 
-export const getJobApplications = expressAsyncHandler(async (req, res) => {
+export const getJobApplications = errorHandler(async (req, res) => {
   const { jobId } = req.params;
 
   // 1. Verify Job (using correct field 'postedBy')
