@@ -1,141 +1,266 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft,
-  Mail,
-  Phone,
-  User,
+  Building2,
+  MapPin,
+  Calendar,
+  IndianRupee,
   Briefcase,
-  GraduationCap,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Download,
   Clock,
+  Loader2,
+  SearchX,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
+import ApplicationDetailsModal from "../components/ApplicationDetailsModal"; // This will now resolve correctly
 
-export default function ApplicantDetails() {
+export default function MyApplications() {
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState(null);
   const navigate = useNavigate();
-  const { state } = useLocation();
-  const application = state?.application;
 
-  const [loading, setLoading] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(
-    application?.status || "applied",
-  );
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const storedUser = localStorage.getItem("userInfo");
+        if (!storedUser) {
+          navigate("/login");
+          return;
+        }
 
-  if (!application)
-    return (
-      <div className="h-screen flex items-center justify-center">
-        No data found.
-      </div>
-    );
+        const userInfo = JSON.parse(storedUser);
+        const { token, id } = userInfo;
+        const userId = id || userInfo.userId;
 
-  // FIX: Destructure 'appliedBy' instead of 'applicant'
-  const { appliedBy } = application;
-  if (!appliedBy)
-    return (
-      <div className="h-screen flex items-center justify-center">
-        Candidate data missing.
-      </div>
-    );
+        if (!token || !userId) {
+          setLoading(false);
+          return;
+        }
 
-  const handleStatusUpdate = async (newStatus) => {
-    if (!window.confirm(`Mark as ${newStatus}?`)) return;
-    setLoading(true);
-    try {
-      const stored = localStorage.getItem("employerInfo");
-      const { token } = JSON.parse(stored);
-      await axios.patch(
-        `https://jobone-mrpy.onrender.com/applications/${application._id}/status`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      setCurrentStatus(newStatus);
-      alert(`Status updated to ${newStatus}`);
-    } catch (error) {
-      alert("Update failed");
-    } finally {
-      setLoading(false);
+        const { data } = await axios.get(
+          `https://jobone-mrpy.onrender.com/applications/${userId}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        setApplications(data.applications || []);
+      } catch (error) {
+        console.error("Error fetching applications:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, [navigate]);
+
+  const handleViewApplication = (application) => {
+    setSelectedApp(application);
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status?.toLowerCase()) {
+      case "accepted":
+      case "hired":
+        return (
+          <span className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-green-200">
+            <CheckCircle2 size={12} /> Hired
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-red-100">
+            <XCircle size={12} /> Rejected
+          </span>
+        );
+      case "interview":
+        return (
+          <span className="flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-purple-200">
+            <Clock size={12} /> Interview
+          </span>
+        );
+      default:
+        return (
+          <span className="flex items-center gap-1 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-gray-200">
+            <AlertCircle size={12} /> Applied
+          </span>
+        );
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 font-sans">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium"
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50 text-slate-500">
+        <Loader2 className="w-10 h-10 animate-spin mb-4 text-blue-600" />
+        <p className="font-medium">Loading your applications...</p>
+      </div>
+    );
+  }
+
+  if (applications.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
+        <div className="bg-white p-10 rounded-3xl shadow-sm border border-slate-200 text-center max-w-md w-full">
+          <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <SearchX className="text-slate-400" size={40} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+            No Applications Yet
+          </h2>
+          <p className="text-slate-500 mb-8 leading-relaxed">
+            You haven't applied to any jobs yet. Your next career move is just a
+            click away!
+          </p>
+          <Link
+            to="/jobs"
+            className="block w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
           >
-            <ArrowLeft size={18} /> Back
-          </button>
-          <div className="flex gap-3">
-            {/* Action Buttons using currentStatus state */}
-            <button
-              onClick={() => handleStatusUpdate("rejected")}
-              disabled={loading}
-              className="px-5 py-2 border border-red-200 text-red-600 bg-white rounded-lg hover:bg-red-50 font-bold flex gap-2 items-center"
-            >
-              <XCircle size={18} /> Reject
-            </button>
-            <button
-              onClick={() => handleStatusUpdate("hired")}
-              disabled={loading}
-              className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold flex gap-2 items-center shadow-md"
-            >
-              <CheckCircle size={18} /> Hire
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* PROFILE CARD */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center">
-              <img
-                src={
-                  appliedBy.profilePicture ||
-                  "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-                }
-                alt="User"
-                className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-slate-50 shadow-sm"
-              />
-              <h2 className="text-2xl font-bold text-slate-900 mt-4">
-                {appliedBy.name}
-              </h2>
-              <div className="mt-6 space-y-3 text-left">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                  <Mail className="text-blue-500" size={18} />
-                  <span className="text-sm text-slate-700 break-all">
-                    {appliedBy.email}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                  <Phone className="text-green-500" size={18} />
-                  <span className="text-sm text-slate-700">
-                    {appliedBy.phone || "N/A"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* DETAILS */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">
-                Professional Summary
-              </h3>
-              <p className="text-slate-600">
-                {appliedBy.description || "No summary provided."}
-              </p>
-            </div>
-            {/* Add Experience/Education sections here using appliedBy.experience etc. */}
-          </div>
+            Browse Jobs
+          </Link>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 py-20 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-7xl mx-auto mt-10">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              My Applications
+            </h1>
+            <p className="text-slate-500 mt-1">
+              Track and manage your job applications.
+            </p>
+          </div>
+          <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-sm font-medium text-slate-600">
+            Total Applications:{" "}
+            <span className="text-blue-600 font-bold ml-1">
+              {applications.length}
+            </span>
+          </div>
+        </div>
+
+        {/* Applications Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {applications.map((app) => {
+            const job = app.job || {};
+            // Handle location object vs string
+            const locationStr =
+              typeof job.location === "object"
+                ? job.location.address
+                : job.location;
+            const companyName = job.postedBy?.name || "Company Confidential";
+            const companyImage = job.postedBy?.image;
+
+            return (
+              <motion.div
+                key={app.applicationId || app._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full"
+              >
+                {/* Card Header */}
+                <div className="p-6 pb-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center text-xl font-bold text-blue-600 shadow-sm shrink-0 overflow-hidden">
+                        {companyImage ? (
+                          <img
+                            src={companyImage}
+                            alt="Logo"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          companyName.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h3
+                          className="font-bold text-slate-900 text-lg leading-snug truncate pr-2"
+                          title={job.title}
+                        >
+                          {job.title || "Job Title Unavailable"}
+                        </h3>
+                        <p className="text-sm text-slate-500 font-medium flex items-center gap-1.5 mt-1 truncate">
+                          <Building2 size={14} className="text-slate-400" />
+                          {companyName}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="mb-6">{getStatusBadge(app.status)}</div>
+
+                  {/* Job Details */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                      <div className="p-1.5 bg-slate-50 rounded-md">
+                        <MapPin size={14} className="text-slate-400" />
+                      </div>
+                      <span className="truncate">
+                        {locationStr || "Remote"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                      <div className="p-1.5 bg-slate-50 rounded-md">
+                        <IndianRupee size={14} className="text-slate-400" />
+                      </div>
+                      <span>
+                        {job.salary
+                          ? job.salary.toLocaleString()
+                          : "Not Disclosed"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                      <div className="p-1.5 bg-slate-50 rounded-md">
+                        <Briefcase size={14} className="text-slate-400" />
+                      </div>
+                      <span className="capitalize">
+                        {job.jobType || "Full-time"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-auto px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex justify-between items-center">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                    <Calendar size={14} />
+                    Applied: {new Date(app.appliedAt).toLocaleDateString()}
+                  </div>
+
+                  {/* BUTTON TO OPEN MODAL */}
+                  <button
+                    onClick={() => handleViewApplication(app)}
+                    className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    View Status →
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* APPLICATION DETAILS MODAL */}
+      <AnimatePresence>
+        {selectedApp && (
+          <ApplicationDetailsModal
+            application={selectedApp}
+            onClose={() => setSelectedApp(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
