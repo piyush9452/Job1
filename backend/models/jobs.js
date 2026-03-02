@@ -3,7 +3,11 @@ import mongoose from "mongoose";
 const JobSchema = new mongoose.Schema({
   title: { type: String, required: true }, // Job title
   description: { type: String, required: true }, //
-  jobType: { type: String, enum: ["daily", "weekly", "monthly"], required: true },
+  jobType: { 
+  type: String, 
+  enum: ["Daily", "7 days", "Mon-Fri", "Sat-Sun", "Others"], 
+  default: "Daily" ,
+},
   skillsRequired: { type: [String], default: [] },
   location: {
     type: {
@@ -20,11 +24,20 @@ const JobSchema = new mongoose.Schema({
   },// city/area
   pinCode: { type: Number }, // optional
   salary: { type: Number, required: true }, // payment for the job
+  salaryFrequency: {
+  type: String,
+  enum: ["Hourly", "Daily", "Weekly", "Monthly"],
+  default: "Hourly"
+},
   durationType: { type: String, enum: ["Day", "Week", "Month"], required: true },
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
+  startDate: { type: Date , default:null},
+  endDate: { 
+  type: Date, 
+  required: false, // Changed from true
+  default: null 
+},
   dailyWorkingHours: { type: Number, required: true },
-  mode: { type: String, enum: ["Online", "Offline", "Hybrid"], required: true },
+  mode: { type: String, enum: ["Work from Home", "Work from Office", "Hybrid"], required: true },
   workFrom: { type: String }, // optional
   workTo: { type: String }, // optional
   noOfDays: { type: Number, required: true },
