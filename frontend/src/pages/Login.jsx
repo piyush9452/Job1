@@ -110,7 +110,7 @@ export default function Login() {
             }`}
             onClick={() => setActiveTab("user")}
           >
-            User
+            Jobseeker
           </button>
           <button
             className={`pb-2 font-medium text-sm ${
@@ -198,7 +198,7 @@ export default function Login() {
         <p className="text-center text-gray-600 text-sm mt-4">
           New to Job1? Register{" "}
           <Link to="/userregister" className="text-blue-600 hover:underline">
-            (User
+            (Jobseeker
           </Link>{" "}
           /{" "}
           <Link

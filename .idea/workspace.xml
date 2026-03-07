@@ -6,8 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="337125a7-a3d3-40d4-80ae-af0fda59f289" name="Changes" comment="changes made">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/CreateJob.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/CreateJob.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -212,7 +214,25 @@
       <workItem from="1769753694192" duration="215000" />
       <workItem from="1769772352490" duration="6484000" />
       <workItem from="1769855582044" duration="7013000" />
-      <workItem from="1770027665472" duration="4976000" />
+      <workItem from="1770027665472" duration="7706000" />
+      <workItem from="1770098391626" duration="1382000" />
+      <workItem from="1770287803253" duration="7091000" />
+      <workItem from="1770360534929" duration="193000" />
+      <workItem from="1770728847211" duration="1675000" />
+      <workItem from="1770789557496" duration="882000" />
+      <workItem from="1771065397919" duration="5172000" />
+      <workItem from="1771165650119" duration="123000" />
+      <workItem from="1771335432543" duration="2025000" />
+      <workItem from="1771383009315" duration="171000" />
+      <workItem from="1771575623897" duration="987000" />
+      <workItem from="1771584651046" duration="1134000" />
+      <workItem from="1771671556415" duration="3343000" />
+      <workItem from="1772267135959" duration="432000" />
+      <workItem from="1772278034106" duration="5832000" />
+      <workItem from="1772449472546" duration="7932000" />
+      <workItem from="1772722162726" duration="1510000" />
+      <workItem from="1772796364069" duration="1904000" />
+      <workItem from="1772881683078" duration="1237000" />
     </task>
     <task id="LOCAL-00001" summary="changes made">
       <option name="closed" value="true" />
@@ -558,7 +578,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770028132926</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="changes made">
+      <option name="closed" value="true" />
+      <created>1770034466470</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1770034466471</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

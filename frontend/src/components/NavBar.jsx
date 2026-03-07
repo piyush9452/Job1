@@ -98,13 +98,13 @@ export default function Navbar() {
                 to="/jobs"
                 className="text-gray-700 hover:text-blue-700 font-medium"
               >
-                Find Jobs
+                Find Part-time Jobs
               </Link>
               <Link
                 to="/employerregister"
                 className="text-gray-700 hover:text-blue-700 font-medium"
               >
-                Post Jobs
+                Post Part-time Jobs
               </Link>
             </>
           )}

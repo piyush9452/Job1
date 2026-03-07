@@ -77,9 +77,7 @@ function App() {
         <Route
           path="/jobs"
           element={
-            <ProtectedRoute>
               <Jobs />
-            </ProtectedRoute>
           }
         />
         <Route

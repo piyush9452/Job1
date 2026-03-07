@@ -26,7 +26,7 @@ export default function CreateJob() {
   const [job, setJob] = useState({
     title: "",
     description: "",
-    jobType: "daily",
+    jobType: "Daily",
     skillsRequired: [],
     location: "",
     latitude: null,
@@ -53,6 +53,8 @@ export default function CreateJob() {
   const [preview, setPreview] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [typingTimeout, setTypingTimeout] = useState(null);
+  const [titleSuggestions, setTitleSuggestions] = useState([]);
+  const [titleTypingTimeout, setTitleTypingTimeout] = useState(null);
   const [step, setStep] = useState(1);
 
   // Validation States
@@ -91,6 +93,22 @@ export default function CreateJob() {
     "C++",
     "Java",
   ];
+    const jobTitleSuggestions = [
+        "Senior React Developer",
+        "Frontend Developer",
+        "Backend Developer",
+        "Full Stack Developer",
+        "MERN Stack Developer",
+        "Node.js Developer",
+        "Python Developer",
+        "Django Developer",
+        "DevOps Engineer",
+        "UI/UX Designer",
+        "Software Engineer",
+        "Mobile App Developer",
+        "Data Analyst",
+        "Machine Learning Engineer",
+    ];
     const durationOptions = [
         { label: "Daily", value: "Day" },
         { label: "Weekly", value: "Week" },
@@ -226,6 +244,26 @@ export default function CreateJob() {
       validateField(name, value);
     }
   };
+    const handleTitleChange = (e) => {
+        const value = e.target.value;
+
+        setJob((prev) => ({ ...prev, title: value }));
+
+        if (titleTypingTimeout) clearTimeout(titleTypingTimeout);
+
+        const timeout = setTimeout(() => {
+            if (value.trim().length > 0) {
+                const filtered = jobTitleSuggestions.filter((title) =>
+                    title.toLowerCase().includes(value.toLowerCase())
+                );
+                setTitleSuggestions(filtered.slice(0, 5));
+            } else {
+                setTitleSuggestions([]);
+            }
+        }, 300);
+
+        setTitleTypingTimeout(timeout);
+    };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
@@ -452,11 +490,27 @@ export default function CreateJob() {
                 <input
                   name="title"
                   value={job.title}
-                  onChange={handleChange}
+                  onChange={handleTitleChange}
                   onBlur={handleBlur}
                   placeholder="e.g. Senior React Developer"
                   className={getInputClass("title", true)}
                 />
+                  {titleSuggestions.length > 0 && (
+                      <ul className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-lg z-20 mt-2 overflow-hidden">
+                          {titleSuggestions.map((suggestion, index) => (
+                              <li
+                                  key={index}
+                                  onClick={() => {
+                                      setJob((prev) => ({ ...prev, title: suggestion }));
+                                      setTitleSuggestions([]);
+                                  }}
+                                  className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0"
+                              >
+                                  {suggestion}
+                              </li>
+                          ))}
+                      </ul>
+                  )}
               </div>
               {touched.title && errors.title && (
                 <p className="text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
@@ -467,30 +521,24 @@ export default function CreateJob() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Nature of Work
+                Work Days
               </label>
-              <div className="flex gap-3">
-                  {durationOptions.map(({ label, value }) => (
-                  <label
-                    key={value}
-                    className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-center gap-2 transition-all ${
-                      job.durationType === value
-                        ? "bg-blue-50 border-blue-500 text-blue-700 font-medium ring-1 ring-blue-500 shadow-sm"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="durationType"
-                      value={value}
-                      checked={job.durationType === value}
-                      onChange={handleChange}
-                      className="hidden"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
+                <div>
+                    <div className="relative">
+                        <select
+                            name="jobType"
+                            value={job.jobType}
+                            onChange={handleChange}
+                            className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"
+                        >
+                            <option value="Daily">Daily</option>
+                            <option value="7 days">7 Days</option>
+                            <option value="Mon-Fri">Monday to Friday</option>
+                            <option value="Sat-Sun">Saturday to Sunday</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -549,7 +597,7 @@ export default function CreateJob() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                  Start Date <span className="text-red-500">*</span>
+                  Start Date
                 </label>
                 <input
                   type="date"
@@ -559,15 +607,11 @@ export default function CreateJob() {
                   onBlur={handleBlur}
                   className={getInputClass("startDate")}
                 />
-                {touched.startDate && errors.startDate && (
-                  <p className="text-red-500 text-xs mt-1 font-medium">
-                    {errors.startDate}
-                  </p>
-                )}
+
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                  End Date <span className="text-red-500">*</span>
+                  End Date
                 </label>
                   <input
                       type="date"
@@ -578,13 +622,21 @@ export default function CreateJob() {
                           Number(job.noOfDays) > 1 ? "bg-gray-100 cursor-not-allowed" : ""
                       }`}
                   />
-
-                  {touched.endDate && errors.endDate && (
-                  <p className="text-red-500 text-xs mt-1 font-medium">
-                    {errors.endDate}
-                  </p>
-                )}
               </div>
+                <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+                        No EndDate
+                    </label>
+                    <input
+                        type="date"
+                        name="startDate"
+                        value={job.startDate}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={getInputClass("startDate")}
+                    />
+
+                </div>
             </div>
 
             <div>
@@ -593,8 +645,8 @@ export default function CreateJob() {
               </label>
               <div className="flex gap-3">
                 {[
-                  { val: "Online", icon: <Monitor size={16} /> },
-                  { val: "Offline", icon: <Building size={16} /> },
+                  { val: "Work from home", icon: <Monitor size={16} /> },
+                  { val: "Work from Office", icon: <Building size={16} /> },
                   { val: "Hybrid", icon: <Globe size={16} /> },
                 ].map((m) => (
                   <label
@@ -718,24 +770,6 @@ export default function CreateJob() {
                     {errors.noOfPeopleRequired}
                   </p>
                 )}
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                  Pin Code
-                </label>
-                <div className="relative">
-                  <Hash
-                    className="absolute left-3 top-3.5 text-gray-400"
-                    size={18}
-                  />
-                  <input
-                    name="pinCode"
-                    value={job.pinCode}
-                    onChange={handleChange}
-                    placeholder="Code"
-                    className={getInputClass("pinCode", true)}
-                  />
-                </div>
               </div>
             </div>
           </div>
