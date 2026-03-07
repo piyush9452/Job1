@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+
 dotenv.config();
 //importing cors module to handle cross-origin requests
 import cors from 'cors';
@@ -11,6 +12,7 @@ import errorHandler from './middleware/errorhandler.js';
 import jobsRoutes from './routes/jobsRoutes.js';
 import applicationRoutes from './routes/applicationRoutes.js';
 import employerRoutes from './routes/employerRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 
 connectDB();
@@ -40,7 +42,10 @@ app.use("/jobs",jobsRoutes);                                                   /
 app.use("/applications",applicationRoutes);                                    //
 //                                                                             //
 //Employer Routes                                                              //
-app.use("/employer",employerRoutes);                                           //
+app.use("/employer",employerRoutes); 
+
+//AI Routes
+app.use("/ai", aiRoutes);
 //---------------------------MAIN ROUTES---------------------------------------//
 
 
