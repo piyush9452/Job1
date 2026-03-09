@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import expressAsyncHandler from "express-async-handler";
-import pdfParse from "pdf-parse";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 
 export const generateJobDetails = expressAsyncHandler(async (req, res) => {
