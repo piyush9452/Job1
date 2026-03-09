@@ -11,9 +11,11 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } 
 });
 
+router.post("/parse-resume", protect, upload.single("resume"), parseResume);
+
+
 // Employer must be logged in to use AI (prevents public API abuse)
 router.post("/generate-job-details", protectEmployer, generateJobDetails);
 
-router.post("/parse-resume", protect, upload.single("resume"), parseResume);
 
 export default router;

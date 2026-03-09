@@ -1,34 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import expressAsyncHandler from "express-async-handler";
 import mammoth from "mammoth";
-import { createRequire } from "module";
-
-// --- BRUTE FORCE MODULE UNWRAPPER ---
-const require = createRequire(import.meta.url);
-const pdfParseRaw = require("pdf-parse");
-
-let extractedPdfParse;
-if (typeof pdfParseRaw === "function") {
-  extractedPdfParse = pdfParseRaw;
-} else if (pdfParseRaw && typeof pdfParseRaw.default === "function") {
-  extractedPdfParse = pdfParseRaw.default;
-} else if (pdfParseRaw && pdfParseRaw.default && typeof pdfParseRaw.default.default === "function") {
-  extractedPdfParse = pdfParseRaw.default.default;
-} else if (pdfParseRaw && typeof pdfParseRaw.pdfParse === "function") {
-  extractedPdfParse = pdfParseRaw.pdfParse;
-} else {
-  // Absolute last resort: hunt through the object for ANY function
-  extractedPdfParse = Object.values(pdfParseRaw || {}).find(val => typeof val === "function");
-}
-
-if (!extractedPdfParse) {
-  console.error("FATAL: RAW PDF-PARSE MODULE DUMP:", pdfParseRaw);
-  throw new Error("CRITICAL SYSTEM FAILURE: pdf-parse module is corrupted or missing its core function.");
-}
-
-const pdfParse = extractedPdfParse;
-// ------------------------------------
-
 
 export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   const { title, jobType, mode } = req.body;
@@ -38,7 +10,6 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
     throw new Error("Job title is required to generate a description.");
   }
 
-  // Initialize Gemini API
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -58,7 +29,6 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     
-    // Brutal cleanup: Strip any markdown formatting Gemini might accidentally include
     const cleanedText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
     const startIndex = cleanedText.indexOf('{');
     const endIndex = cleanedText.lastIndexOf('}');
@@ -85,45 +55,23 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
     throw new Error("No document uploaded.");
   }
 
-  let rawText = "";
-  const fileType = req.file.mimetype;
-
-  try {
-    // 1. Extract text based on file type
-    if (fileType === "application/pdf") {
-      const pdfData = await pdfParse(req.file.buffer);
-      rawText = pdfData.text;
-    } else if (
-      fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || 
-      fileType === "application/msword"
-    ) {
-      const docxData = await mammoth.extractRawText({ buffer: req.file.buffer });
-      rawText = docxData.value;
-    } else {
-      res.status(400);
-      throw new Error("Unsupported file format. Please upload a PDF or DOCX.");
-    }
-  } catch (err) {
-    console.error("File Extraction Error:", err);
-    res.status(500);
-    throw new Error("Failed to read the document. Ensure it is not encrypted or password-protected.");
-  }
-
-  if (!rawText || rawText.trim().length === 0) {
+  if (!req.file.buffer) {
     res.status(400);
-    throw new Error("The document appears to be empty or consists only of images (scanned document).");
+    throw new Error("Server Error: File buffer is missing. Ensure your backend route uses multer.memoryStorage().");
   }
 
-  // 2. Feed to Gemini to structure it
+  const fileType = req.file.mimetype;
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  const prompt = `
-    You are an expert Applicant Tracking System (ATS). Extract the following information from the provided messy resume text.
+  const basePrompt = `
+    You are an expert Applicant Tracking System (ATS). Extract the following information from the provided resume.
     Return EXACTLY a raw JSON object and nothing else. Do NOT use markdown formatting (\`\`\`json). If information for a field is missing, return an empty array or empty string.
 
     Strict JSON Schema required:
     {
+      "name": "Candidate's full name if found, else empty string",
+      "phone": "Extract ONLY the core digits of the phone number. Strip away any country codes (like +91), spaces, dashes, and location text (like Bhopal, MP). Example: '7024901312'. Else empty string.",
       "description": "Create a professional 2-3 sentence summary based on their profile.",
       "skills": ["Skill 1", "Skill 2", "Skill 3"],
       "experience": [
@@ -133,13 +81,50 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
         { "degree": "Degree Name", "university": "Institution Name", "ended": "YYYY", "CGPA": "GPA/Percentage if found, else empty string" }
       ]
     }
-
-    Resume Text to Parse:
-    ${rawText.substring(0, 15000)} 
   `;
 
+  let generateParts = [];
+
   try {
-    const result = await model.generateContent(prompt);
+    if (fileType === "application/pdf") {
+      // FACT: Gemini natively understands PDFs. We pass the buffer directly as inlineData.
+      generateParts = [
+        { text: basePrompt },
+        {
+          inlineData: {
+            data: req.file.buffer.toString("base64"),
+            mimeType: "application/pdf"
+          }
+        }
+      ];
+    } else if (
+      fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || 
+      fileType === "application/msword"
+    ) {
+      // For Word Docs, we still use mammoth to extract text
+      const docxData = await mammoth.extractRawText({ buffer: req.file.buffer });
+      const rawText = docxData.value;
+      
+      if (!rawText || rawText.trim().length === 0) {
+         throw new Error("The Word document is empty or unreadable.");
+      }
+
+      generateParts = [
+        { text: basePrompt + "\n\nResume Text:\n" + rawText.substring(0, 15000) }
+      ];
+    } else {
+      res.status(400);
+      throw new Error(`Unsupported file format: ${fileType}. Please upload a PDF or DOCX.`);
+    }
+  } catch (err) {
+    console.error("File Extraction Error:", err);
+    res.status(500);
+    throw new Error(`Document parsing failed: ${err.message}`);
+  }
+
+  try {
+    // Send the constructed parts (either Text+PDF or just Text) to Gemini
+    const result = await model.generateContent(generateParts);
     const responseText = result.response.text();
     
     // Aggressive JSON cleanup
