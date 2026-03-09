@@ -314,19 +314,34 @@ export default function CreateJob() {
     }
   };
 
+  const typeWriterEffect = async (text, setterState, speed = 15) => {
+    setterState(""); // Clear the input field first
+    for (let i = 0; i < text.length; i++) {
+      setterState((prev) => prev + text.charAt(i));
+      // Wait for 'speed' milliseconds before typing the next character
+      await new Promise((resolve) => setTimeout(resolve, speed));
+    }
+  };
+
   const handleAIGenerate = async () => {
-    if (!job.title.trim()) {
+    if (!job.title?.trim()) {
       alert("You must enter a Job Title in Step 1 first!");
       return;
     }
 
     setGeneratingAI(true);
+
+    // Clear the fields immediately to show the user something is happening
+    setJobSummary("");
+    setKeyResponsibilities("");
+
     try {
       const storedData = localStorage.getItem("employerInfo");
       const token = storedData ? JSON.parse(storedData).token : null;
 
       if (!token) throw new Error("No token found");
 
+      // 1. Fetch the complete data from the backend
       const { data } = await axios.post(
         "https://jobone-mrpy.onrender.com/ai/generate-job-details",
         {
@@ -337,12 +352,15 @@ export default function CreateJob() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      setJobSummary(data.summary);
-      setKeyResponsibilities(data.responsibilities);
+      // 2. Simulate the AI typing out the response sequentially
+      // Await the first one, then do the second one so it looks organic
+      await typeWriterEffect(data.summary, setJobSummary, 10);
+      await typeWriterEffect(data.responsibilities, setKeyResponsibilities, 10);
     } catch (error) {
       console.error("AI generation failed:", error);
       alert(error.response?.data?.message || "Failed to generate AI content.");
     } finally {
+      // Re-enable the button only after all the typing is completely finished
       setGeneratingAI(false);
     }
   };
@@ -675,7 +693,7 @@ export default function CreateJob() {
               </label>
               <div className="flex gap-3">
                 {[
-                  { val: "Work from home", icon: <Monitor size={16} /> },
+                  { val: "Work from Home", icon: <Monitor size={16} /> },
                   { val: "Work from Office", icon: <Building size={16} /> },
                   { val: "Hybrid", icon: <Globe size={16} /> },
                 ].map((m) => (
