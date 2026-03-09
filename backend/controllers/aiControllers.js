@@ -1,10 +1,34 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import expressAsyncHandler from "express-async-handler";
+import mammoth from "mammoth";
 import { createRequire } from "module";
+
+// --- BRUTE FORCE MODULE UNWRAPPER ---
 const require = createRequire(import.meta.url);
 const pdfParseRaw = require("pdf-parse");
-const pdfParse = typeof pdfParseRaw === "function" ? pdfParseRaw : pdfParseRaw.default;
-import mammoth from "mammoth";
+
+let extractedPdfParse;
+if (typeof pdfParseRaw === "function") {
+  extractedPdfParse = pdfParseRaw;
+} else if (pdfParseRaw && typeof pdfParseRaw.default === "function") {
+  extractedPdfParse = pdfParseRaw.default;
+} else if (pdfParseRaw && pdfParseRaw.default && typeof pdfParseRaw.default.default === "function") {
+  extractedPdfParse = pdfParseRaw.default.default;
+} else if (pdfParseRaw && typeof pdfParseRaw.pdfParse === "function") {
+  extractedPdfParse = pdfParseRaw.pdfParse;
+} else {
+  // Absolute last resort: hunt through the object for ANY function
+  extractedPdfParse = Object.values(pdfParseRaw || {}).find(val => typeof val === "function");
+}
+
+if (!extractedPdfParse) {
+  console.error("FATAL: RAW PDF-PARSE MODULE DUMP:", pdfParseRaw);
+  throw new Error("CRITICAL SYSTEM FAILURE: pdf-parse module is corrupted or missing its core function.");
+}
+
+const pdfParse = extractedPdfParse;
+// ------------------------------------
+
 
 export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   const { title, jobType, mode } = req.body;
@@ -36,8 +60,16 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
     
     // Brutal cleanup: Strip any markdown formatting Gemini might accidentally include
     const cleanedText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const startIndex = cleanedText.indexOf('{');
+    const endIndex = cleanedText.lastIndexOf('}');
     
-    const parsedData = JSON.parse(cleanedText);
+    if (startIndex === -1 || endIndex === -1) {
+       throw new Error("Gemini did not return a valid JSON object.");
+    }
+
+    const jsonString = cleanedText.substring(startIndex, endIndex + 1);
+    const parsedData = JSON.parse(jsonString);
+    
     res.status(200).json(parsedData);
   } catch (error) {
     console.error("AI Generation Error:", error);
