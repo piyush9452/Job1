@@ -20,7 +20,7 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
     
     Return EXACTLY a JSON object with this format, and nothing else. Do not use markdown code blocks like \`\`\`json. Just the raw JSON.
     {
-      "summary": "Write a compelling 4-5 sentence summary about this role with clearly mentioning the experience needed for this role...",
+      "summary": "Write a compelling 4-5 sentence summary about this role with clearly mentioning the experience range needed for this role...",
       "responsibilities": "Write 6 to 7 bullet points of key responsibilities. Do not use markdown, just standard text with newlines (\\n) for bullets like:\\n- Task 1\\n- Task 2"
     }
   `;

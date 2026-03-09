@@ -856,8 +856,7 @@ export default function CreateJob() {
                   ✨ AI Auto-Writer
                 </h4>
                 <p className="text-xs text-indigo-700">
-                  Let AI write the summary and responsibilities based on your
-                  Job Title.
+                  Let AI write the summary and responsibilities based on your Job Title.
                 </p>
               </div>
               <button
@@ -883,14 +882,20 @@ export default function CreateJob() {
               </label>
               <div className="relative">
                 <FileText
-                  className="absolute left-3 top-4 text-gray-400"
+                  className={`absolute left-3 top-4 transition-colors duration-300 ${
+                    generatingAI ? "text-indigo-500 animate-pulse" : "text-gray-400"
+                  }`}
                   size={18}
                 />
                 <textarea
                   value={jobSummary}
                   onChange={(e) => setJobSummary(e.target.value)}
                   placeholder="Briefly describe the role..."
-                  className="w-full p-4 pl-10 border rounded-xl outline-none h-32 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all resize-y"
+                  className={`w-full p-4 pl-10 border rounded-xl outline-none h-32 transition-all duration-500 resize-y ${
+                    generatingAI
+                      ? "border-indigo-400 ring-4 ring-indigo-100 shadow-[0_0_20px_rgba(99,102,241,0.3)] bg-indigo-50/30"
+                      : "focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white border-gray-200"
+                  }`}
                 />
               </div>
             </div>
@@ -902,14 +907,20 @@ export default function CreateJob() {
               </label>
               <div className="relative">
                 <ListChecks
-                  className="absolute left-3 top-4 text-gray-400"
+                  className={`absolute left-3 top-4 transition-colors duration-300 ${
+                    generatingAI ? "text-indigo-500 animate-pulse" : "text-gray-400"
+                  }`}
                   size={18}
                 />
                 <textarea
                   value={keyResponsibilities}
                   onChange={(e) => setKeyResponsibilities(e.target.value)}
                   placeholder="List main tasks and duties..."
-                  className="w-full p-4 pl-10 border rounded-xl outline-none h-32 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all resize-y"
+                  className={`w-full p-4 pl-10 border rounded-xl outline-none h-32 transition-all duration-500 resize-y ${
+                    generatingAI
+                      ? "border-indigo-400 ring-4 ring-indigo-100 shadow-[0_0_20px_rgba(99,102,241,0.3)] bg-indigo-50/30"
+                      : "focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white border-gray-200"
+                  }`}
                 />
               </div>
             </div>
