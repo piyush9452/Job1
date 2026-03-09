@@ -56,14 +56,14 @@ export default function CreateJob() {
   const [titleSuggestions, setTitleSuggestions] = useState([]);
   const [titleTypingTimeout, setTitleTypingTimeout] = useState(null);
   const [step, setStep] = useState(1);
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   // Validation States
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
 
-
-    const skillSuggestions = [
+  const skillSuggestions = [
     "React",
     "Redux",
     "Node.js",
@@ -93,30 +93,29 @@ export default function CreateJob() {
     "C++",
     "Java",
   ];
-    const jobTitleSuggestions = [
-        "Senior React Developer",
-        "Frontend Developer",
-        "Backend Developer",
-        "Full Stack Developer",
-        "MERN Stack Developer",
-        "Node.js Developer",
-        "Python Developer",
-        "Django Developer",
-        "DevOps Engineer",
-        "UI/UX Designer",
-        "Software Engineer",
-        "Mobile App Developer",
-        "Data Analyst",
-        "Machine Learning Engineer",
-    ];
-    const durationOptions = [
-        { label: "Daily", value: "Day" },
-        { label: "Weekly", value: "Week" },
-        { label: "Monthly", value: "Month" },
-    ];
+  const jobTitleSuggestions = [
+    "Senior React Developer",
+    "Frontend Developer",
+    "Backend Developer",
+    "Full Stack Developer",
+    "MERN Stack Developer",
+    "Node.js Developer",
+    "Python Developer",
+    "Django Developer",
+    "DevOps Engineer",
+    "UI/UX Designer",
+    "Software Engineer",
+    "Mobile App Developer",
+    "Data Analyst",
+    "Machine Learning Engineer",
+  ];
+  const durationOptions = [
+    { label: "Daily", value: "Day" },
+    { label: "Weekly", value: "Week" },
+    { label: "Monthly", value: "Month" },
+  ];
 
-
-    // Auto-calculate salary
+  // Auto-calculate salary
   useEffect(() => {
     const totalHours = Number(job.noOfDays) * Number(job.dailyWorkingHours);
     const totalSalary = totalHours * Number(job.paymentPerHour);
@@ -128,80 +127,79 @@ export default function CreateJob() {
     }
   }, [job.noOfDays, job.dailyWorkingHours, job.paymentPerHour]);
 
-    useEffect(() => {
-        if (!job.startDate || !job.noOfDays) return;
+  useEffect(() => {
+    if (!job.startDate || !job.noOfDays) return;
 
-        const days = Number(job.noOfDays);
-        if (isNaN(days) || days < 1) return;
+    const days = Number(job.noOfDays);
+    if (isNaN(days) || days < 1) return;
 
-        const start = new Date(job.startDate);
-        const calculatedEnd = new Date(start);
+    const start = new Date(job.startDate);
+    const calculatedEnd = new Date(start);
 
-        // endDate = startDate + (days - 1)
-        calculatedEnd.setDate(start.getDate() + days - 1);
+    // endDate = startDate + (days - 1)
+    calculatedEnd.setDate(start.getDate() + days - 1);
 
-        const formattedEndDate = calculatedEnd.toISOString().split("T")[0];
+    const formattedEndDate = calculatedEnd.toISOString().split("T")[0];
 
-        setJob((prev) => ({
-            ...prev,
-            endDate: formattedEndDate,
-        }));
+    setJob((prev) => ({
+      ...prev,
+      endDate: formattedEndDate,
+    }));
 
-        // Validation: same date only allowed if days === 1
-        if (days > 1 && formattedEndDate === job.startDate) {
-            setErrors((prev) => ({
-                ...prev,
-                endDate: "End date must be after start date for multiple days",
-            }));
-        } else {
-            setErrors((prev) => ({
-                ...prev,
-                endDate: "",
-            }));
-        }
-    }, [job.startDate, job.noOfDays]);
+    // Validation: same date only allowed if days === 1
+    if (days > 1 && formattedEndDate === job.startDate) {
+      setErrors((prev) => ({
+        ...prev,
+        endDate: "End date must be after start date for multiple days",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        endDate: "",
+      }));
+    }
+  }, [job.startDate, job.noOfDays]);
 
-    useEffect(() => {
-        if (!job.workFrom || !job.dailyWorkingHours) return;
+  useEffect(() => {
+    if (!job.workFrom || !job.dailyWorkingHours) return;
 
-        const hours = Number(job.dailyWorkingHours);
-        if (isNaN(hours) || hours <= 0) return;
+    const hours = Number(job.dailyWorkingHours);
+    if (isNaN(hours) || hours <= 0) return;
 
-        const [startHour, startMinute] = job.workFrom.split(":").map(Number);
+    const [startHour, startMinute] = job.workFrom.split(":").map(Number);
 
-        if (isNaN(startHour) || isNaN(startMinute)) return;
+    if (isNaN(startHour) || isNaN(startMinute)) return;
 
-        const startTotalMinutes = startHour * 60 + startMinute;
-        const endTotalMinutes = startTotalMinutes + hours * 60;
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = startTotalMinutes + hours * 60;
 
-        const endHour = Math.floor((endTotalMinutes % 1440) / 60);
-        const endMinute = endTotalMinutes % 60;
+    const endHour = Math.floor((endTotalMinutes % 1440) / 60);
+    const endMinute = endTotalMinutes % 60;
 
-        const formattedEndTime = `${String(endHour).padStart(2, "0")}:${String(
-            endMinute
-        ).padStart(2, "0")}`;
+    const formattedEndTime = `${String(endHour).padStart(2, "0")}:${String(
+      endMinute,
+    ).padStart(2, "0")}`;
 
-        setJob((prev) => ({
-            ...prev,
-            workTo: formattedEndTime,
-        }));
+    setJob((prev) => ({
+      ...prev,
+      workTo: formattedEndTime,
+    }));
 
-        // Validation: start & end cannot be same
-        if (formattedEndTime === job.workFrom) {
-            setErrors((prev) => ({
-                ...prev,
-                workTo: "End time cannot be same as start time",
-            }));
-        } else {
-            setErrors((prev) => ({
-                ...prev,
-                workTo: "",
-            }));
-        }
-    }, [job.workFrom, job.dailyWorkingHours]);
+    // Validation: start & end cannot be same
+    if (formattedEndTime === job.workFrom) {
+      setErrors((prev) => ({
+        ...prev,
+        workTo: "End time cannot be same as start time",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        workTo: "",
+      }));
+    }
+  }, [job.workFrom, job.dailyWorkingHours]);
 
-
-    const validateField = (name, value) => {
+  const validateField = (name, value) => {
     let errorMsg = "";
     const requiredFields = [
       "title",
@@ -218,21 +216,20 @@ export default function CreateJob() {
       errorMsg = "This field is required";
     }
     if (name === "endDate" && job.startDate && job.noOfDays) {
-            const start = new Date(job.startDate);
-            const end = new Date(value);
-            const days = Number(job.noOfDays);
+      const start = new Date(job.startDate);
+      const end = new Date(value);
+      const days = Number(job.noOfDays);
 
-            if (end < start) {
-                errorMsg = "End date cannot be before start date";
-            }
+      if (end < start) {
+        errorMsg = "End date cannot be before start date";
+      }
 
-            if (days > 1 && end.getTime() === start.getTime()) {
-                errorMsg = "End date must be after start date for multiple days";
-            }
-        }
+      if (days > 1 && end.getTime() === start.getTime()) {
+        errorMsg = "End date must be after start date for multiple days";
+      }
+    }
 
-
-        setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
     return errorMsg;
   };
 
@@ -244,26 +241,26 @@ export default function CreateJob() {
       validateField(name, value);
     }
   };
-    const handleTitleChange = (e) => {
-        const value = e.target.value;
+  const handleTitleChange = (e) => {
+    const value = e.target.value;
 
-        setJob((prev) => ({ ...prev, title: value }));
+    setJob((prev) => ({ ...prev, title: value }));
 
-        if (titleTypingTimeout) clearTimeout(titleTypingTimeout);
+    if (titleTypingTimeout) clearTimeout(titleTypingTimeout);
 
-        const timeout = setTimeout(() => {
-            if (value.trim().length > 0) {
-                const filtered = jobTitleSuggestions.filter((title) =>
-                    title.toLowerCase().includes(value.toLowerCase())
-                );
-                setTitleSuggestions(filtered.slice(0, 5));
-            } else {
-                setTitleSuggestions([]);
-            }
-        }, 300);
+    const timeout = setTimeout(() => {
+      if (value.trim().length > 0) {
+        const filtered = jobTitleSuggestions.filter((title) =>
+          title.toLowerCase().includes(value.toLowerCase()),
+        );
+        setTitleSuggestions(filtered.slice(0, 5));
+      } else {
+        setTitleSuggestions([]);
+      }
+    }, 300);
 
-        setTitleTypingTimeout(timeout);
-    };
+    setTitleTypingTimeout(timeout);
+  };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
@@ -293,7 +290,7 @@ export default function CreateJob() {
     const timeout = setTimeout(() => {
       if (value.trim().length > 0) {
         const filtered = skillSuggestions.filter((skill) =>
-          skill.toLowerCase().includes(value.toLowerCase())
+          skill.toLowerCase().includes(value.toLowerCase()),
         );
         setSuggestions(filtered.slice(0, 5));
       } else {
@@ -314,6 +311,39 @@ export default function CreateJob() {
       }
       setSkillsInput("");
       setSuggestions([]);
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    if (!job.title.trim()) {
+      alert("You must enter a Job Title in Step 1 first!");
+      return;
+    }
+
+    setGeneratingAI(true);
+    try {
+      const storedData = localStorage.getItem("employerInfo");
+      const token = storedData ? JSON.parse(storedData).token : null;
+
+      if (!token) throw new Error("No token found");
+
+      const { data } = await axios.post(
+        "https://jobone-mrpy.onrender.com/ai/generate-job-details",
+        {
+          title: job.title,
+          jobType: job.jobType,
+          mode: job.mode,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      setJobSummary(data.summary);
+      setKeyResponsibilities(data.responsibilities);
+    } catch (error) {
+      console.error("AI generation failed:", error);
+      alert(error.response?.data?.message || "Failed to generate AI content.");
+    } finally {
+      setGeneratingAI(false);
     }
   };
 
@@ -446,7 +476,7 @@ export default function CreateJob() {
     } catch (error) {
       console.error("Error posting job:", error);
       alert(
-        `Failed to post job: ${error.response?.data?.message || error.message}`
+        `Failed to post job: ${error.response?.data?.message || error.message}`,
       );
     } finally {
       setLoading(false);
@@ -495,22 +525,22 @@ export default function CreateJob() {
                   placeholder="e.g. Senior React Developer"
                   className={getInputClass("title", true)}
                 />
-                  {titleSuggestions.length > 0 && (
-                      <ul className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-lg z-20 mt-2 overflow-hidden">
-                          {titleSuggestions.map((suggestion, index) => (
-                              <li
-                                  key={index}
-                                  onClick={() => {
-                                      setJob((prev) => ({ ...prev, title: suggestion }));
-                                      setTitleSuggestions([]);
-                                  }}
-                                  className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0"
-                              >
-                                  {suggestion}
-                              </li>
-                          ))}
-                      </ul>
-                  )}
+                {titleSuggestions.length > 0 && (
+                  <ul className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-lg z-20 mt-2 overflow-hidden">
+                    {titleSuggestions.map((suggestion, index) => (
+                      <li
+                        key={index}
+                        onClick={() => {
+                          setJob((prev) => ({ ...prev, title: suggestion }));
+                          setTitleSuggestions([]);
+                        }}
+                        className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0"
+                      >
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               {touched.title && errors.title && (
                 <p className="text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
@@ -523,22 +553,22 @@ export default function CreateJob() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Work Days
               </label>
-                <div>
-                    <div className="relative">
-                        <select
-                            name="jobType"
-                            value={job.jobType}
-                            onChange={handleChange}
-                            className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"
-                        >
-                            <option value="Daily">Daily</option>
-                            <option value="7 days">7 Days</option>
-                            <option value="Mon-Fri">Monday to Friday</option>
-                            <option value="Sat-Sun">Saturday to Sunday</option>
-                            <option value="Others">Others</option>
-                        </select>
-                    </div>
+              <div>
+                <div className="relative">
+                  <select
+                    name="jobType"
+                    value={job.jobType}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"
+                  >
+                    <option value="Daily">Daily</option>
+                    <option value="7 days">7 Days</option>
+                    <option value="Mon-Fri">Monday to Friday</option>
+                    <option value="Sat-Sun">Saturday to Sunday</option>
+                    <option value="Others">Others</option>
+                  </select>
                 </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -607,36 +637,36 @@ export default function CreateJob() {
                   onBlur={handleBlur}
                   className={getInputClass("startDate")}
                 />
-
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                   End Date
                 </label>
-                  <input
-                      type="date"
-                      name="endDate"
-                      value={job.endDate}
-                      readOnly={Number(job.noOfDays) > 1}
-                      className={`${getInputClass("endDate")} ${
-                          Number(job.noOfDays) > 1 ? "bg-gray-100 cursor-not-allowed" : ""
-                      }`}
-                  />
+                <input
+                  type="date"
+                  name="endDate"
+                  value={job.endDate}
+                  readOnly={Number(job.noOfDays) > 1}
+                  className={`${getInputClass("endDate")} ${
+                    Number(job.noOfDays) > 1
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : ""
+                  }`}
+                />
               </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                        No EndDate
-                    </label>
-                    <input
-                        type="date"
-                        name="startDate"
-                        value={job.startDate}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={getInputClass("startDate")}
-                    />
-
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+                  No EndDate
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={job.startDate}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getInputClass("startDate")}
+                />
+              </div>
             </div>
 
             <div>
@@ -689,14 +719,13 @@ export default function CreateJob() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                   End Time
                 </label>
-                  <input
-                      type="time"
-                      name="workTo"
-                      value={job.workTo}
-                      readOnly
-                      className="w-full p-3 border rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
-                  />
-
+                <input
+                  type="time"
+                  name="workTo"
+                  value={job.workTo}
+                  readOnly
+                  className="w-full p-3 border rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
+                />
               </div>
             </div>
 
@@ -802,6 +831,34 @@ export default function CreateJob() {
         {/* --- STEP 2: DETAILS & LOCATION --- */}
         {step === 2 && (
           <div className="space-y-6">
+            {/* AI GENERATOR BANNER */}
+            <div className="flex items-center justify-between mb-2 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+              <div>
+                <h4 className="font-bold text-indigo-900 text-sm">
+                  ✨ AI Auto-Writer
+                </h4>
+                <p className="text-xs text-indigo-700">
+                  Let AI write the summary and responsibilities based on your
+                  Job Title.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAIGenerate}
+                disabled={generatingAI}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {generatingAI ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} /> Generating...
+                  </>
+                ) : (
+                  "Generate with AI"
+                )}
+              </button>
+            </div>
+
+            {/* JOB SUMMARY */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Job Summary <span className="text-red-500">*</span>
@@ -820,6 +877,7 @@ export default function CreateJob() {
               </div>
             </div>
 
+            {/* KEY RESPONSIBILITIES */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Key Responsibilities <span className="text-red-500">*</span>
@@ -832,7 +890,7 @@ export default function CreateJob() {
                 <textarea
                   value={keyResponsibilities}
                   onChange={(e) => setKeyResponsibilities(e.target.value)}
-                  placeholder="List main tasks..."
+                  placeholder="List main tasks and duties..."
                   className="w-full p-4 pl-10 border rounded-xl outline-none h-32 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all resize-y"
                 />
               </div>
@@ -894,7 +952,7 @@ export default function CreateJob() {
                   <button
                     onClick={() => {
                       const updated = job.skillsRequired.filter(
-                        (_, i) => i !== index
+                        (_, i) => i !== index,
                       );
                       setJob({ ...job, skillsRequired: updated });
                     }}
@@ -990,7 +1048,7 @@ export default function CreateJob() {
                 Preview
               </button>
               <button
-                  onClick={() => setShowConfirm(true)}
+                onClick={() => setShowConfirm(true)}
                 disabled={loading}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-blue-300 font-bold shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5"
               >
@@ -1032,20 +1090,19 @@ export default function CreateJob() {
           </div>
         </div>
       )}
-        {showConfirm && (
-            <JobConfirmModal
-                job={job}
-                summary={jobSummary}
-                responsibilities={keyResponsibilities}
-                loading={loading}
-                onClose={() => setShowConfirm(false)}
-                onConfirm={() => {
-                    setShowConfirm(false);
-                    handleSubmit();
-                }}
-            />
-        )}
-
+      {showConfirm && (
+        <JobConfirmModal
+          job={job}
+          summary={jobSummary}
+          responsibilities={keyResponsibilities}
+          loading={loading}
+          onClose={() => setShowConfirm(false)}
+          onConfirm={() => {
+            setShowConfirm(false);
+            handleSubmit();
+          }}
+        />
+      )}
     </div>
   );
 }
