@@ -115,7 +115,7 @@ export default function Navbar() {
               to="/jobs"
               className="text-gray-700 hover:text-blue-700 font-medium"
             >
-              Find Jobs
+              Find Part-time Jobs
             </Link>
           )}
 
@@ -125,7 +125,7 @@ export default function Navbar() {
               to="/createjob"
               className="text-gray-700 hover:text-blue-700 font-medium"
             >
-              Post a Job
+              Post a Part-time Job
             </Link>
           )}
 
@@ -268,7 +268,7 @@ export default function Navbar() {
                 className="text-gray-700 hover:text-blue-600 font-medium"
                 onClick={() => setMenuOpen(false)}
               >
-                Post a Job
+                Post a Part-time Job
               </Link>
               <Link
                 to="/employerdashboard"
@@ -303,7 +303,7 @@ export default function Navbar() {
                 className="text-gray-700 hover:text-blue-600 font-medium"
                 onClick={() => setMenuOpen(false)}
               >
-                Find Jobs
+                Find Part-time Jobs
               </Link>
               <Link
                 to="/profile"

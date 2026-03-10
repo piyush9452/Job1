@@ -6,7 +6,7 @@ const JobSchema = new mongoose.Schema({
   jobType: { 
   type: String, 
   enum: ["Daily", "7 days", "Mon-Fri", "Sat-Sun", "Others"], 
-  default: "Daily" ,
+  default: "Daily",
 },
   skillsRequired: { type: [String], default: [] },
   location: {

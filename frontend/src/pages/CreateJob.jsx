@@ -33,11 +33,12 @@ export default function CreateJob() {
     longitude: null,
     pinCode: "",
     salary: "",
+      salaryFrequency: "Hourly",
     durationType: "Day",
     startDate: "",
     endDate: "",
     dailyWorkingHours: "",
-    mode: "Online",
+    mode: "Work from Home",
     workFrom: "",
     workTo: "",
     noOfDays: "",
@@ -61,6 +62,7 @@ export default function CreateJob() {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
+  const [noEndDate, setNoEndDate] = useState(false);
 
 
     const skillSuggestions = [
@@ -117,16 +119,49 @@ export default function CreateJob() {
 
 
     // Auto-calculate salary
-  useEffect(() => {
-    const totalHours = Number(job.noOfDays) * Number(job.dailyWorkingHours);
-    const totalSalary = totalHours * Number(job.paymentPerHour);
+    useEffect(() => {
+        let totalSalary = 0;
 
-    if (!isNaN(totalSalary) && totalSalary > 0) {
-      setJob((prevJob) => ({ ...prevJob, salary: totalSalary }));
-    } else {
-      setJob((prevJob) => ({ ...prevJob, salary: "" }));
-    }
-  }, [job.noOfDays, job.dailyWorkingHours, job.paymentPerHour]);
+        const days = Number(job.noOfDays);
+        const hours = Number(job.dailyWorkingHours);
+        const rate = Number(job.paymentPerHour);
+
+        if (!days || !hours || !rate) {
+            setJob(prev => ({ ...prev, salary: "" }));
+            return;
+        }
+
+        switch (job.salaryFrequency) {
+            case "Hourly":
+                totalSalary = days * hours * rate;
+                break;
+
+            case "Daily":
+                totalSalary = days * rate;
+                break;
+
+            case "Weekly":
+                totalSalary = (days / 7) * rate;
+                break;
+
+            case "Monthly":
+                totalSalary = (days / 30) * rate;
+                break;
+
+            default:
+                totalSalary = days * hours * rate;
+        }
+
+        setJob(prev => ({
+            ...prev,
+            salary: Math.round(totalSalary),
+        }));
+    }, [
+        job.noOfDays,
+        job.dailyWorkingHours,
+        job.paymentPerHour,
+        job.salaryFrequency,
+    ]);
 
     useEffect(() => {
         if (!job.startDate || !job.noOfDays) return;
@@ -207,20 +242,17 @@ export default function CreateJob() {
       "title",
       "noOfDays",
       "dailyWorkingHours",
-      "startDate",
-      "endDate",
       "paymentPerHour",
-      "noOfPeopleRequired",
-      "location",
+      "noOfPeopleRequired"
     ];
 
     if (requiredFields.includes(name) && !value) {
       errorMsg = "This field is required";
     }
-    if (name === "endDate" && job.startDate && job.noOfDays) {
-            const start = new Date(job.startDate);
-            const end = new Date(value);
-            const days = Number(job.noOfDays);
+    if (name === "endDate" && value && job.startDate && job.noOfDays) {
+        const start = new Date(job.startDate);
+        const end = new Date(value);
+        const days = Number(job.noOfDays);
 
             if (end < start) {
                 errorMsg = "End date cannot be before start date";
@@ -229,6 +261,24 @@ export default function CreateJob() {
             if (days > 1 && end.getTime() === start.getTime()) {
                 errorMsg = "End date must be after start date for multiple days";
             }
+        }
+        if (name === "dailyWorkingHours") {
+            const hours = Number(value);
+
+            if (hours < 1) {
+                errorMsg = "Daily working hours must be at least 1";
+            }
+
+            if (hours > 10) {
+                errorMsg = "Daily working hours cannot exceed 10";
+            }
+        }
+        if (
+            name === "location" &&
+            (job.mode === "Work from Office" || job.mode === "Hybrid") &&
+            !value
+        ) {
+            errorMsg = "Location is required";
         }
 
 
@@ -269,6 +319,7 @@ export default function CreateJob() {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
     validateField(name, value);
+
   };
 
   // --- MAP HANDLER ---
@@ -322,8 +373,6 @@ export default function CreateJob() {
       "title",
       "noOfDays",
       "dailyWorkingHours",
-      "startDate",
-      "endDate",
       "paymentPerHour",
       "noOfPeopleRequired",
     ];
@@ -353,12 +402,15 @@ export default function CreateJob() {
   };
 
   const handleSubmit = async () => {
-    if (!job.location) {
-      setTouched((prev) => ({ ...prev, location: true }));
-      setErrors((prev) => ({ ...prev, location: "Location is required" }));
-      alert("Please enter a location.");
-      return;
-    }
+      if (
+          (job.mode === "Work from Office" || job.mode === "Hybrid") &&
+          !job.location
+      ) {
+          setTouched((prev) => ({ ...prev, location: true }));
+          setErrors((prev) => ({ ...prev, location: "Location is required" }));
+          alert("Please enter a location.");
+          return;
+      }
 
     if (!jobSummary.trim() || !keyResponsibilities.trim()) {
       alert("Job Summary and Key Responsibilities are required.");
@@ -417,19 +469,16 @@ export default function CreateJob() {
       setJob({
         title: "",
         description: "",
-        jobType: "daily",
+        jobType: "Daily",
         skillsRequired: [],
-        location: "",
         latitude: null,
         longitude: null,
         pinCode: "",
         salary: "",
         durationType: "Day",
-        startDate: "",
-        endDate: "",
         dailyWorkingHours: "",
-        mode: "Online",
-        workFrom: "",
+          mode: "Work from Home",
+          workFrom: "",
         workTo: "",
         noOfDays: "",
         noOfPeopleRequired: "",
@@ -583,6 +632,8 @@ export default function CreateJob() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="e.g. 8"
+                    min="1"
+                    max="10"
                     className={getInputClass("dailyWorkingHours", true)}
                   />
                 </div>
@@ -609,33 +660,42 @@ export default function CreateJob() {
                 />
 
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                  End Date
-                </label>
-                  <input
-                      type="date"
-                      name="endDate"
-                      value={job.endDate}
-                      readOnly={Number(job.noOfDays) > 1}
-                      className={`${getInputClass("endDate")} ${
-                          Number(job.noOfDays) > 1 ? "bg-gray-100 cursor-not-allowed" : ""
-                      }`}
-                  />
-              </div>
                 <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                        No EndDate
+                        End Date
                     </label>
+
                     <input
                         type="date"
-                        name="startDate"
-                        value={job.startDate}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={getInputClass("startDate")}
+                        name="endDate"
+                        value={noEndDate ? "" : job.endDate || ""}
+                        readOnly={Number(job.noOfDays) > 1 || noEndDate}
+                        disabled={noEndDate}
+                        className={`${getInputClass("endDate")} ${
+                            Number(job.noOfDays) > 1 || noEndDate
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                        }`}
                     />
 
+                    <label className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                        <input
+                            type="checkbox"
+                            checked={noEndDate}
+                            onChange={(e) => {
+                                const checked = e.target.checked;
+                                setNoEndDate(checked);
+
+                                if (checked) {
+                                    setJob((prev) => ({
+                                        ...prev,
+                                        endDate: null,
+                                    }));
+                                }
+                            }}
+                        />
+                        No End Date
+                    </label>
                 </div>
             </div>
 
@@ -699,10 +759,26 @@ export default function CreateJob() {
 
               </div>
             </div>
+              <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+                      Salary Type
+                  </label>
+                  <select
+                      name="salaryFrequency"
+                      value={job.salaryFrequency}
+                      onChange={handleChange}
+                      className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white"
+                  >
+                      <option value="Hourly">Hourly</option>
+                      <option value="Daily">Daily</option>
+                      <option value="Weekly">Weekly</option>
+                      <option value="Monthly">Monthly</option>
+                  </select>
+              </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                Payment Per Hour <span className="text-red-500">*</span>
+                  {job.salaryFrequency} Payment <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <IndianRupee
@@ -909,71 +985,73 @@ export default function CreateJob() {
             <hr className="border-gray-200 my-6" />
 
             {/* --- LOCATION PICKER SECTION --- */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                <MapPin className="text-blue-600" /> Job Location
-                <span className="text-red-500 text-sm">*</span>
-              </h3>
+              {(job.mode === "Work from Office" || job.mode === "Hybrid") && (
+                  <div className="space-y-4">
+                      <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
+                          <MapPin className="text-blue-600" /> Job Location
+                          <span className="text-red-500 text-sm">*</span>
+                      </h3>
 
-              <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
-                <p className="text-sm text-blue-800 mb-3 font-medium">
-                  Step 1: Search & Drop a pin on the map{" "}
-                  <span className="text-blue-600 font-normal">
+                      <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                          <p className="text-sm text-blue-800 mb-3 font-medium">
+                              Step 1: Search & Drop a pin on the map{" "}
+                              <span className="text-blue-600 font-normal">
                     (Required for "Jobs Near Me")
                   </span>
-                </p>
-                {/* Map Component */}
-                <div className="rounded-lg overflow-hidden border border-blue-200 shadow-sm">
-                  <LocationPicker onLocationSelect={handleLocationSelect} />
-                </div>
-              </div>
+                          </p>
+                          {/* Map Component */}
+                          <div className="rounded-lg overflow-hidden border border-blue-200 shadow-sm">
+                              <LocationPicker onLocationSelect={handleLocationSelect} />
+                          </div>
+                      </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5 mt-2">
-                  Step 2: Refine Address{" "}
-                  <span className="font-normal text-gray-500">
+                      <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1.5 mt-2">
+                              Step 2: Refine Address{" "}
+                              <span className="font-normal text-gray-500">
                     (Add Floor, Building Name, etc.)
                   </span>
-                </label>
-                <div className="relative">
-                  <input
-                    name="location"
-                    value={job.location}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    placeholder="303-B, Sweethomes Apt, Indrapuri, Bhopal..."
-                    className={`w-full p-3 pl-10 border rounded-xl outline-none focus:ring-2 transition-all ${
-                      touched.location && errors.location
-                        ? "border-red-500 focus:ring-red-200 bg-red-50"
-                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200 bg-gray-50 focus:bg-white"
-                    }`}
-                  />
-                  <MapPin
-                    className="absolute left-3 top-3.5 text-gray-400"
-                    size={18}
-                  />
-                </div>
-                {touched.location && errors.location && (
-                  <p className="text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
-                    <AlertCircle size={12} /> {errors.location}
-                  </p>
-                )}
+                          </label>
+                          <div className="relative">
+                              <input
+                                  name="location"
+                                  value={job.location}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  placeholder="303-B, Sweethomes Apt, Indrapuri, Bhopal..."
+                                  className={`w-full p-3 pl-10 border rounded-xl outline-none focus:ring-2 transition-all ${
+                                      touched.location && errors.location
+                                          ? "border-red-500 focus:ring-red-200 bg-red-50"
+                                          : "border-gray-300 focus:border-blue-500 focus:ring-blue-200 bg-gray-50 focus:bg-white"
+                                  }`}
+                              />
+                              <MapPin
+                                  className="absolute left-3 top-3.5 text-gray-400"
+                                  size={18}
+                              />
+                          </div>
+                          {touched.location && errors.location && (
+                              <p className="text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                                  <AlertCircle size={12} /> {errors.location}
+                              </p>
+                          )}
 
-                {/* Status Indicator */}
-                <div className="mt-3 text-xs flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100 w-fit">
-                  {job.latitude && job.longitude ? (
-                    <span className="text-green-600 flex items-center gap-1.5 font-medium">
+                          {/* Status Indicator */}
+                          <div className="mt-3 text-xs flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100 w-fit">
+                              {job.latitude && job.longitude ? (
+                                  <span className="text-green-600 flex items-center gap-1.5 font-medium">
                       <CheckCircle size={14} /> Coordinates Captured
                       Successfully
                     </span>
-                  ) : (
-                    <span className="text-orange-500 flex items-center gap-1.5 font-medium">
+                              ) : (
+                                  <span className="text-orange-500 flex items-center gap-1.5 font-medium">
                       <AlertCircle size={14} /> Pin not dropped on map yet
                     </span>
-                  )}
-                </div>
-              </div>
-            </div>
+                              )}
+                          </div>
+                      </div>
+                  </div>
+              )}
 
             <div className="flex gap-4 justify-end mt-8 pt-6 border-t border-gray-100">
               <button
