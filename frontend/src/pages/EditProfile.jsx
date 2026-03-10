@@ -15,13 +15,16 @@ import {
   GraduationCap,
   Link as LinkIcon,
   AlertTriangle,
+  Upload,
+  Sparkles,
 } from "lucide-react";
 
 export default function EditProfile() {
   const navigate = useNavigate();
-  const location = useLocation(); // Hook to access state passed from Login
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isParsing, setIsParsing] = useState(false); // AI Parsing State
 
   // --- POPUP STATE ---
   const [showPopup, setShowPopup] = useState(false);
@@ -59,7 +62,6 @@ export default function EditProfile() {
 
   // --- 1. LOAD DATA & CHECK POPUP ---
   useEffect(() => {
-    // Check if we need to show the warning popup
     if (location.state?.showWarning) {
       setShowPopup(true);
     }
@@ -127,7 +129,77 @@ export default function EditProfile() {
     fetchUser();
   }, [navigate, location]);
 
-  // --- HANDLERS (Same as before) ---
+  // --- AI RESUME PARSER HANDLER ---
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+    ];
+
+    if (!validTypes.includes(file.type)) {
+      return alert("Invalid file type. Please upload a PDF or DOCX file.");
+    }
+
+    setIsParsing(true);
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    try {
+      const storedData = localStorage.getItem("userInfo");
+      const token = storedData ? JSON.parse(storedData).token : null;
+
+      const { data } = await axios.post(
+        "https://jobone-mrpy.onrender.com/ai/parse-resume",
+        // https://jobone-mrpy.onrender.com
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+      if (data.name) {
+        setProfile((prev) => ({ ...prev, name: data.name }));
+      }
+      if (data.phone) {
+        setProfile((prev) => ({ ...prev, phone: data.phone }));
+      }
+      // Inject parsed data into state. User can manually edit afterward.
+      if (data.description) {
+        setProfile((prev) => ({ ...prev, description: data.description }));
+      }
+      if (data.skills && data.skills.length > 0) {
+        // Merge skills, removing duplicates
+        setSkills((prev) => Array.from(new Set([...prev, ...data.skills])));
+      }
+      if (data.experience && data.experience.length > 0) {
+        setExperience(data.experience); // Overwrite to match resume
+      }
+      if (data.education && data.education.length > 0) {
+        setEducation(data.education); // Overwrite to match resume
+      }
+
+      alert(
+        "Resume parsed successfully! Please review and edit the auto-filled details below.",
+      );
+    } catch (error) {
+      console.error("Parsing failed:", error);
+      alert(
+        error.response?.data?.message ||
+          "Failed to parse resume. Please try again.",
+      );
+    } finally {
+      setIsParsing(false);
+      e.target.value = null; // Reset input so same file can be selected again
+    }
+  };
+
+  // --- HANDLERS ---
   const handleProfileChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
@@ -182,27 +254,20 @@ export default function EditProfile() {
     try {
       const storedUser = JSON.parse(localStorage.getItem("userInfo"));
       const { token, id } = storedUser;
-      // Handle the id/userId mismatch
       const userId = id || storedUser.userId;
 
-      // 1. Prepare Phone Number
-      // Ensure we send a Number type, or undefined if empty
       let formattedPhone = undefined;
       if (profile.phone && String(profile.phone).trim() !== "") {
         formattedPhone = String(profile.phone);
       }
 
-      // 2. Construct Payload
       const payload = {
-        ...profile, // Name, Description, ProfilePicture, etc.
+        ...profile,
         phone: formattedPhone,
-        skills, // Array of skills
-        experience, // Array of experience objects
-        education, // Array of education objects
+        skills,
+        experience,
+        education,
       };
-
-      // Debugging: Check your browser console to see exactly what is being sent
-      console.log("SENDING PAYLOAD:", payload);
 
       const { data } = await axios.patch(
         `https://jobone-mrpy.onrender.com/user/${userId}`,
@@ -210,9 +275,6 @@ export default function EditProfile() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      console.log("SERVER RESPONSE:", data); // Check if server returns the updated phone
-
-      // Update local storage to keep UI in sync immediately
       const updatedUserInfo = { ...storedUser, ...data };
       localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
 
@@ -228,6 +290,14 @@ export default function EditProfile() {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-slate-50">
+        <Loader2 className="animate-spin text-blue-600" size={48} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-900 relative">
@@ -268,7 +338,7 @@ export default function EditProfile() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto mt-10">
         {/* HEADER */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -288,6 +358,57 @@ export default function EditProfile() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* AI MAGIC AUTO-FILL BANNER */}
+          <div
+            className={`p-6 rounded-2xl border transition-all duration-300 ${isParsing ? "border-indigo-400 bg-indigo-50/50 shadow-[0_0_20px_rgba(99,102,241,0.2)]" : "border-indigo-200 bg-indigo-50/30"}`}
+          >
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-indigo-900 flex items-center gap-2">
+                  <Sparkles
+                    className={
+                      isParsing
+                        ? "text-indigo-500 animate-pulse"
+                        : "text-indigo-500"
+                    }
+                    size={20}
+                  />
+                  AI Resume Auto-Fill
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  Upload your PDF or Word document and let AI extract your
+                  details instantly.
+                </p>
+              </div>
+
+              <div className="relative overflow-hidden group">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleResumeUpload}
+                  disabled={isParsing}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+                />
+                <button
+                  type="button"
+                  disabled={isParsing}
+                  className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm group-hover:bg-indigo-700 transition disabled:opacity-70 pointer-events-none"
+                >
+                  {isParsing ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} /> Reading
+                      Document...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={18} /> Upload Resume
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* 1. PERSONAL DETAILS CARD */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
             <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
@@ -359,7 +480,7 @@ export default function EditProfile() {
               onChange={handleProfileChange}
               rows={4}
               placeholder="Write a short bio about your professional background and goals..."
-              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all resize-y text-slate-700 leading-relaxed text-sm"
+              className={`w-full p-4 bg-gray-50 border rounded-xl outline-none transition-all resize-y text-slate-700 leading-relaxed text-sm ${isParsing ? "border-indigo-400 ring-2 ring-indigo-100" : "border-gray-200 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500"}`}
             />
           </div>
 
@@ -394,7 +515,7 @@ export default function EditProfile() {
                 {skills.map((skill, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm group"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 bg-white border rounded-lg shadow-sm group transition-all ${isParsing ? "border-indigo-300 bg-indigo-50" : "border-gray-200"}`}
                   >
                     <span className="text-sm font-medium text-gray-700">
                       {skill}
@@ -446,7 +567,7 @@ export default function EditProfile() {
                   name="duration"
                   value={expForm.duration}
                   onChange={handleExpChange}
-                  placeholder="Duration (e.g. 2 Years)"
+                  placeholder="Duration (e.g. 2020 - 2022)"
                   className="p-3 border border-gray-200 rounded-xl focus:border-blue-500 outline-none text-sm"
                 />
                 <input
@@ -471,7 +592,7 @@ export default function EditProfile() {
               {experience.map((exp, index) => (
                 <div
                   key={index}
-                  className="flex justify-between items-start p-4 bg-white border border-gray-100 rounded-xl shadow-sm"
+                  className={`flex justify-between items-start p-4 bg-white border rounded-xl shadow-sm transition-all ${isParsing ? "border-indigo-300 bg-indigo-50" : "border-gray-100"}`}
                 >
                   <div>
                     <h4 className="font-bold text-gray-900">{exp.role}</h4>
@@ -556,7 +677,7 @@ export default function EditProfile() {
               {education.map((edu, index) => (
                 <div
                   key={index}
-                  className="flex justify-between items-start p-4 bg-white border border-gray-100 rounded-xl shadow-sm"
+                  className={`flex justify-between items-start p-4 bg-white border rounded-xl shadow-sm transition-all ${isParsing ? "border-indigo-300 bg-indigo-50" : "border-gray-100"}`}
                 >
                   <div>
                     <h4 className="font-bold text-gray-900">{edu.degree}</h4>
@@ -590,7 +711,7 @@ export default function EditProfile() {
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || isParsing}
               className="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving ? (
