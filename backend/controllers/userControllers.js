@@ -1,23 +1,15 @@
 import User from "../models/users.js";
 import jwt from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
-// import errorHandler from "../middleware/errorhandler.js";
 import { OAuth2Client } from 'google-auth-library';
 import bcrypt from "bcrypt";
-import admin from 'firebase-admin';
-
-// Initialize Firebase Admin SDK (do this once when your server starts)
-// admin.initializeApp({
-//   credential: admin.credential.cert(require('./path/to/your/serviceAccountKey.json'))
-// });
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-// Create a new user
-import UserOTP from '../models/userVerification.js'; // <-- Import the new model
+import UserOTP from '../models/userVerification.js';
 import sendEmail from '../utils/emailVerification.js';
 import { validationResult } from 'express-validator';
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 export const createUser = expressAsyncHandler(async (req, res) => {
-  // 1. Validation
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400);
@@ -26,17 +18,14 @@ export const createUser = expressAsyncHandler(async (req, res) => {
 
   const { name, email, password, phone } = req.body;
 
-  // 2. Check existence
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     res.status(400);
     throw new Error("User already exists");
   }
 
-  // 3. Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 4. Create User (isVerified: false by default)
   const user = new User({
     name,
     email,
@@ -45,17 +34,14 @@ export const createUser = expressAsyncHandler(async (req, res) => {
   });
   const savedUser = await user.save();
 
-  // 5. Generate OTP
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
-    // 6. Save to the separate UserOTP collection
     await UserOTP.create({
       userId: savedUser._id,
       otp: otpCode,
     });
 
-    // 7. Send Email
     await sendEmail({
       email: savedUser.email,
       subject: 'Verify your Job Portal Account',
@@ -68,7 +54,6 @@ export const createUser = expressAsyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    // Cleanup if email fails
     await User.deleteOne({ _id: savedUser._id });
     await UserOTP.deleteOne({ userId: savedUser._id });
     res.status(500);
@@ -77,19 +62,15 @@ export const createUser = expressAsyncHandler(async (req, res) => {
 });
 
 
-
 export const verifyUserOTP = expressAsyncHandler(async (req, res) => {
   const { email, otp } = req.body;
 
-  // 1. Find the User first
   const user = await User.findOne({ email });
-  
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
-  // 2. Find the OTP record in the UserOTP collection
   const otpRecord = await UserOTP.findOne({
     userId: user._id,
     otp: otp,
@@ -100,32 +81,23 @@ export const verifyUserOTP = expressAsyncHandler(async (req, res) => {
     throw new Error("Invalid or expired OTP.");
   }
 
-  // 3. Mark Verified
   user.isVerified = true;
   await user.save();
 
-  // 4. Clean up OTP
   await UserOTP.deleteOne({ _id: otpRecord._id });
 
-  // 5. Generate Token
   const token = jwt.sign(
     { id: user._id }, 
     process.env.JWT_SECRET, 
     { expiresIn: '5h' }
   );
   
-  // 6. Send Response (With ID!)
   res.status(200).json({ 
       message: "Account verified!", 
       token,
       userId: user._id 
   });
 });
-
-
-
-
-
 
 
 export const loginUser = expressAsyncHandler(async (req, res) => {
@@ -137,7 +109,6 @@ export const loginUser = expressAsyncHandler(async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // --- FIX: Block unverified users ---
     if (!user.isVerified) {
         return res.status(401).json({ message: "Account not verified. Please verify email." });
     }
@@ -148,7 +119,6 @@ export const loginUser = expressAsyncHandler(async (req, res) => {
       { expiresIn: "120h" }
     );
 
-    // Response structure looks good
     res.status(200).json({
       message: "Login successful",
       token,
@@ -162,19 +132,17 @@ export const loginUser = expressAsyncHandler(async (req, res) => {
 });
 
 
-
 export const updateUser = expressAsyncHandler(async (req, res) => {
-
-    const userId = req.params.id; // get user id from URL
-    const updates = req.body;     // only the fields provided
+    const userId = req.params.id; 
+    const updates = req.body;     
 
     const notAllowed = ["email", "password"]; 
     notAllowed.forEach(field => delete updates[field]);
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $set: updates },   // update only provided fields
-      { new: true, runValidators: true } // return updated doc
+      { $set: updates },  
+      { new: true, runValidators: true } 
     );
 
     if (!updatedUser) {
@@ -182,12 +150,7 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(updatedUser);
-
-  
 });
-
-
-
 
 
 export const userDetails = expressAsyncHandler(async (req, res) => {
@@ -197,73 +160,79 @@ export const userDetails = expressAsyncHandler(async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     return res.status(200).json(user);
-  
-})
-
-
+});
 
 
 export const googleLogin = expressAsyncHandler(async (req, res) => {
-  const { token: googleToken } = req.body;
+  try {
+    const { token: googleToken } = req.body;
 
-  // 1. Verify Google Token
-  const ticket = await client.verifyIdToken({
-    idToken: googleToken,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
-  
-  const { email, name, picture, sub: googleId } = ticket.getPayload();
-
-  // 2. Check if user exists
-  let user = await User.findOne({ email });
-
-  if (user) {
-    // --- SCENARIO 1: EXISTING USER (LOGIN) ---
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+    // 1. Verify Google Token
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
     
-    if (!user.profilePicture) {
-        user.profilePicture = picture;
-        await user.save();
+    const { email, name, picture } = ticket.getPayload();
+
+    // 2. Check if user exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // --- SCENARIO 1: EXISTING USER (LOGIN) ---
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+      
+      if (!user.profilePicture) {
+          user.profilePicture = picture;
+          await user.save();
+      }
+
+      // Check if they have a REAL phone number (not our dummy one) and skills
+      const hasRealPhone = user.phone && !user.phone.startsWith("G-");
+      const isProfileComplete = hasRealPhone && user.skills && user.skills.length > 0;
+
+      return res.status(200).json({
+        message: "Google Login Successful",
+        token,
+        userId: user._id,
+        user: { id: user._id, name: user.name, email: user.email },
+        isProfileComplete: !!isProfileComplete 
+      });
+
+    } else {
+      // --- SCENARIO 2: NEW USER (REGISTER) ---
+      const randomPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      // FACT: We inject a completely unique dummy phone number to prevent MongoDB E11000 duplicate key crashes
+      const dummyPhone = `G-${Date.now().toString().slice(-8)}`;
+
+      const newUser = new User({
+        name,
+        email,
+        password: hashedPassword,
+        profilePicture: picture,
+        isVerified: true, 
+        phone: dummyPhone // Bypass crash here
+      });
+
+      const savedUser = await newUser.save();
+      
+      const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+      // Send false so frontend redirects to Edit Profile
+      return res.status(201).json({
+        message: "Google Registration Successful",
+        token,
+        userId: savedUser._id,
+        user: { id: savedUser._id, name, email },
+        isProfileComplete: false 
+      });
     }
-
-    // Check if they have a phone number and skills
-    const isProfileComplete = user.phone && user.skills && user.skills.length > 0;
-
-    res.status(200).json({
-      message: "Google Login Successful",
-      token,
-      userId: user._id,
-      user: { id: user._id, name: user.name, email: user.email },
-      isProfileComplete: !!isProfileComplete // Send true/false
-    });
-
-  } else {
-    // --- SCENARIO 2: NEW USER (REGISTER) ---
-    const randomPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      profilePicture: picture,
-      isVerified: true, 
-      authProvider: 'google',
-      phone: undefined // Explicitly undefined to avoid unique index issues if sparse
-    });
-
-    const savedUser = await newUser.save();
-    
-    const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
-
-    // FIX: A new Google user is ALWAYS incomplete (no phone/skills yet)
-    // We send 'false' so frontend redirects to Edit Profile
-    res.status(201).json({
-      message: "Google Registration Successful",
-      token,
-      userId: savedUser._id,
-      user: { id: savedUser._id, name, email },
-      isProfileComplete: false // <--- This forces the redirect
-    });
+  } catch (error) {
+    // FACT: If it crashes again, it will print the real reason in your backend terminal/logs
+    console.error("FATAL GOOGLE LOGIN ERROR:", error);
+    res.status(500);
+    throw new Error(`Google Login Failed: ${error.message}`);
   }
 });
