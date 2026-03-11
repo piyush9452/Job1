@@ -14,7 +14,6 @@ import {
   Clock,
   IndianRupee,
   Users,
-  Hash,
   Globe,
   Monitor,
   Building,
@@ -33,7 +32,7 @@ export default function CreateJob() {
     longitude: null,
     pinCode: "",
     salary: "",
-      salaryFrequency: "Hourly",
+    salaryFrequency: "Hourly",
     durationType: "Day",
     startDate: "",
     endDate: "",
@@ -57,16 +56,15 @@ export default function CreateJob() {
   const [titleSuggestions, setTitleSuggestions] = useState([]);
   const [titleTypingTimeout, setTitleTypingTimeout] = useState(null);
   const [step, setStep] = useState(1);
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   // Validation States
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [noEndDate, setNoEndDate] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
 
-
-    const skillSuggestions = [
+  const skillSuggestions = [
     "React",
     "Redux",
     "Node.js",
@@ -96,234 +94,180 @@ export default function CreateJob() {
     "C++",
     "Java",
   ];
-    const jobTitleSuggestions = [
-        "Senior React Developer",
-        "Frontend Developer",
-        "Backend Developer",
-        "Full Stack Developer",
-        "MERN Stack Developer",
-        "Node.js Developer",
-        "Python Developer",
-        "Django Developer",
-        "DevOps Engineer",
-        "UI/UX Designer",
-        "Software Engineer",
-        "Mobile App Developer",
-        "Data Analyst",
-        "Machine Learning Engineer",
-    ];
-    const durationOptions = [
-        { label: "Daily", value: "Day" },
-        { label: "Weekly", value: "Week" },
-        { label: "Monthly", value: "Month" },
-    ];
 
+  const jobTitleSuggestions = [
+    "Senior React Developer",
+    "Frontend Developer",
+    "Backend Developer",
+    "Full Stack Developer",
+    "MERN Stack Developer",
+    "Node.js Developer",
+    "Python Developer",
+    "Django Developer",
+    "DevOps Engineer",
+    "UI/UX Designer",
+    "Software Engineer",
+    "Mobile App Developer",
+    "Data Analyst",
+    "Machine Learning Engineer",
+  ];
 
-    // Auto-calculate salary
-    useEffect(() => {
-        let totalSalary = 0;
+  // Auto-calculate salary
+  useEffect(() => {
+    let totalSalary = 0;
+    const days = Number(job.noOfDays);
+    const hours = Number(job.dailyWorkingHours);
+    const rate = Number(job.paymentPerHour);
 
-        const days = Number(job.noOfDays);
-        const hours = Number(job.dailyWorkingHours);
-        const rate = Number(job.paymentPerHour);
+    if (!days || !hours || !rate) {
+      setJob((prev) => ({ ...prev, salary: "" }));
+      return;
+    }
 
-        if (!days || !hours || !rate) {
-            setJob(prev => ({ ...prev, salary: "" }));
-            return;
-        }
+    switch (job.salaryFrequency) {
+      case "Hourly":
+        totalSalary = days * hours * rate;
+        break;
+      case "Daily":
+        totalSalary = days * rate;
+        break;
+      case "Weekly":
+        totalSalary = (days / 7) * rate;
+        break;
+      case "Monthly":
+        totalSalary = (days / 30) * rate;
+        break;
+      default:
+        totalSalary = days * hours * rate;
+    }
 
-        switch (job.salaryFrequency) {
-            case "Hourly":
-                totalSalary = days * hours * rate;
-                break;
+    setJob((prev) => ({
+      ...prev,
+      salary: Math.round(totalSalary),
+    }));
+  }, [
+    job.noOfDays,
+    job.dailyWorkingHours,
+    job.paymentPerHour,
+    job.salaryFrequency,
+  ]);
 
-            case "Daily":
-                totalSalary = days * rate;
-                break;
+  useEffect(() => {
+    if (!job.startDate || !job.noOfDays) return;
+    const days = Number(job.noOfDays);
+    if (isNaN(days) || days < 1) return;
 
-            case "Weekly":
-                totalSalary = (days / 7) * rate;
-                break;
+    const start = new Date(job.startDate);
+    const calculatedEnd = new Date(start);
+    calculatedEnd.setDate(start.getDate() + days - 1);
+    const formattedEndDate = calculatedEnd.toISOString().split("T")[0];
 
-            case "Monthly":
-                totalSalary = (days / 30) * rate;
-                break;
+    setJob((prev) => ({ ...prev, endDate: formattedEndDate }));
 
-            default:
-                totalSalary = days * hours * rate;
-        }
+    if (days > 1 && formattedEndDate === job.startDate) {
+      setErrors((prev) => ({
+        ...prev,
+        endDate: "End date must be after start date for multiple days",
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, endDate: "" }));
+    }
+  }, [job.startDate, job.noOfDays]);
 
-        setJob(prev => ({
-            ...prev,
-            salary: Math.round(totalSalary),
-        }));
-    }, [
-        job.noOfDays,
-        job.dailyWorkingHours,
-        job.paymentPerHour,
-        job.salaryFrequency,
-    ]);
+  useEffect(() => {
+    if (!job.workFrom || !job.dailyWorkingHours) return;
+    const hours = Number(job.dailyWorkingHours);
+    if (isNaN(hours) || hours <= 0) return;
 
-    useEffect(() => {
-        if (!job.startDate || !job.noOfDays) return;
+    const [startHour, startMinute] = job.workFrom.split(":").map(Number);
+    if (isNaN(startHour) || isNaN(startMinute)) return;
 
-        const days = Number(job.noOfDays);
-        if (isNaN(days) || days < 1) return;
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = startTotalMinutes + hours * 60;
+    const endHour = Math.floor((endTotalMinutes % 1440) / 60);
+    const endMinute = endTotalMinutes % 60;
 
-        const start = new Date(job.startDate);
-        const calculatedEnd = new Date(start);
+    const formattedEndTime = `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
+    setJob((prev) => ({ ...prev, workTo: formattedEndTime }));
 
-        // endDate = startDate + (days - 1)
-        calculatedEnd.setDate(start.getDate() + days - 1);
+    if (formattedEndTime === job.workFrom) {
+      setErrors((prev) => ({
+        ...prev,
+        workTo: "End time cannot be same as start time",
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, workTo: "" }));
+    }
+  }, [job.workFrom, job.dailyWorkingHours]);
 
-        const formattedEndDate = calculatedEnd.toISOString().split("T")[0];
-
-        setJob((prev) => ({
-            ...prev,
-            endDate: formattedEndDate,
-        }));
-
-        // Validation: same date only allowed if days === 1
-        if (days > 1 && formattedEndDate === job.startDate) {
-            setErrors((prev) => ({
-                ...prev,
-                endDate: "End date must be after start date for multiple days",
-            }));
-        } else {
-            setErrors((prev) => ({
-                ...prev,
-                endDate: "",
-            }));
-        }
-    }, [job.startDate, job.noOfDays]);
-
-    useEffect(() => {
-        if (!job.workFrom || !job.dailyWorkingHours) return;
-
-        const hours = Number(job.dailyWorkingHours);
-        if (isNaN(hours) || hours <= 0) return;
-
-        const [startHour, startMinute] = job.workFrom.split(":").map(Number);
-
-        if (isNaN(startHour) || isNaN(startMinute)) return;
-
-        const startTotalMinutes = startHour * 60 + startMinute;
-        const endTotalMinutes = startTotalMinutes + hours * 60;
-
-        const endHour = Math.floor((endTotalMinutes % 1440) / 60);
-        const endMinute = endTotalMinutes % 60;
-
-        const formattedEndTime = `${String(endHour).padStart(2, "0")}:${String(
-            endMinute
-        ).padStart(2, "0")}`;
-
-        setJob((prev) => ({
-            ...prev,
-            workTo: formattedEndTime,
-        }));
-
-        // Validation: start & end cannot be same
-        if (formattedEndTime === job.workFrom) {
-            setErrors((prev) => ({
-                ...prev,
-                workTo: "End time cannot be same as start time",
-            }));
-        } else {
-            setErrors((prev) => ({
-                ...prev,
-                workTo: "",
-            }));
-        }
-    }, [job.workFrom, job.dailyWorkingHours]);
-
-
-    const validateField = (name, value) => {
+  const validateField = (name, value) => {
     let errorMsg = "";
     const requiredFields = [
       "title",
       "noOfDays",
       "dailyWorkingHours",
       "paymentPerHour",
-      "noOfPeopleRequired"
+      "noOfPeopleRequired",
     ];
 
     if (requiredFields.includes(name) && !value) {
       errorMsg = "This field is required";
     }
     if (name === "endDate" && value && job.startDate && job.noOfDays) {
-        const start = new Date(job.startDate);
-        const end = new Date(value);
-        const days = Number(job.noOfDays);
+      const start = new Date(job.startDate);
+      const end = new Date(value);
+      const days = Number(job.noOfDays);
+      if (end < start) errorMsg = "End date cannot be before start date";
+      if (days > 1 && end.getTime() === start.getTime())
+        errorMsg = "End date must be after start date for multiple days";
+    }
+    if (name === "dailyWorkingHours") {
+      const hours = Number(value);
+      if (hours < 1) errorMsg = "Daily working hours must be at least 1";
+      if (hours > 10) errorMsg = "Daily working hours cannot exceed 10";
+    }
+    if (
+      name === "location" &&
+      (job.mode === "Work from Office" || job.mode === "Hybrid") &&
+      !value
+    ) {
+      errorMsg = "Location is required";
+    }
 
-            if (end < start) {
-                errorMsg = "End date cannot be before start date";
-            }
-
-            if (days > 1 && end.getTime() === start.getTime()) {
-                errorMsg = "End date must be after start date for multiple days";
-            }
-        }
-        if (name === "dailyWorkingHours") {
-            const hours = Number(value);
-
-            if (hours < 1) {
-                errorMsg = "Daily working hours must be at least 1";
-            }
-
-            if (hours > 10) {
-                errorMsg = "Daily working hours cannot exceed 10";
-            }
-        }
-        if (
-            name === "location" &&
-            (job.mode === "Work from Office" || job.mode === "Hybrid") &&
-            !value
-        ) {
-            errorMsg = "Location is required";
-        }
-
-
-        setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
     return errorMsg;
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setJob((prev) => ({ ...prev, [name]: value }));
-
-    if (touched[name]) {
-      validateField(name, value);
-    }
+    if (touched[name]) validateField(name, value);
   };
-    const handleTitleChange = (e) => {
-        const value = e.target.value;
 
-        setJob((prev) => ({ ...prev, title: value }));
+  const handleTitleChange = (e) => {
+    const value = e.target.value;
+    setJob((prev) => ({ ...prev, title: value }));
+    if (titleTypingTimeout) clearTimeout(titleTypingTimeout);
 
-        if (titleTypingTimeout) clearTimeout(titleTypingTimeout);
-
-        const timeout = setTimeout(() => {
-            if (value.trim().length > 0) {
-                const filtered = jobTitleSuggestions.filter((title) =>
-                    title.toLowerCase().includes(value.toLowerCase())
-                );
-                setTitleSuggestions(filtered.slice(0, 5));
-            } else {
-                setTitleSuggestions([]);
-            }
-        }, 300);
-
-        setTitleTypingTimeout(timeout);
-    };
+    const timeout = setTimeout(() => {
+      if (value.trim().length > 0) {
+        const filtered = jobTitleSuggestions.filter((title) =>
+          title.toLowerCase().includes(value.toLowerCase()),
+        );
+        setTitleSuggestions(filtered.slice(0, 5));
+      } else {
+        setTitleSuggestions([]);
+      }
+    }, 300);
+    setTitleTypingTimeout(timeout);
+  };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
     validateField(name, value);
-
   };
 
-  // --- MAP HANDLER ---
   const handleLocationSelect = useCallback((locData) => {
     setJob((prev) => ({
       ...prev,
@@ -331,28 +275,24 @@ export default function CreateJob() {
       latitude: locData.latitude,
       longitude: locData.longitude,
     }));
-
-    // Clear error manually since state update is async
     setErrors((prev) => ({ ...prev, location: "" }));
   }, []);
 
   const handleSkillInputChange = (e) => {
     const value = e.target.value;
     setSkillsInput(value);
-
     if (typingTimeout) clearTimeout(typingTimeout);
 
     const timeout = setTimeout(() => {
       if (value.trim().length > 0) {
         const filtered = skillSuggestions.filter((skill) =>
-          skill.toLowerCase().includes(value.toLowerCase())
+          skill.toLowerCase().includes(value.toLowerCase()),
         );
         setSuggestions(filtered.slice(0, 5));
       } else {
         setSuggestions([]);
       }
     }, 300);
-
     setTypingTimeout(timeout);
   };
 
@@ -368,43 +308,52 @@ export default function CreateJob() {
       setSuggestions([]);
     }
   };
-    const generateAIContent = async () => {
-        if (!job.title) {
-            alert("Please enter a job title first.");
-            return;
-        }
 
-        try {
-            setAiLoading(true);
+  // Typewriter effect logic
+  const typeWriterEffect = async (text, setterState, speed = 10) => {
+    setterState("");
+    for (let i = 0; i < text.length; i++) {
+      setterState((prev) => prev + text.charAt(i));
+      await new Promise((resolve) => setTimeout(resolve, speed));
+    }
+  };
 
-            const storedData = localStorage.getItem("employerInfo");
-            const employerInfo = JSON.parse(storedData);
-            const token = employerInfo?.token;
+  // Consolidated AI Generator Function
+  const handleAIGenerate = async () => {
+    if (!job.title?.trim()) {
+      alert("You must enter a Job Title in Step 1 first!");
+      return;
+    }
 
-            const res = await axios.post(
-                "https://jobone-mrpy.onrender.com/ai/generate-job-details",
-                {
-                    title: job.title,
-                    jobType: job.jobType,
-                    mode: job.mode,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+    setGeneratingAI(true);
+    setJobSummary("");
+    setKeyResponsibilities("");
 
-            setJobSummary(res.data.summary);
-            setKeyResponsibilities(res.data.responsibilities);
+    try {
+      const storedData = localStorage.getItem("employerInfo");
+      const token = storedData ? JSON.parse(storedData).token : null;
 
-        } catch (err) {
-            console.error("AI generation failed:", err);
-            alert("Failed to generate job description.");
-        } finally {
-            setAiLoading(false);
-        }
-    };
+      if (!token) throw new Error("No token found");
+
+      const { data } = await axios.post(
+        "https://jobone-mrpy.onrender.com/ai/generate-job-details",
+        {
+          title: job.title,
+          jobType: job.jobType,
+          mode: job.mode,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      await typeWriterEffect(data.summary, setJobSummary, 10);
+      await typeWriterEffect(data.responsibilities, setKeyResponsibilities, 10);
+    } catch (error) {
+      console.error("AI generation failed:", error);
+      alert(error.response?.data?.message || "Failed to generate AI content.");
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
 
   const validateStep1 = () => {
     const fieldsToValidate = [
@@ -440,15 +389,19 @@ export default function CreateJob() {
   };
 
   const handleSubmit = async () => {
-      if (
-          (job.mode === "Work from Office" || job.mode === "Hybrid") &&
-          !job.location
-      ) {
-          setTouched((prev) => ({ ...prev, location: true }));
-          setErrors((prev) => ({ ...prev, location: "Location is required" }));
-          alert("Please enter a location.");
-          return;
-      }
+    // FACT: Only validate location if it's not Work from Home
+    if (
+      (job.mode === "Work from Office" || job.mode === "Hybrid") &&
+      !job.location
+    ) {
+      setTouched((prev) => ({ ...prev, location: true }));
+      setErrors((prev) => ({
+        ...prev,
+        location: "Location is required for Office/Hybrid roles",
+      }));
+      alert("Please drop a pin on the map to set the job location.");
+      return;
+    }
 
     if (!jobSummary.trim() || !keyResponsibilities.trim()) {
       alert("Job Summary and Key Responsibilities are required.");
@@ -461,37 +414,24 @@ export default function CreateJob() {
       const storedData = localStorage.getItem("employerInfo");
       if (!storedData) {
         alert("No employer session found. Please log in again.");
-        setLoading(false);
         return;
       }
 
-      let employerInfo;
-      try {
-        employerInfo = JSON.parse(storedData);
-      } catch (err) {
-        console.error("Invalid token:", err);
-        setLoading(false);
-        return;
-      }
-
+      const employerInfo = JSON.parse(storedData);
       const token = employerInfo?.token;
+
       if (!token) {
         alert("No token found. Please log in again.");
-        setLoading(false);
         return;
       }
 
       const combinedDescription =
         `Job Summary:\n${jobSummary}\n\nKey Responsibilities:\n${keyResponsibilities}`.trim();
 
+      // FACT: Formulate the strictly valid payload
       const payload = {
         ...job,
         description: combinedDescription,
-          location: {
-              type: "Point",
-              coordinates: [job.longitude, job.latitude],
-              address: job.location,
-          },
         pinCode: job.pinCode ? Number(job.pinCode) : undefined,
         salary: Number(job.salary),
         paymentPerHour: Number(job.paymentPerHour),
@@ -500,35 +440,51 @@ export default function CreateJob() {
         dailyWorkingHours: Number(job.dailyWorkingHours),
       };
 
+      // FACT: Only attach the Mongo DB GeoJSON location if it's actually an office role
+      // Sending [null, null] for WFH will crash the DB.
+      if (job.mode === "Work from Office" || job.mode === "Hybrid") {
+        payload.location = {
+          type: "Point",
+          coordinates: [Number(job.longitude), Number(job.latitude)],
+          address: job.location,
+        };
+      } else {
+        // Strip out any location data for WFH to ensure clean save
+        delete payload.location;
+        delete payload.latitude;
+        delete payload.longitude;
+      }
+
       await axios.post("https://jobone-mrpy.onrender.com/jobs", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       alert("Job posted successfully!");
 
-        setJob({
-            title: "",
-            description: "",
-            jobType: "Daily",
-            skillsRequired: [],
-            location: "",
-            latitude: null,
-            longitude: null,
-            pinCode: "",
-            salary: "",
-            salaryFrequency: "Hourly",
-            durationType: "Day",
-            startDate: "",
-            endDate: "",
-            dailyWorkingHours: "",
-            mode: "Work from Home",
-            workFrom: "",
-            workTo: "",
-            noOfDays: "",
-            noOfPeopleRequired: "",
-            genderPreference: "No Preference",
-            paymentPerHour: "",
-        });
+      // Reset
+      setJob({
+        title: "",
+        description: "",
+        jobType: "Daily",
+        skillsRequired: [],
+        location: "",
+        latitude: null,
+        longitude: null,
+        pinCode: "",
+        salary: "",
+        salaryFrequency: "Hourly",
+        durationType: "Day",
+        startDate: "",
+        endDate: "",
+        dailyWorkingHours: "",
+        mode: "Work from Home",
+        workFrom: "",
+        workTo: "",
+        noOfDays: "",
+        noOfPeopleRequired: "",
+        genderPreference: "No Preference",
+        paymentPerHour: "",
+      });
       setJobSummary("");
       setKeyResponsibilities("");
       setSkillsInput("");
@@ -539,18 +495,15 @@ export default function CreateJob() {
     } catch (error) {
       console.error("Error posting job:", error);
       alert(
-        `Failed to post job: ${error.response?.data?.message || error.message}`
+        `Failed to post job: ${error.response?.data?.message || error.message}`,
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Improved Input Class Helper with Icon Support
   const getInputClass = (fieldName, hasIcon = false) => {
-    const base = `w-full p-3 ${
-      hasIcon ? "pl-10" : ""
-    } border rounded-xl outline-none transition-all duration-200`;
+    const base = `w-full p-3 ${hasIcon ? "pl-10" : ""} border rounded-xl outline-none transition-all duration-200`;
     const state =
       touched[fieldName] && errors[fieldName]
         ? "border-red-500 focus:ring-2 focus:ring-red-200 bg-red-50"
@@ -588,22 +541,22 @@ export default function CreateJob() {
                   placeholder="e.g. Senior React Developer"
                   className={getInputClass("title", true)}
                 />
-                  {titleSuggestions.length > 0 && (
-                      <ul className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-lg z-20 mt-2 overflow-hidden">
-                          {titleSuggestions.map((suggestion, index) => (
-                              <li
-                                  key={index}
-                                  onClick={() => {
-                                      setJob((prev) => ({ ...prev, title: suggestion }));
-                                      setTitleSuggestions([]);
-                                  }}
-                                  className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0"
-                              >
-                                  {suggestion}
-                              </li>
-                          ))}
-                      </ul>
-                  )}
+                {titleSuggestions.length > 0 && (
+                  <ul className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-lg z-20 mt-2 overflow-hidden">
+                    {titleSuggestions.map((suggestion, index) => (
+                      <li
+                        key={index}
+                        onClick={() => {
+                          setJob((prev) => ({ ...prev, title: suggestion }));
+                          setTitleSuggestions([]);
+                        }}
+                        className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0"
+                      >
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               {touched.title && errors.title && (
                 <p className="text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
@@ -616,22 +569,22 @@ export default function CreateJob() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Work Days
               </label>
-                <div>
-                    <div className="relative">
-                        <select
-                            name="jobType"
-                            value={job.jobType}
-                            onChange={handleChange}
-                            className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"
-                        >
-                            <option value="Daily">Daily</option>
-                            <option value="7 days">7 Days</option>
-                            <option value="Mon-Fri">Monday to Friday</option>
-                            <option value="Sat-Sun">Saturday to Sunday</option>
-                            <option value="Others">Others</option>
-                        </select>
-                    </div>
+              <div>
+                <div className="relative">
+                  <select
+                    name="jobType"
+                    value={job.jobType}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"
+                  >
+                    <option value="Daily">Daily</option>
+                    <option value="7 days">7 Days</option>
+                    <option value="Mon-Fri">Monday to Friday</option>
+                    <option value="Sat-Sun">Saturday to Sunday</option>
+                    <option value="Others">Others</option>
+                  </select>
                 </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -702,46 +655,39 @@ export default function CreateJob() {
                   onBlur={handleBlur}
                   className={getInputClass("startDate")}
                 />
-
               </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                        End Date
-                    </label>
-
-                    <input
-                        type="date"
-                        name="endDate"
-                        value={noEndDate ? "" : job.endDate || ""}
-                        onChange={handleChange}
-                        readOnly={Number(job.noOfDays) > 1 || noEndDate}
-                        disabled={noEndDate}
-                        className={`${getInputClass("endDate")} ${
-                            Number(job.noOfDays) > 1 || noEndDate
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
-                        }`}
-                    />
-
-                    <label className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                        <input
-                            type="checkbox"
-                            checked={noEndDate}
-                            onChange={(e) => {
-                                const checked = e.target.checked;
-                                setNoEndDate(checked);
-
-                                if (checked) {
-                                    setJob((prev) => ({
-                                        ...prev,
-                                        endDate: null,
-                                    }));
-                                }
-                            }}
-                        />
-                        No End Date
-                    </label>
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={noEndDate ? "" : job.endDate || ""}
+                  onChange={handleChange}
+                  readOnly={Number(job.noOfDays) > 1 || noEndDate}
+                  disabled={noEndDate}
+                  className={`${getInputClass("endDate")} ${
+                    Number(job.noOfDays) > 1 || noEndDate
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : ""
+                  }`}
+                />
+                <label className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={noEndDate}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setNoEndDate(checked);
+                      if (checked) {
+                        setJob((prev) => ({ ...prev, endDate: null }));
+                      }
+                    }}
+                  />
+                  No End Date
+                </label>
+              </div>
             </div>
 
             <div>
@@ -771,7 +717,7 @@ export default function CreateJob() {
                       className="hidden"
                     />
                     {m.icon}
-                    <span className="text-xs">{m.val}</span>
+                    <span className="text-xs text-center">{m.val}</span>
                   </label>
                 ))}
               </div>
@@ -794,36 +740,37 @@ export default function CreateJob() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                   End Time
                 </label>
-                  <input
-                      type="time"
-                      name="workTo"
-                      value={job.workTo}
-                      readOnly
-                      className="w-full p-3 border rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
-                  />
-
+                <input
+                  type="time"
+                  name="workTo"
+                  value={job.workTo}
+                  readOnly
+                  className="w-full p-3 border rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
+                />
               </div>
             </div>
-              <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                      Salary Type
-                  </label>
-                  <select
-                      name="salaryFrequency"
-                      value={job.salaryFrequency}
-                      onChange={handleChange}
-                      className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white"
-                  >
-                      <option value="Hourly">Hourly</option>
-                      <option value="Daily">Daily</option>
-                      <option value="Weekly">Weekly</option>
-                      <option value="Monthly">Monthly</option>
-                  </select>
-              </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                  {job.salaryFrequency} Payment <span className="text-red-500">*</span>
+                Salary Type
+              </label>
+              <select
+                name="salaryFrequency"
+                value={job.salaryFrequency}
+                onChange={handleChange}
+                className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white"
+              >
+                <option value="Hourly">Hourly</option>
+                <option value="Daily">Daily</option>
+                <option value="Weekly">Weekly</option>
+                <option value="Monthly">Monthly</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+                {job.salaryFrequency} Payment{" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <IndianRupee
@@ -923,99 +870,80 @@ export default function CreateJob() {
         {/* --- STEP 2: DETAILS & LOCATION --- */}
         {step === 2 && (
           <div className="space-y-6">
-            <div>
-                <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-sm font-semibold text-gray-700">
-                        Job Summary <span className="text-red-500">*</span>
-                    </label>
+            {/* AI GENERATOR BANNER */}
+            <div className="flex items-center justify-between mb-2 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+              <div>
+                <h4 className="font-bold text-indigo-900 text-sm">
+                  ✨ AI Auto-Writer
+                </h4>
+                <p className="text-xs text-indigo-700">
+                  Let AI write the summary and responsibilities based on your
+                  Job Title.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAIGenerate}
+                disabled={generatingAI}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {generatingAI ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} /> Generating...
+                  </>
+                ) : (
+                  "Generate with AI"
+                )}
+              </button>
+            </div>
 
-                    <button
-                        type="button"
-                        onClick={generateAIContent}
-                        disabled={aiLoading}
-                        className="text-xs bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700"
-                    >
-                        {aiLoading ? "Generating..." : "✨ Generate with AI"}
-                    </button>
-                </div>
+            {/* JOB SUMMARY */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Job Summary <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
                 <FileText
-                  className="absolute left-3 top-4 text-gray-400"
+                  className={`absolute left-3 top-4 transition-colors duration-300 ${generatingAI ? "text-indigo-500 animate-pulse" : "text-gray-400"}`}
                   size={18}
                 />
                 <textarea
                   value={jobSummary}
                   onChange={(e) => setJobSummary(e.target.value)}
                   placeholder="Briefly describe the role..."
-                  className="w-full p-4 pl-10 border rounded-xl outline-none h-32 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all resize-y"
+                  className={`w-full p-4 pl-10 border rounded-xl outline-none h-32 transition-all duration-500 resize-y ${
+                    generatingAI
+                      ? "border-indigo-400 ring-4 ring-indigo-100 shadow-[0_0_20px_rgba(99,102,241,0.3)] bg-indigo-50/30"
+                      : "focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white border-gray-200"
+                  }`}
                 />
               </div>
             </div>
 
+            {/* KEY RESPONSIBILITIES */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Key Responsibilities <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <ListChecks
-                  className="absolute left-3 top-4 text-gray-400"
+                  className={`absolute left-3 top-4 transition-colors duration-300 ${generatingAI ? "text-indigo-500 animate-pulse" : "text-gray-400"}`}
                   size={18}
                 />
                 <textarea
                   value={keyResponsibilities}
                   onChange={(e) => setKeyResponsibilities(e.target.value)}
-                  placeholder="List main tasks..."
-                  className="w-full p-4 pl-10 border rounded-xl outline-none h-32 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all resize-y"
+                  placeholder="List main tasks and duties..."
+                  className={`w-full p-4 pl-10 border rounded-xl outline-none h-32 transition-all duration-500 resize-y ${
+                    generatingAI
+                      ? "border-indigo-400 ring-4 ring-indigo-100 shadow-[0_0_20px_rgba(99,102,241,0.3)] bg-indigo-50/30"
+                      : "focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white border-gray-200"
+                  }`}
                 />
               </div>
             </div>
 
-            {/* Skills Input */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Required Skills
-              </label>
-              <div className="relative">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={skillsInput}
-                    onChange={handleSkillInputChange}
-                    placeholder="Type to search (e.g. React)"
-                    className="flex-1 p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"
-                  />
-                  <button
-                    onClick={handleSkills}
-                    className="bg-blue-600 text-white px-5 rounded-xl hover:bg-blue-700 font-medium transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-                {suggestions.length > 0 && (
-                  <ul className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-lg z-20 mt-2 overflow-hidden">
-                    {suggestions.map((s, index) => (
-                      <li
-                        key={index}
-                        onClick={() => {
-                          if (!job.skillsRequired.includes(s)) {
-                            setJob({
-                              ...job,
-                              skillsRequired: [...job.skillsRequired, s],
-                            });
-                          }
-                          setSkillsInput("");
-                          setSuggestions([]);
-                        }}
-                        className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0"
-                      >
-                        {s}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
+            {/* SKILLS MAP */}
             <div className="flex flex-wrap gap-2">
               {job.skillsRequired.map((skill, index) => (
                 <div
@@ -1026,7 +954,7 @@ export default function CreateJob() {
                   <button
                     onClick={() => {
                       const updated = job.skillsRequired.filter(
-                        (_, i) => i !== index
+                        (_, i) => i !== index,
                       );
                       setJob({ ...job, skillsRequired: updated });
                     }}
@@ -1040,74 +968,72 @@ export default function CreateJob() {
 
             <hr className="border-gray-200 my-6" />
 
-            {/* --- LOCATION PICKER SECTION --- */}
-              {(job.mode === "Work from Office" || job.mode === "Hybrid") && (
-                  <div className="space-y-4">
-                      <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                          <MapPin className="text-blue-600" /> Job Location
-                          <span className="text-red-500 text-sm">*</span>
-                      </h3>
+            {/* --- STRICT CONDITIONAL LOCATION PICKER --- */}
+            {(job.mode === "Work from Office" || job.mode === "Hybrid") && (
+              <div className="space-y-4">
+                <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
+                  <MapPin className="text-blue-600" /> Job Location
+                  <span className="text-red-500 text-sm">*</span>
+                </h3>
 
-                      <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
-                          <p className="text-sm text-blue-800 mb-3 font-medium">
-                              Step 1: Search & Drop a pin on the map{" "}
-                              <span className="text-blue-600 font-normal">
-                    (Required for "Jobs Near Me")
-                  </span>
-                          </p>
-                          {/* Map Component */}
-                          <div className="rounded-lg overflow-hidden border border-blue-200 shadow-sm">
-                              <LocationPicker onLocationSelect={handleLocationSelect} />
-                          </div>
-                      </div>
-
-                      <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1.5 mt-2">
-                              Step 2: Refine Address{" "}
-                              <span className="font-normal text-gray-500">
-                    (Add Floor, Building Name, etc.)
-                  </span>
-                          </label>
-                          <div className="relative">
-                              <input
-                                  name="location"
-                                  value={job.location}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  placeholder="303-B, Sweethomes Apt, Indrapuri, Bhopal..."
-                                  className={`w-full p-3 pl-10 border rounded-xl outline-none focus:ring-2 transition-all ${
-                                      touched.location && errors.location
-                                          ? "border-red-500 focus:ring-red-200 bg-red-50"
-                                          : "border-gray-300 focus:border-blue-500 focus:ring-blue-200 bg-gray-50 focus:bg-white"
-                                  }`}
-                              />
-                              <MapPin
-                                  className="absolute left-3 top-3.5 text-gray-400"
-                                  size={18}
-                              />
-                          </div>
-                          {touched.location && errors.location && (
-                              <p className="text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
-                                  <AlertCircle size={12} /> {errors.location}
-                              </p>
-                          )}
-
-                          {/* Status Indicator */}
-                          <div className="mt-3 text-xs flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100 w-fit">
-                              {job.latitude && job.longitude ? (
-                                  <span className="text-green-600 flex items-center gap-1.5 font-medium">
-                      <CheckCircle size={14} /> Coordinates Captured
-                      Successfully
+                <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                  <p className="text-sm text-blue-800 mb-3 font-medium">
+                    Step 1: Search & Drop a pin on the map{" "}
+                    <span className="text-blue-600 font-normal">
+                      (Required for "Jobs Near Me")
                     </span>
-                              ) : (
-                                  <span className="text-orange-500 flex items-center gap-1.5 font-medium">
-                      <AlertCircle size={14} /> Pin not dropped on map yet
-                    </span>
-                              )}
-                          </div>
-                      </div>
+                  </p>
+                  <div className="rounded-lg overflow-hidden border border-blue-200 shadow-sm">
+                    <LocationPicker onLocationSelect={handleLocationSelect} />
                   </div>
-              )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 mt-2">
+                    Step 2: Refine Address{" "}
+                    <span className="font-normal text-gray-500">
+                      (Add Floor, Building Name, etc.)
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      name="location"
+                      value={job.location}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="303-B, Sweethomes Apt, Indrapuri, Bhopal..."
+                      className={`w-full p-3 pl-10 border rounded-xl outline-none focus:ring-2 transition-all ${
+                        touched.location && errors.location
+                          ? "border-red-500 focus:ring-red-200 bg-red-50"
+                          : "border-gray-300 focus:border-blue-500 focus:ring-blue-200 bg-gray-50 focus:bg-white"
+                      }`}
+                    />
+                    <MapPin
+                      className="absolute left-3 top-3.5 text-gray-400"
+                      size={18}
+                    />
+                  </div>
+                  {touched.location && errors.location && (
+                    <p className="text-red-500 text-xs mt-1 font-medium flex items-center gap-1">
+                      <AlertCircle size={12} /> {errors.location}
+                    </p>
+                  )}
+
+                  <div className="mt-3 text-xs flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100 w-fit">
+                    {job.latitude && job.longitude ? (
+                      <span className="text-green-600 flex items-center gap-1.5 font-medium">
+                        <CheckCircle size={14} /> Coordinates Captured
+                        Successfully
+                      </span>
+                    ) : (
+                      <span className="text-orange-500 flex items-center gap-1.5 font-medium">
+                        <AlertCircle size={14} /> Pin not dropped on map yet
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-4 justify-end mt-8 pt-6 border-t border-gray-100">
               <button
@@ -1124,7 +1050,7 @@ export default function CreateJob() {
                 Preview
               </button>
               <button
-                  onClick={() => setShowConfirm(true)}
+                onClick={() => setShowConfirm(true)}
                 disabled={loading}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-blue-300 font-bold shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5"
               >
@@ -1166,20 +1092,20 @@ export default function CreateJob() {
           </div>
         </div>
       )}
-        {showConfirm && (
-            <JobConfirmModal
-                job={job}
-                summary={jobSummary}
-                responsibilities={keyResponsibilities}
-                loading={loading}
-                onClose={() => setShowConfirm(false)}
-                onConfirm={() => {
-                    setShowConfirm(false);
-                    handleSubmit();
-                }}
-            />
-        )}
 
+      {showConfirm && (
+        <JobConfirmModal
+          job={job}
+          summary={jobSummary}
+          responsibilities={keyResponsibilities}
+          loading={loading}
+          onClose={() => setShowConfirm(false)}
+          onConfirm={() => {
+            setShowConfirm(false);
+            handleSubmit();
+          }}
+        />
+      )}
     </div>
   );
 }

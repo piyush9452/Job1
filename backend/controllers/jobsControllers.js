@@ -2,8 +2,7 @@ import expressAsyncHandler from "express-async-handler";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
 import { validationResult } from "express-validator";
-import Employer from "../models/employer.js"; // Adjust path as needed
-
+import Employer from "../models/employer.js";
 
 export const createJob = expressAsyncHandler(async (req, res) => {
   // 1. Validation
@@ -15,50 +14,37 @@ export const createJob = expressAsyncHandler(async (req, res) => {
 
   // 2. Fetch the Employer
   const employer = await Employer.findById(req.employerId);
-
   if (!employer) {
     res.status(404);
     throw new Error('Employer not found');
   }
 
-  // --- STRICT PROFILE CHECK ---
-  // Define what "Fully Completed" means for your platform
   const requiredFields = ['companyName', 'phone', 'location', 'industry', 'description', 'companyWebsite'];
   const missingFields = requiredFields.filter(field => !employer[field] || employer[field].trim() === '');
 
   if (missingFields.length > 0) {
-    res.status(403); // Forbidden
+    res.status(403);
     throw new Error(`You must complete your profile before posting a job. Missing: ${missingFields.join(', ')}`);
   }
-  // -----------------------------
 
   const { 
     title, description, jobType, skillsRequired, 
     salary, durationType, startDate, endDate, 
     dailyWorkingHours, mode, workFrom, workTo, 
     noOfDays, noOfPeopleRequired, genderPreference, 
-    paymentPerHour, pinCode,
-    latitude, longitude, address 
+    paymentPerHour, pinCode, location
   } = req.body;
 
-  // 3. Construct Location (Same as before)
-  let locationData;
-  if (latitude && longitude) {
-    locationData = {
-      type: 'Point',
-      coordinates: [parseFloat(longitude), parseFloat(latitude)],
-      address: address || "Location not specified"
-    };
-  } else {
-    if (mode !== 'Online') {
-        res.status(400);
-        throw new Error("Please pick a location on the map.");
+  // 3. FACT: Validate and handle location STRICTLY based on the Job Mode
+  let finalLocation = undefined; // Default to completely undefined for WFH jobs
+
+  if (mode === "Work from Office" || mode === "Hybrid") {
+    // If it's an office job, it MUST have a valid location sent from frontend
+    if (!location || !location.coordinates || location.coordinates.length !== 2) {
+      res.status(400);
+      throw new Error("Map coordinates and address are required for Office and Hybrid roles.");
     }
-    locationData = {
-      type: 'Point',
-      coordinates: [0, 0],
-      address: "Remote"
-    };
+    finalLocation = location;
   }
 
   // 4. Create Job
@@ -68,12 +54,13 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     dailyWorkingHours, mode, workFrom, workTo, 
     noOfDays, noOfPeopleRequired, genderPreference, 
     paymentPerHour, pinCode,
-    location: locationData,
+    
+    location: finalLocation, // If WFH, this passes undefined, saving your DB from crashing
 
     postedBy: req.employerId,
     postedByName: employer.name, 
     postedByImage: employer.profilePicture || '', 
-    postedByCompany: employer.companyName, // Now guaranteed to exist
+    postedByCompany: employer.companyName, 
   });
 
   const savedJob = await newJob.save();
@@ -86,85 +73,46 @@ export const createJob = expressAsyncHandler(async (req, res) => {
 });
 
 
-
 export const getJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
   if (!job) return res.status(404).json({ message: "Job not found" });
   res.status(200).json(job);
-  
-})
-
-
-
+});
 
 export const getJobs = expressAsyncHandler(async (req, res) => {
-  // --- 1. FILTERING ---
-  // We start with a base query object and add filters conditionally.
   const queryObj = { ...req.query };
   const filters = {};
 
-  // Text-based search for title and location (case-insensitive)
-  if (queryObj.title) {
-    filters.title = { $regex: queryObj.title, $options: 'i' };
-  }
-  if (queryObj.location) {
-    filters.location = { $regex: queryObj.location, $options: 'i' };
-  }
+  if (queryObj.title) filters.title = { $regex: queryObj.title, $options: 'i' };
+  if (queryObj.location) filters.location = { $regex: queryObj.location, $options: 'i' };
+  if (queryObj.jobType) filters.jobType = queryObj.jobType;
+  if (queryObj.status) filters.status = queryObj.status;
 
-  // Exact match for enum fields
-  if (queryObj.jobType) {
-    filters.jobType = queryObj.jobType;
-  }
-  if (queryObj.status) {
-    filters.status = queryObj.status;
-  }
-
-  // Filter by skills (supports comma-separated values like "react,node")
   if (queryObj.skillsRequired) {
     const skills = queryObj.skillsRequired.split(',');
-    // $in operator matches if the skillsRequired array contains any of the provided skills
     filters.skillsRequired = { $in: skills };
   }
 
-  // Numeric range for salary (e.g., /jobs?salary[gte]=500&salary[lte]=1000)
   if (queryObj.salary) {
     const salaryFilter = {};
-    if (queryObj.salary.gte) {
-      salaryFilter.$gte = Number(queryObj.salary.gte);
-    }
-    if (queryObj.salary.lte) {
-      salaryFilter.$lte = Number(queryObj.salary.lte);
-    }
-    if (Object.keys(salaryFilter).length > 0) {
-      filters.salary = salaryFilter;
-    }
+    if (queryObj.salary.gte) salaryFilter.$gte = Number(queryObj.salary.gte);
+    if (queryObj.salary.lte) salaryFilter.$lte = Number(queryObj.salary.lte);
+    if (Object.keys(salaryFilter).length > 0) filters.salary = salaryFilter;
   }
 
-  // --- 2. PAGINATION ---
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10; // Default to 10 results per page
+  const limit = Number(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  // --- 3. SORTING ---
-  // Default sort by most recent post.
-  // Supports sorting like ?sort=salary or ?sort=-salary (for descending)
   let sortBy = { postedAt: -1 }; 
   if (req.query.sort) {
-    const sortField = req.query.sort.startsWith('-') 
-      ? req.query.sort.substring(1) 
-      : req.query.sort;
+    const sortField = req.query.sort.startsWith('-') ? req.query.sort.substring(1) : req.query.sort;
     const sortOrder = req.query.sort.startsWith('-') ? -1 : 1;
     sortBy = { [sortField]: sortOrder };
   }
 
-  // --- 4. EXECUTE QUERY ---
-  const jobs = await Job.find(filters)
-    .sort(sortBy)
-    .skip(skip)
-    .limit(limit);
-    
-  // Optional: Get total count for pagination metadata on the frontend
+  const jobs = await Job.find(filters).sort(sortBy).skip(skip).limit(limit);
   const totalJobs = await Job.countDocuments(filters);
 
   res.status(200).json({
@@ -176,10 +124,7 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
   });
 });
 
-
-
 export const getEmployerCreatedJobs = expressAsyncHandler(async (req, res) => {
-  // 1. req.employerId is attached by the 'protectEmployer' middleware
   const employerId = req.employerId;
   try{
     const jobs = await Job.find({ postedBy: employerId }).sort({ postedAt: -1 });
@@ -187,26 +132,18 @@ export const getEmployerCreatedJobs = expressAsyncHandler(async (req, res) => {
   }
   catch(error){
     res.status(500).json({ message: "Server error", error: error.message });
-
   }
- 
 });
-
-
-
 
 export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const jobs = await Job.find({ postedBy: id });
 
-  // This is the correct way to check if no jobs were found
   if (!jobs || jobs.length === 0) {
     return res.status(404).json({ message: "No jobs found for this user" });
   }
-
   res.status(200).json(jobs);
 });
-
 
 export const updateJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -214,7 +151,6 @@ export const updateJob = expressAsyncHandler(async (req, res) => {
   
   if (!job) return res.status(404).json({ message: "Job not found" });
 
-  // FIX: Use req.employerId, NOT req.user._id
   if (job.postedBy.toString() !== req.employerId.toString()) {
     return res.status(403).json({ message: "Not authorized to update this job" });
   }
@@ -223,36 +159,24 @@ export const updateJob = expressAsyncHandler(async (req, res) => {
   res.status(200).json({ message: "Job updated successfully", job: updatedJob });
 });
 
-
-
 export const deleteJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
   
   if (!job) return res.status(404).json({ message: "Job not found" });
 
-  // FIX: Use req.employerId, NOT req.user._id
   if (job.postedBy.toString() !== req.employerId.toString()) {
     return res.status(403).json({ message: "Not authorized to delete this job" });
   }
 
   await Job.deleteOne({ _id: id });
-
-  // FIX: You must also update the EMPLOYER model, not the User model
-  // Import Employer at the top of your file if not already imported
-  await Employer.findByIdAndUpdate(req.employerId, {
-    $pull: { createdJobs: id },
-  });
+  await Employer.findByIdAndUpdate(req.employerId, { $pull: { createdJobs: id } });
 
   res.status(200).json({ message: "Job deleted successfully" });
 });
 
-
-
 export const getJobApplicants = expressAsyncHandler(async (req, res) => {
   const jobId = req.params.id;
-
-  // 1. Find the Job
   const job = await Job.findById(jobId);
 
   if (!job) {
@@ -260,37 +184,28 @@ export const getJobApplicants = expressAsyncHandler(async (req, res) => {
     throw new Error("Job not found");
   }
 
-  // 2. SECURITY CHECK: Is the logged-in employer the owner?
-  // req.employerId comes from your 'protectEmployer' middleware
   if (job.postedBy.toString() !== req.employerId.toString()) {
-    res.status(403); // Forbidden
+    res.status(403); 
     throw new Error("Not authorized to view applicants for this job");
   }
 
-  // 3. Populate the applicants array
-  // This replaces the User IDs with the actual User documents
   await job.populate({
     path: 'applicants',
-    // Select ONLY the fields you need. Do NOT send the password hash!
     select: 'name email phone resume skills experience education profilePicture' 
   });
 
-  // 4. Return the populated list
   res.status(200).json(job.applicants);
 });
-
-
 
 export const getJobsNearby = expressAsyncHandler(async (req, res) => {
   const { lat, lng, dist } = req.query;
 
-  // Reality Check: We can't search without a center point
   if (!lat || !lng) {
     return res.status(400).json({ message: "Latitude and Longitude are required" });
   }
 
-  const radiusKm = dist || 50; // Default to 50km if not sent
-  const radiusRadians = radiusKm / 6378.1; // Convert km to radians (Earth's radius)
+  const radiusKm = dist || 50; 
+  const radiusRadians = radiusKm / 6378.1; 
 
   const jobs = await Job.find({
     location: {
@@ -299,7 +214,6 @@ export const getJobsNearby = expressAsyncHandler(async (req, res) => {
       }
     }
   });
-  console.log(jobs);
 
   res.status(200).json(jobs);
 });
