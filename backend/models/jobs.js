@@ -13,15 +13,15 @@ const JobSchema = new mongoose.Schema({
     type: {
       type: String, 
       enum: ['Point'], 
-      default: 'Point',
+      required: false // FACT: Removed default: 'Point' to prevent Mongo 2dsphere crash when empty
     },
     coordinates: {
-      type: [Number], // [Longitude, Latitude] - Mongo expects this order
-      required: true,
-      index: '2dsphere' // Crucial for "find nearby" queries later
+      type: [Number], // [Longitude, Latitude]
+      required: false, // Changed to false
+      index: '2dsphere' 
     },
-    address: { type: String, required: true } // The readable string (e.g. "HMP House, MP Nagar")
-  },// city/area
+    address: { type: String, required: false } // Changed to false
+  },
   pinCode: { type: Number }, // optional
   salary: { type: Number, required: true }, // payment for the job
   salaryFrequency: {
