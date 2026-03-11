@@ -63,6 +63,7 @@ export default function CreateJob() {
   const [touched, setTouched] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [noEndDate, setNoEndDate] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
 
 
     const skillSuggestions = [
@@ -367,6 +368,43 @@ export default function CreateJob() {
       setSuggestions([]);
     }
   };
+    const generateAIContent = async () => {
+        if (!job.title) {
+            alert("Please enter a job title first.");
+            return;
+        }
+
+        try {
+            setAiLoading(true);
+
+            const storedData = localStorage.getItem("employerInfo");
+            const employerInfo = JSON.parse(storedData);
+            const token = employerInfo?.token;
+
+            const res = await axios.post(
+                "https://jobone-mrpy.onrender.com/ai/generate-job-details",
+                {
+                    title: job.title,
+                    jobType: job.jobType,
+                    mode: job.mode,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            setJobSummary(res.data.summary);
+            setKeyResponsibilities(res.data.responsibilities);
+
+        } catch (err) {
+            console.error("AI generation failed:", err);
+            alert("Failed to generate job description.");
+        } finally {
+            setAiLoading(false);
+        }
+    };
 
   const validateStep1 = () => {
     const fieldsToValidate = [
@@ -449,9 +487,11 @@ export default function CreateJob() {
       const payload = {
         ...job,
         description: combinedDescription,
-        address: job.location, // Matches schema requirement
-        latitude: job.latitude,
-        longitude: job.longitude,
+          location: {
+              type: "Point",
+              coordinates: [job.longitude, job.latitude],
+              address: job.location,
+          },
         pinCode: job.pinCode ? Number(job.pinCode) : undefined,
         salary: Number(job.salary),
         paymentPerHour: Number(job.paymentPerHour),
@@ -466,25 +506,29 @@ export default function CreateJob() {
 
       alert("Job posted successfully!");
 
-      setJob({
-        title: "",
-        description: "",
-        jobType: "Daily",
-        skillsRequired: [],
-        latitude: null,
-        longitude: null,
-        pinCode: "",
-        salary: "",
-        durationType: "Day",
-        dailyWorkingHours: "",
-          mode: "Work from Home",
-          workFrom: "",
-        workTo: "",
-        noOfDays: "",
-        noOfPeopleRequired: "",
-        genderPreference: "No Preference",
-        paymentPerHour: "",
-      });
+        setJob({
+            title: "",
+            description: "",
+            jobType: "Daily",
+            skillsRequired: [],
+            location: "",
+            latitude: null,
+            longitude: null,
+            pinCode: "",
+            salary: "",
+            salaryFrequency: "Hourly",
+            durationType: "Day",
+            startDate: "",
+            endDate: "",
+            dailyWorkingHours: "",
+            mode: "Work from Home",
+            workFrom: "",
+            workTo: "",
+            noOfDays: "",
+            noOfPeopleRequired: "",
+            genderPreference: "No Preference",
+            paymentPerHour: "",
+        });
       setJobSummary("");
       setKeyResponsibilities("");
       setSkillsInput("");
@@ -529,7 +573,7 @@ export default function CreateJob() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Job Title <span className="text-red-500">*</span>
+                Job Title<span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Briefcase
@@ -669,6 +713,7 @@ export default function CreateJob() {
                         type="date"
                         name="endDate"
                         value={noEndDate ? "" : job.endDate || ""}
+                        onChange={handleChange}
                         readOnly={Number(job.noOfDays) > 1 || noEndDate}
                         disabled={noEndDate}
                         className={`${getInputClass("endDate")} ${
@@ -705,7 +750,7 @@ export default function CreateJob() {
               </label>
               <div className="flex gap-3">
                 {[
-                  { val: "Work from home", icon: <Monitor size={16} /> },
+                  { val: "Work from Home", icon: <Monitor size={16} /> },
                   { val: "Work from Office", icon: <Building size={16} /> },
                   { val: "Hybrid", icon: <Globe size={16} /> },
                 ].map((m) => (
@@ -879,9 +924,20 @@ export default function CreateJob() {
         {step === 2 && (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Job Summary <span className="text-red-500">*</span>
-              </label>
+                <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-sm font-semibold text-gray-700">
+                        Job Summary <span className="text-red-500">*</span>
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={generateAIContent}
+                        disabled={aiLoading}
+                        className="text-xs bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700"
+                    >
+                        {aiLoading ? "Generating..." : "✨ Generate with AI"}
+                    </button>
+                </div>
               <div className="relative">
                 <FileText
                   className="absolute left-3 top-4 text-gray-400"
