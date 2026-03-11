@@ -20,9 +20,10 @@ const JobSchema = new mongoose.Schema({
     coordinates: {
       type: [Number], // [Longitude, Latitude]
       required: false, 
-      index: '2dsphere' 
+      index: '2dsphere',
+      default: undefined // CRITICAL: Prevents Mongoose from saving `[]` which crashes the 2dsphere index
     },
-    address: { type: String, required: false }
+    address: { type: String, default: "Remote" } // Safely defaults the text for the frontend to prevent UI crashes
   },
   
   pinCode: { type: Number }, // optional
