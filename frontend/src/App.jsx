@@ -1,114 +1,90 @@
 import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import UserRegister from "./pages/UserRegister.jsx";
-import About from "./pages/About";
-import Services from "./pages/Services";
-import EditProfile from "./pages/EditProfile.jsx";
-import EditProfile2 from "./pages/EditProfile2.jsx";
-import MyApplications from "./pages/MyApplications";
-import Jobs from "./pages/Jobs";
-import CreateJob from "./pages/CreateJob";
-import EmployerRegister from "./pages/EmployerRegister";
-import UserDashboard from "./pages/UserDashboard";
-import EmployerDashboard from "./pages/EmployerDashboard";
-import EmployerProfile from "./pages/EmployerProfile";
-import EmployerEditProfile from "./pages/EmployerEditProfile.jsx";
-import EmployerEditProfile2 from "./pages/EmployerEditProfile2.jsx";
-import Profile from "./pages/Profile.jsx";
-import Register from "./pages/Register.jsx";
-import ApplyPage from "./pages/ApplyPage";
-import AuthHome from "./routes/AuthHome";
-import EmployerOTP from "./pages/EmployerOTP";
-import EmployerJobDetails from "./pages/EmployerJobDetails";
-import UserOTP from "./pages/UserOTP";
-import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
-import DocumentUploadPage from "./pages/EmployerDOC.jsx";
-import Applicants from "./pages/Applicants.jsx";
-import PublicProfile from "./pages/PublicProfile.jsx";
-import EmployerRegisterOption from "./pages/EmployerRegisterOption.jsx";
+
+// --- COMPONENTS ---
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
-import TestLocation from "./pages/TestLocation.jsx";
+import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
+
+// --- PUBLIC PAGES ---
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import UserRegister from "./pages/UserRegister";
+import EmployerRegister from "./pages/EmployerRegister";
+import EmployerRegisterOption from "./pages/EmployerRegisterOption";
+import About from "./pages/About";
+import Services from "./pages/Services";
+import Jobs from "./pages/Jobs"; 
+import PublicProfile from "./pages/PublicProfile";
+
+// --- USER PAGES ---
+import UserDashboard from "./pages/UserDashboard";
+import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
+import EditProfile2 from "./pages/EditProfile2";
+import MyApplications from "./pages/MyApplications";
+import UserOTP from "./pages/UserOTP";
+import ApplyPage from "./pages/ApplyPage";
+
+// --- EMPLOYER PAGES ---
+import EmployerDashboard from "./pages/EmployerDashboard";
+import EmployerProfile from "./pages/EmployerProfile";
+import EmployerEditProfile from "./pages/EmployerEditProfile";
+import EmployerEditProfile2 from "./pages/EmployerEditProfile2";
+import CreateJob from "./pages/CreateJob";
+import EmployerJobDetails from "./pages/EmployerJobDetails";
+import DocumentUploadPage from "./pages/EmployerDOC";
+import EmployerOTP from "./pages/EmployerOTP";
+import EditJob from "./pages/EditJob1"; 
+import JobApplicants from "./pages/JobApplicants"; 
+
+import AuthHome from "./routes/AuthHome";
+import TestLocation from "./pages/TestLocation";
 
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/" element={<AuthHome />} />
+        {/* ================= PUBLIC ROUTES ================= */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/userregister" element={<UserRegister />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route
-          path="/about"
-          element={
-            <ProtectedRoute>
-              <About />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/services"
-          element={
-            <ProtectedRoute>
-              <Services />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/editprofile"
-          element={
-            <ProtectedRoute>
-              <EditProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/editprofile2" element={<EditProfile2 />} />
-        <Route
-          path="/myapplications"
-          element={
-            <ProtectedRoute>
-              <MyApplications />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/jobs"
-          element={
-              <Jobs />
-          }
-        />
-        <Route
-          path="/createjob"
-          element={
-            <EmployerProtectedRoute>
-              <CreateJob />
-            </EmployerProtectedRoute>
-          }
-        />
-        <Route path="/" element={<AuthHome />} />
         <Route path="/employerregister" element={<EmployerRegister />} />
-        <Route path="/employerprofile" element={<EmployerProfile />} />
-        <Route path="/employereditprofile" element={<EmployerEditProfile />} />
-        <Route
-          path="/employerotp/employereditprofile2"
-          element={<EmployerEditProfile2 />}
-        />
-        <Route path="/employerdashboard" element={<EmployerDashboard />} />
-        <Route
-          path="/employerregisteroption"
-          element={<EmployerRegisterOption />}
-        />
-        <Route path="/userdashboard" element={<UserDashboard />} />
-        <Route path="/employerotp" element={<EmployerOTP />} />
-        <Route path="/job/:id" element={<EmployerJobDetails />} />
-        <Route path="/userotp" element={<UserOTP />} />
-        <Route path="/apply/:jobId" element={<ApplyPage />} />
-        <Route path="/employerdocupload" element={<DocumentUploadPage />} />
+        <Route path="/employerregisteroption" element={<EmployerRegisterOption />} />
+        <Route path="/jobs" element={<Jobs />} />
+        
+        {/* FACT: This single route serves as both Public View and Applicant Review */}
         <Route path="/profile/:userId" element={<PublicProfile />} />
-        <Route path="/job/:id/applicants" element={<Applicants />} />
+
+        {/* ================= USER ROUTES ================= */}
+        <Route path="/userdashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/editprofile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+        <Route path="/editprofile2" element={<ProtectedRoute><EditProfile2 /></ProtectedRoute>} />
+        <Route path="/myapplications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
+        <Route path="/apply/:jobId" element={<ProtectedRoute><ApplyPage /></ProtectedRoute>} />
+        <Route path="/userotp" element={<UserOTP />} />
+
+        {/* ================= EMPLOYER ROUTES ================= */}
+        <Route path="/employerdashboard" element={<EmployerProtectedRoute><EmployerDashboard /></EmployerProtectedRoute>} />
+        <Route path="/employerprofile" element={<EmployerProtectedRoute><EmployerProfile /></EmployerProtectedRoute>} />
+        <Route path="/employereditprofile" element={<EmployerProtectedRoute><EmployerEditProfile /></EmployerProtectedRoute>} />
+        <Route path="/employerotp/employereditprofile2" element={<EmployerProtectedRoute><EmployerEditProfile2 /></EmployerProtectedRoute>} />
+        <Route path="/createjob" element={<EmployerProtectedRoute><CreateJob /></EmployerProtectedRoute>} />
+        <Route path="/employerdocupload" element={<EmployerProtectedRoute><DocumentUploadPage /></EmployerProtectedRoute>} />
+        <Route path="/employerotp" element={<EmployerOTP />} />
+
+        {/* --- JOB MANAGEMENT & ATS --- */}
+        <Route path="/job/:id" element={<EmployerProtectedRoute><EmployerJobDetails /></EmployerProtectedRoute>} />
+        <Route path="/editjob/:id" element={<EmployerProtectedRoute><EditJob /></EmployerProtectedRoute>} />
+        <Route path="/job/:id/applicants" element={<EmployerProtectedRoute><JobApplicants /></EmployerProtectedRoute>} />
+        
+        {/* MISC */}
+        <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
+        <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
         <Route path="/job/JobsAroundMe" element={<TestLocation />} />
       </Routes>
     </Router>
