@@ -30,7 +30,7 @@ const JobSchema = new mongoose.Schema({
   pinCode: { type: Number }, 
   
   // CHANGED: Consolidated salary handling
-  salary: { type: Number, required: true }, 
+  salaryAmount: { type: Number, required: true }, 
   salaryFrequency: {
     type: String,
     enum: ["Hourly", "Daily", "Weekly", "Monthly", "Lump-Sum"],
