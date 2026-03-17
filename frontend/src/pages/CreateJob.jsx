@@ -3,6 +3,7 @@ import axios from "axios";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 import LocationPicker from "../components/LocationPicker.jsx";
 import JobConfirmModal from "../components/JobConfirmModal.jsx";
+import { useNavigate } from "react-router-dom"; // <-- ADD THIS LINE
 
 import {
   MapPin,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 
 export default function CreateJob() {
+  const navigate = useNavigate();
   const [job, setJob] = useState({
     title: "",
     description: "",
@@ -655,7 +657,7 @@ export default function CreateJob() {
                     />
                     {m.icon}
                     <span className="text-xs text-center font-bold">
-                      {m.val.replace("Work from ", "")}
+                      {m.val}
                     </span>
                   </label>
                 ))}

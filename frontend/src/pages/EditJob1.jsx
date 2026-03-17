@@ -16,6 +16,7 @@ import {
   Sparkles,
   X,
   Target,
+  Plus,
 } from "lucide-react";
 
 export default function EditJob() {
@@ -25,27 +26,38 @@ export default function EditJob() {
   const [saving, setSaving] = useState(false);
   const [skillsInput, setSkillsInput] = useState("");
   const [originalLocation, setOriginalLocation] = useState(null);
+  const [jobSummary, setJobSummary] = useState("");
+  const [keyResponsibilities, setKeyResponsibilities] = useState("");
 
+  // FACT: Initialized with the new Phase 1 Schema structure
   const [job, setJob] = useState({
     title: "",
     description: "",
-    jobType: "Daily",
+    workDays: [],
     skillsRequired: [],
     locationAddress: "",
-    salary: "",
-    salaryFrequency: "Hourly",
-    durationType: "Day",
+    salaryAmount: "",
+    salaryFrequency: "Monthly",
+    durationType: "Month",
     startDate: "",
     endDate: "",
-    dailyWorkingHours: "",
+    isLongTerm: false,
+    shifts: [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
     mode: "Work from Home",
-    workFrom: "",
-    workTo: "",
     noOfDays: "",
     noOfPeopleRequired: "",
     genderPreference: "No Preference",
-    paymentPerHour: "",
   });
+
+  const DAYS_OF_WEEK = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   // --- FETCH EXISTING JOB ---
   useEffect(() => {
@@ -63,37 +75,46 @@ export default function EditJob() {
 
         const jobData = data.job || data;
 
-        // Safely format dates for HTML inputs
         const formatDate = (dateStr) => {
           if (!dateStr) return "";
           return new Date(dateStr).toISOString().split("T")[0];
         };
 
-        // Preserve original location object to prevent overwriting coordinates with undefined
         setOriginalLocation(jobData.location);
 
+        const rawDesc = jobData.description || "";
+        const [summaryPart, resPart] = rawDesc.split("Key Responsibilities:");
+        setJobSummary(
+          summaryPart
+            ? summaryPart.replace("Job Summary:", "").trim()
+            : rawDesc,
+        );
+        setKeyResponsibilities(resPart ? resPart.trim() : "");
+
+        // FACT: Mapping fetched data to the NEW schema
         setJob({
           title: jobData.title || "",
           description: jobData.description || "",
-          jobType: jobData.jobType || "Daily",
+          workDays: jobData.workDays || [],
           skillsRequired: jobData.skillsRequired || [],
           locationAddress:
             typeof jobData.location === "object"
               ? jobData.location?.address
               : jobData.location || "",
-          salary: jobData.salary || "",
-          salaryFrequency: jobData.salaryFrequency || "Hourly",
-          durationType: jobData.durationType || "Day",
+          salaryAmount: jobData.salaryAmount || "",
+          salaryFrequency: jobData.salaryFrequency || "Monthly",
+          durationType: jobData.durationType || "Month",
           startDate: formatDate(jobData.startDate),
           endDate: formatDate(jobData.endDate),
-          dailyWorkingHours: jobData.dailyWorkingHours || "",
+          isLongTerm: jobData.isLongTerm || false,
+          shifts:
+            jobData.shifts?.length > 0
+              ? jobData.shifts
+              : [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
           mode: jobData.mode || "Work from Home",
-          workFrom: jobData.workFrom || "",
-          workTo: jobData.workTo || "",
           noOfDays: jobData.noOfDays || "",
           noOfPeopleRequired: jobData.noOfPeopleRequired || "",
           genderPreference: jobData.genderPreference || "No Preference",
-          paymentPerHour: jobData.paymentPerHour || "",
         });
       } catch (err) {
         console.error("Error fetching job:", err);
@@ -110,34 +131,50 @@ export default function EditJob() {
   // --- HANDLERS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setJob((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const toggleWorkDay = (day) => {
     setJob((prev) => {
-      const updated = { ...prev, [name]: value };
-
-      // Auto-calculate Salary if hours/days/rate change
-      if (
-        [
-          "noOfDays",
-          "dailyWorkingHours",
-          "paymentPerHour",
-          "salaryFrequency",
-        ].includes(name)
-      ) {
-        const days = Number(updated.noOfDays) || 0;
-        const hours = Number(updated.dailyWorkingHours) || 0;
-        const rate = Number(updated.paymentPerHour) || 0;
-        let total = 0;
-
-        if (updated.salaryFrequency === "Hourly") total = days * hours * rate;
-        else if (updated.salaryFrequency === "Daily") total = days * rate;
-        else if (updated.salaryFrequency === "Weekly")
-          total = (days / 7) * rate;
-        else if (updated.salaryFrequency === "Monthly")
-          total = (days / 30) * rate;
-
-        updated.salary = Math.round(total);
-      }
-      return updated;
+      const isSelected = prev.workDays.includes(day);
+      return {
+        ...prev,
+        workDays: isSelected
+          ? prev.workDays.filter((d) => d !== day)
+          : [...prev.workDays, day],
+      };
     });
+  };
+
+  const updateShift = (index, field, value) => {
+    setJob((prev) => {
+      const updatedShifts = [...prev.shifts];
+      updatedShifts[index][field] = value;
+      return { ...prev, shifts: updatedShifts };
+    });
+  };
+
+  const addShift = () => {
+    setJob((prev) => ({
+      ...prev,
+      shifts: [
+        ...prev.shifts,
+        {
+          shiftName: `Shift ${prev.shifts.length + 1}`,
+          startTime: "",
+          endTime: "",
+        },
+      ],
+    }));
+  };
+
+  const removeShift = (index) => {
+    setJob((prev) => ({
+      ...prev,
+      shifts: prev.shifts
+        .filter((_, i) => i !== index)
+        .map((shift, i) => ({ ...shift, shiftName: `Shift ${i + 1}` })),
+    }));
   };
 
   const handleSkills = (e) => {
@@ -161,24 +198,30 @@ export default function EditJob() {
   // --- SAVE UPDATES ---
   const handleUpdate = async (e) => {
     e.preventDefault();
+
+    // Safety checks
+    if (!job.title || !job.salaryAmount || job.workDays.length === 0) {
+      return alert("Title, Salary, and Work Days are required.");
+    }
+
     setSaving(true);
 
     try {
       const stored = localStorage.getItem("employerInfo");
       const token = JSON.parse(stored).token;
-
-      // Construct payload, carefully handling the GeoJSON location object
+      const combinedDescription =
+        `Job Summary:\n${jobSummary}\n\nKey Responsibilities:\n${keyResponsibilities}`.trim();
+      // Construct payload according to Phase 1 schema
       const payload = {
         ...job,
-        salary: Number(job.salary),
-        paymentPerHour: Number(job.paymentPerHour),
-        noOfDays: Number(job.noOfDays),
+        description: combinedDescription,
+        salaryAmount: Number(job.salaryAmount),
+        noOfDays: job.noOfDays ? Number(job.noOfDays) : undefined,
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
-        dailyWorkingHours: Number(job.dailyWorkingHours),
       };
 
       if (job.mode === "Work from Home") {
-        payload.location = { address: "Remote" }; // Wipe coordinates safely
+        payload.location = { address: "Remote" };
       } else if (originalLocation && originalLocation.coordinates) {
         payload.location = {
           ...originalLocation,
@@ -186,7 +229,7 @@ export default function EditJob() {
         };
       }
 
-      delete payload.locationAddress; // Clean up temporary UI field
+      delete payload.locationAddress;
 
       await axios.patch(
         `https://jobone-mrpy.onrender.com/jobs/${id}`,
@@ -218,9 +261,9 @@ export default function EditJob() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans selection:bg-indigo-100 selection:text-indigo-900 ">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans selection:bg-indigo-100 selection:text-indigo-900 mt-20">
       {/* STICKY HEADER */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm mt-20">
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -287,39 +330,22 @@ export default function EditJob() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      Work Mode
-                    </label>
-                    <select
-                      name="mode"
-                      value={job.mode}
-                      onChange={handleChange}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium appearance-none"
-                    >
-                      <option value="Work from Home">Work from Home</option>
-                      <option value="Work from Office">Work from Office</option>
-                      <option value="Hybrid">Hybrid</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      Job Type
-                    </label>
-                    <select
-                      name="jobType"
-                      value={job.jobType}
-                      onChange={handleChange}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium appearance-none"
-                    >
-                      <option value="Daily">Daily</option>
-                      <option value="7 days">7 Days</option>
-                      <option value="Mon-Fri">Mon-Fri</option>
-                      <option value="Sat-Sun">Sat-Sun</option>
-                      <option value="Others">Others</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Work Mode
+                  </label>
+                  <select
+                    name="mode"
+                    value={job.mode}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium appearance-none"
+                  >
+                    <option value="Work from Home">Work from Home</option>
+                    <option value="Work from Office/Field">
+                      Work from Office/Field
+                    </option>
+                    <option value="Hybrid">Hybrid</option>
+                  </select>
                 </div>
 
                 {job.mode !== "Work from Home" && (
@@ -340,7 +366,6 @@ export default function EditJob() {
                         value={job.locationAddress}
                         onChange={handleChange}
                         className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl pl-11 pr-4 py-3.5 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium"
-                        placeholder="e.g. 123 Business Park, City"
                       />
                     </div>
                   </motion.div>
@@ -363,13 +388,32 @@ export default function EditJob() {
                   Job Description
                 </h2>
               </div>
-              <textarea
-                name="description"
-                value={job.description}
-                onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-5 py-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[250px] resize-y leading-relaxed"
-                placeholder="Detail the responsibilities, requirements, and perks..."
-              />
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Job Summary
+                  </label>
+                  <textarea
+                    value={jobSummary}
+                    onChange={(e) => setJobSummary(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-5 py-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[300px] resize-y leading-relaxed"
+                    placeholder="Briefly describe the role..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Key Responsibilities
+                  </label>
+                  <textarea
+                    value={keyResponsibilities}
+                    onChange={(e) => setKeyResponsibilities(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-5 py-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[300px] resize-y leading-relaxed"
+                    placeholder="List main tasks and duties..."
+                  />
+                </div>
+              </div>
             </motion.div>
           </div>
 
@@ -380,48 +424,55 @@ export default function EditJob() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 shadow-xl text-white relative overflow-hidden"
+              className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-3xl p-8 shadow-sm border border-emerald-200 relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-
-              <div className="flex items-center gap-3 mb-8">
-                <div className="p-2.5 bg-white/10 text-emerald-400 rounded-xl backdrop-blur-md">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-emerald-600 text-white rounded-xl">
                   <IndianRupee size={20} />
                 </div>
-                <h2 className="text-xl font-bold">Compensation</h2>
+                <h2 className="text-xl font-bold text-emerald-900">
+                  Compensation
+                </h2>
               </div>
 
-              <div className="space-y-5 relative z-10">
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                  {["Monthly", "Weekly", "Daily", "Hourly", "Lump-Sum"].map(
+                    (freq) => (
+                      <label
+                        key={freq}
+                        className={`cursor-pointer py-2 px-1 text-center text-[10px] font-extrabold uppercase tracking-wide rounded-lg border transition-all ${job.salaryFrequency === freq ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="salaryFrequency"
+                          value={freq}
+                          checked={job.salaryFrequency === freq}
+                          onChange={handleChange}
+                          className="hidden"
+                        />
+                        {freq}
+                      </label>
+                    ),
+                  )}
+                </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Pay Per Hour
+                  <label className="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
+                    Salary Amount
                   </label>
                   <div className="relative">
                     <IndianRupee
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600"
                       size={16}
                     />
                     <input
                       type="number"
-                      name="paymentPerHour"
-                      value={job.paymentPerHour}
+                      name="salaryAmount"
+                      value={job.salaryAmount}
                       onChange={handleChange}
-                      className="w-full bg-white/10 border border-white/10 text-white rounded-xl pl-10 pr-4 py-3 focus:bg-white/20 focus:ring-2 focus:ring-emerald-500 outline-none transition-all placeholder:text-slate-500"
+                      className="w-full bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
                     />
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/10">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Total Estimated Salary
-                  </p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold tracking-tight text-emerald-400">
-                      ₹{job.salary ? Number(job.salary).toLocaleString() : "0"}
-                    </span>
-                    <span className="text-sm font-medium text-slate-500">
-                      / total
-                    </span>
                   </div>
                 </div>
               </div>
@@ -443,7 +494,7 @@ export default function EditJob() {
                 </h2>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
@@ -464,49 +515,103 @@ export default function EditJob() {
                     <input
                       type="date"
                       name="endDate"
-                      value={job.endDate}
+                      value={job.isLongTerm ? "" : job.endDate}
                       onChange={handleChange}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                      disabled={job.isLongTerm}
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm outline-none ${job.isLongTerm ? "bg-slate-100 border-slate-200 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-700 focus:border-indigo-500"}`}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      Days
-                    </label>
-                    <div className="relative">
-                      <CalendarDays
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                        size={14}
-                      />
-                      <input
-                        type="number"
-                        name="noOfDays"
-                        value={job.noOfDays}
-                        onChange={handleChange}
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm outline-none focus:border-indigo-500"
-                      />
-                    </div>
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={job.isLongTerm}
+                    onChange={(e) =>
+                      setJob((prev) => ({
+                        ...prev,
+                        isLongTerm: e.target.checked,
+                        endDate: e.target.checked ? "" : prev.endDate,
+                      }))
+                    }
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                  />
+                  Long Term Role (No fixed end date)
+                </label>
+
+                <div className="border-t border-slate-100 pt-4">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                    Work Days
+                  </label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {DAYS_OF_WEEK.map((day) => (
+                      <button
+                        type="button"
+                        key={day}
+                        onClick={() => toggleWorkDay(day)}
+                        className={`py-1.5 text-[10px] font-bold rounded border transition-all ${job.workDays.includes(day) ? "bg-indigo-600 text-white border-indigo-600 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+                      >
+                        {day.substring(0, 3)}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      Daily Hrs
-                    </label>
-                    <div className="relative">
-                      <Clock
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                        size={14}
-                      />
-                      <input
-                        type="number"
-                        name="dailyWorkingHours"
-                        value={job.dailyWorkingHours}
-                        onChange={handleChange}
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm outline-none focus:border-indigo-500"
-                      />
-                    </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-4">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex justify-between items-center">
+                    Shifts
+                    <button
+                      type="button"
+                      onClick={addShift}
+                      className="text-indigo-600 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded"
+                    >
+                      <Plus size={12} /> Add
+                    </button>
+                  </label>
+                  <div className="space-y-3">
+                    {job.shifts.map((shift, index) => (
+                      <div
+                        key={index}
+                        className="p-3 bg-slate-50 border border-slate-200 rounded-xl relative"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <input
+                            value={shift.shiftName}
+                            onChange={(e) =>
+                              updateShift(index, "shiftName", e.target.value)
+                            }
+                            className="bg-transparent font-bold text-xs text-indigo-600 outline-none w-24"
+                          />
+                          {index > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => removeShift(index)}
+                              className="text-rose-400 hover:text-rose-600"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="time"
+                            value={shift.startTime}
+                            onChange={(e) =>
+                              updateShift(index, "startTime", e.target.value)
+                            }
+                            className="flex-1 p-1.5 border border-slate-200 rounded text-xs outline-none focus:border-indigo-500"
+                          />
+                          <input
+                            type="time"
+                            value={shift.endTime}
+                            onChange={(e) =>
+                              updateShift(index, "endTime", e.target.value)
+                            }
+                            className="flex-1 p-1.5 border border-slate-200 rounded text-xs outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -569,7 +674,6 @@ export default function EditJob() {
                     </button>
                   </div>
 
-                  {/* Skill Chips */}
                   <div className="flex flex-wrap gap-2">
                     {job.skillsRequired.length === 0 ? (
                       <span className="text-xs text-slate-400 italic">
