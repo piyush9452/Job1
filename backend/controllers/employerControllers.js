@@ -444,66 +444,72 @@ export const continueWithGoogle = expressAsyncHandler(async (req, res) => {
 // Ensure other imports (Employer, jwt, expressAsyncHandler, etc.) are present
 
 export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
-  const { token: googleToken } = req.body;
+  try {
+    const { token: googleToken } = req.body;
 
-  const ticket = await client.verifyIdToken({
-    idToken: googleToken,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
-  const { email, name, picture, sub: googleId } = ticket.getPayload();
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const { email, name, picture, sub: googleId } = ticket.getPayload();
 
-  let employer = await Employer.findOne({ email });
+    let employer = await Employer.findOne({ email });
 
-  if (employer) {
-    // --- EXISTING EMPLOYER ---
-    const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
+    if (employer) {
+      // --- EXISTING EMPLOYER ---
+      const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
 
-    if (!employer.profilePicture) {
-        employer.profilePicture = picture;
-        await employer.save();
+      if (!employer.profilePicture) {
+          employer.profilePicture = picture;
+          await employer.save();
+      }
+
+      // FACT: We must ensure the phone number is REAL and not the injected dummy one
+      const hasRealPhone = employer.phone && !employer.phone.startsWith("EMP-");
+      const isProfileComplete = hasRealPhone && employer.companyName && employer.companyName.trim() !== "";
+
+      res.status(200).json({
+        message: "Google Login Successful",
+        token,
+        employerId: employer._id,
+        email: employer.email,
+        isProfileComplete: !!isProfileComplete
+      });
+
+    } else {
+      // --- NEW EMPLOYER ---
+      const randomPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      // FACT: Inject unique dummy phone to prevent MongoDB E11000 duplicate key crash
+      const dummyPhone = `EMP-${Date.now().toString().slice(-6)}`;
+
+      const newEmployer = new Employer({
+        name,
+        email,
+        password: hashedPassword,
+        profilePicture: picture,
+        isVerified: true, 
+        authProvider: 'google',
+        googleId: googleId,
+        phone: dummyPhone, // <-- Crash bypassed here
+        companyName: ""   
+      });
+
+      const savedEmployer = await newEmployer.save();
+      const token = jwt.sign({ employer: { id: savedEmployer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+      res.status(201).json({
+        message: "Google Registration Successful",
+        token,
+        employerId: savedEmployer._id,
+        email: savedEmployer.email,
+        isProfileComplete: false // Forces redirect to Edit Profile
+      });
     }
-
-    // Check if Company Name and Phone exist
-    const isProfileComplete = 
-        employer.phone && 
-        employer.companyName && 
-        employer.companyName.trim() !== "";
-
-    res.status(200).json({
-      message: "Google Login Successful",
-      token,
-      employerId: employer._id,
-      email: employer.email,
-      isProfileComplete: !!isProfileComplete
-    });
-
-  } else {
-    // --- NEW EMPLOYER ---
-    const randomPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-    const newEmployer = new Employer({
-      name,
-      email,
-      password: hashedPassword,
-      profilePicture: picture,
-      isVerified: true, 
-      authProvider: 'google',
-      googleId: googleId,
-      phone: undefined, 
-      companyName: ""   
-    });
-
-    const savedEmployer = await newEmployer.save();
-    const token = jwt.sign({ employer: { id: savedEmployer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
-
-    // FIX: Force false for new employers
-    res.status(201).json({
-      message: "Google Registration Successful",
-      token,
-      employerId: savedEmployer._id,
-      email: savedEmployer.email,
-      isProfileComplete: false // <--- Forces the redirect to Edit Profile
-    });
+  } catch (error) {
+    console.error("FATAL GOOGLE LOGIN ERROR (EMPLOYER):", error);
+    res.status(500);
+    throw new Error(`Google Login Failed: ${error.message}`);
   }
 });
