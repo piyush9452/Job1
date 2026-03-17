@@ -27,19 +27,19 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     throw new Error(`You must complete your profile before posting a job. Missing: ${missingFields.join(', ')}`);
   }
 
+  // CHANGED: Extract the new Phase 1 schema fields
   const { 
-    title, description, jobType, skillsRequired, 
-    salary, durationType, startDate, endDate, 
-    dailyWorkingHours, mode, workFrom, workTo, 
-    noOfDays, noOfPeopleRequired, genderPreference, 
-    paymentPerHour, pinCode, location
+    title, description, workDays, skillsRequired, 
+    salaryAmount, salaryFrequency, durationType, startDate, endDate, isLongTerm,
+    shifts, mode, noOfDays, noOfPeopleRequired, genderPreference, 
+    pinCode, location
   } = req.body;
 
   // 3. FACT: Validate and handle location STRICTLY based on the Job Mode
-  let finalLocation = undefined; // Default to completely undefined for WFH jobs
+  let finalLocation = undefined; 
 
-  if (mode === "Work from Office" || mode === "Hybrid") {
-    // If it's an office job, it MUST have a valid location sent from frontend
+  // CHANGED: Updated the exact mode string to match the new requirement
+  if (mode === "Work from Office/Field" || mode === "Hybrid") {
     if (!location || !location.coordinates || location.coordinates.length !== 2) {
       res.status(400);
       throw new Error("Map coordinates and address are required for Office and Hybrid roles.");
@@ -47,16 +47,12 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     finalLocation = location;
   }
 
-  // 4. Create Job
+  // 4. Create Job using the new data structure
   const newJob = new Job({
-    title, description, jobType, skillsRequired, 
-    salary, durationType, startDate, endDate, 
-    dailyWorkingHours, mode, workFrom, workTo, 
-    noOfDays, noOfPeopleRequired, genderPreference, 
-    paymentPerHour, pinCode,
-    
-    location: finalLocation, // If WFH, this passes undefined, saving your DB from crashing
-
+    title, description, workDays, skillsRequired, 
+    salaryAmount, salaryFrequency, durationType, startDate, endDate, isLongTerm,
+    shifts, mode, noOfDays, noOfPeopleRequired, genderPreference, pinCode,
+    location: finalLocation,
     postedBy: req.employerId,
     postedByName: employer.name, 
     postedByImage: employer.profilePicture || '', 
@@ -86,7 +82,7 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
 
   if (queryObj.title) filters.title = { $regex: queryObj.title, $options: 'i' };
   if (queryObj.location) filters.location = { $regex: queryObj.location, $options: 'i' };
-  if (queryObj.jobType) filters.jobType = queryObj.jobType;
+  // If you filter by workDays later, you can add it here.
   if (queryObj.status) filters.status = queryObj.status;
 
   if (queryObj.skillsRequired) {
@@ -94,11 +90,12 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
     filters.skillsRequired = { $in: skills };
   }
 
-  if (queryObj.salary) {
+  // CHANGED: Updated from salary to salaryAmount
+  if (queryObj.salaryAmount) {
     const salaryFilter = {};
-    if (queryObj.salary.gte) salaryFilter.$gte = Number(queryObj.salary.gte);
-    if (queryObj.salary.lte) salaryFilter.$lte = Number(queryObj.salary.lte);
-    if (Object.keys(salaryFilter).length > 0) filters.salary = salaryFilter;
+    if (queryObj.salaryAmount.gte) salaryFilter.$gte = Number(queryObj.salaryAmount.gte);
+    if (queryObj.salaryAmount.lte) salaryFilter.$lte = Number(queryObj.salaryAmount.lte);
+    if (Object.keys(salaryFilter).length > 0) filters.salaryAmount = salaryFilter;
   }
 
   const page = Number(req.query.page) || 1;
@@ -155,6 +152,7 @@ export const updateJob = expressAsyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Not authorized to update this job" });
   }
 
+  // req.body automatically accepts the new multi-shift arrays and grid configurations
   const updatedJob = await Job.findByIdAndUpdate(id, req.body, { new: true });
   res.status(200).json({ message: "Job updated successfully", job: updatedJob });
 });

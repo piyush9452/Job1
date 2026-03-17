@@ -3,11 +3,23 @@ import mongoose from "mongoose";
 const applicationSchema = new mongoose.Schema({
   job_id: { type: mongoose.Schema.Types.ObjectId, ref: "Job", required: true },
   
-  // FIX: Change ref from "User" to "Employer"
   jobHost: { type: mongoose.Schema.Types.ObjectId, ref: "Employer", required: true },
   
   appliedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  status: { type: String, enum: ["applied", "accepted", "rejected", "interview", "shortlisted"], default: "applied" },
+  
+  // CHANGED: Implemented new ATS tracking statuses from the 16/2/2026 meeting
+  status: { 
+    type: String, 
+    enum: [
+      "applied", 
+      "shortlisted", 
+      "Interview Scheduled", 
+      "Assignment Scheduled", 
+      "hired", 
+      "NCTT"
+    ], 
+    default: "applied" 
+  },
   appliedAt: { type: Date, default: Date.now },
 }); 
 
