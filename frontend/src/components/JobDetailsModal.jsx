@@ -12,6 +12,7 @@ import {
   Building2,
   Users,
   CheckCircle2,
+  FileText,
   ArrowRight,
   Loader2,
 } from "lucide-react";

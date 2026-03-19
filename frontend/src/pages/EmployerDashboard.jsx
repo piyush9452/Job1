@@ -266,7 +266,12 @@ export default function EmployerDashboard() {
                     <div className="flex flex-col gap-3 border-t border-slate-100 pt-4">
                       <div className="flex items-center gap-2 text-sm text-slate-600">
                         <MapPin size={16} className="text-slate-400" />
-                        {job.location.address || "Remote"}
+                        {/* Safely handles both new WFH jobs and old string-based locations */}
+                        {job.mode === "Work from Home"
+                          ? "Remote"
+                          : job.location?.address ||
+                            job.location ||
+                            "Office/Field"}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-600">
                         <Clock size={16} className="text-slate-400" />

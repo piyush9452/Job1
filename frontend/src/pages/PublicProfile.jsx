@@ -29,8 +29,13 @@ export default function PublicProfile() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(initialStatus);
   const [actionLoading, setActionLoading] = useState(false);
-  const [showNCTTModal, setShowNCTTModal] = useState(false);
-
+  const [actionModal, setActionModal] = useState({
+    show: false,
+    status: "",
+    title: "",
+    requireMessage: false,
+  });
+  const [employerMessage, setEmployerMessage] = useState("");
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -74,7 +79,7 @@ export default function PublicProfile() {
     fetchUserProfile();
   }, [userId]);
 
-  const handleStatusUpdate = async (newStatus) => {
+  const handleStatusUpdate = async () => {
     if (!applicationId) return;
 
     setActionLoading(true);
@@ -84,17 +89,25 @@ export default function PublicProfile() {
 
       await axios.patch(
         `https://jobone-mrpy.onrender.com/applications/${applicationId}/status`,
-        { status: newStatus },
+        // FACT: Sending the message payload to the backend
+        { status: actionModal.status, employerMessage: employerMessage },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      setStatus(newStatus);
+      setStatus(actionModal.status);
+      alert(`Candidate status updated to: ${actionModal.status}`);
     } catch (error) {
       console.error("Update failed", error);
       alert("Failed to update status.");
     } finally {
       setActionLoading(false);
-      setShowNCTTModal(false); // Close modal if it was open
+      setActionModal({
+        show: false,
+        status: "",
+        title: "",
+        requireMessage: false,
+      });
+      setEmployerMessage("");
     }
   };
 
@@ -136,55 +149,73 @@ export default function PublicProfile() {
               ) : (
                 <>
                   <button
-                    onClick={() => {
-                      if (window.confirm("Shortlist this candidate?"))
-                        handleStatusUpdate("shortlisted");
-                    }}
+                    onClick={() =>
+                      setActionModal({
+                        show: true,
+                        status: "shortlisted",
+                        title: "Shortlist Candidate",
+                        requireMessage: true,
+                      })
+                    }
                     disabled={actionLoading}
                     className="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 transition-colors text-sm"
                   >
                     Shortlist
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm("Schedule Interview?"))
-                        handleStatusUpdate("Interview Scheduled");
-                    }}
+                    onClick={() =>
+                      setActionModal({
+                        show: true,
+                        status: "Interview Scheduled",
+                        title: "Schedule Interview",
+                        requireMessage: true,
+                      })
+                    }
                     disabled={actionLoading}
                     className="px-4 py-2 bg-purple-50 text-purple-600 font-bold rounded-lg hover:bg-purple-100 transition-colors text-sm"
                   >
                     Interview
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm("Schedule Assignment?"))
-                        handleStatusUpdate("Assignment Scheduled");
-                    }}
+                    onClick={() =>
+                      setActionModal({
+                        show: true,
+                        status: "Assignment Scheduled",
+                        title: "Schedule Assignment",
+                        requireMessage: true,
+                      })
+                    }
                     disabled={actionLoading}
                     className="px-4 py-2 bg-orange-50 text-orange-600 font-bold rounded-lg hover:bg-orange-100 transition-colors text-sm"
                   >
                     Assignment
                   </button>
                   <button
-                    onClick={() => setShowNCTTModal(true)}
+                    onClick={() =>
+                      setActionModal({
+                        show: true,
+                        status: "NCTT",
+                        title: "Not Considered This Time",
+                        requireMessage: false,
+                      })
+                    }
                     disabled={actionLoading}
                     className="px-4 py-2 bg-white border border-rose-200 text-rose-600 font-bold rounded-lg hover:bg-rose-50 transition-colors text-sm"
                   >
                     NCTT
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm("Hire this candidate?"))
-                        handleStatusUpdate("hired");
-                    }}
+                    onClick={() =>
+                      setActionModal({
+                        show: true,
+                        status: "hired",
+                        title: "Hire Candidate",
+                        requireMessage: false,
+                      })
+                    }
                     disabled={actionLoading}
                     className="px-5 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors flex items-center gap-2 text-sm"
                   >
-                    {actionLoading ? (
-                      <Loader2 className="animate-spin" size={16} />
-                    ) : (
-                      <CheckCircle size={16} />
-                    )}{" "}
                     Hire
                   </button>
                 </>
@@ -343,34 +374,62 @@ export default function PublicProfile() {
           </div>
         </div>
       </div>
-      {showNCTTModal && (
+      {/* Unified Action Modal with Messaging */}
+      {actionModal.show && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
             <h3 className="text-xl font-bold text-slate-900 mb-2">
-              Not Considered This Time
+              {actionModal.title}
             </h3>
-            <p className="text-slate-600 mb-6">
-              Are you sure you want to mark this candidate as NCTT? This will
-              permanently update their application status.
-            </p>
+
+            {actionModal.requireMessage ? (
+              <div className="mb-6 mt-4">
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Message / Details (Sent to Applicant)
+                </label>
+                <textarea
+                  value={employerMessage}
+                  onChange={(e) => setEmployerMessage(e.target.value)}
+                  placeholder="Enter meeting links, dates, or assignment instructions here..."
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 h-32 resize-y text-sm"
+                />
+              </div>
+            ) : (
+              <p className="text-slate-600 mb-6 mt-2">
+                Are you sure you want to mark this candidate as{" "}
+                {actionModal.status}? This action will update their dashboard.
+              </p>
+            )}
+
             <div className="flex gap-4 justify-end">
               <button
-                onClick={() => setShowNCTTModal(false)}
+                onClick={() => {
+                  setActionModal({
+                    show: false,
+                    status: "",
+                    title: "",
+                    requireMessage: false,
+                  });
+                  setEmployerMessage("");
+                }}
                 className="px-5 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleStatusUpdate("NCTT")}
-                disabled={actionLoading}
-                className="px-5 py-2.5 rounded-xl font-bold text-white bg-rose-600 hover:bg-rose-700 flex items-center gap-2"
+                onClick={handleStatusUpdate}
+                disabled={
+                  actionLoading ||
+                  (actionModal.requireMessage && !employerMessage.trim())
+                }
+                className="px-5 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
               >
                 {actionLoading ? (
                   <Loader2 className="animate-spin" size={16} />
                 ) : (
-                  <XCircle size={18} />
-                )}{" "}
-                Confirm NCTT
+                  <CheckCircle size={18} />
+                )}
+                Confirm
               </button>
             </div>
           </div>

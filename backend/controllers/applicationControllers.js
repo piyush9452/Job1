@@ -188,7 +188,9 @@ export const getJobApplications = errorHandler(async (req, res) => {
 
 export const updateApplicationStatus = errorHandler(async (req, res) => {
   const { id } = req.params; // Application ID
-  const { status } = req.body;
+  
+  // FACT: Extract both the status and the new employerMessage from the request body
+  const { status, employerMessage } = req.body;
 
   const application = await Application.findById(id);
 
@@ -204,6 +206,12 @@ export const updateApplicationStatus = errorHandler(async (req, res) => {
   }
 
   application.status = status;
+  
+  // FACT: Safely append the message to the database document if the employer provided one
+  if (employerMessage !== undefined) {
+    application.employerMessage = employerMessage;
+  }
+
   await application.save();
 
   res.status(200).json({

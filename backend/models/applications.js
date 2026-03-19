@@ -20,6 +20,7 @@ const applicationSchema = new mongoose.Schema({
     ], 
     default: "applied" 
   },
+  employerMessage: { type: String, default: "" },
   appliedAt: { type: Date, default: Date.now },
 }); 
 
