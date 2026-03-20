@@ -94,14 +94,19 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
   const formatted = applications.map((app) => ({
     applicationId: app._id,
     status: app.status,
+    employerMessage: app.employerMessage || "", // <-- FIX: Passing the message to the frontend!
     appliedAt: app.appliedAt,
     job: {
       id: app.job_id._id,
       title: app.job_id.title,
       description: app.job_id.description,
-      jobType: app.job_id.jobType,
+      mode: app.job_id.mode,                       // <-- FIX: New schema
+      workDays: app.job_id.workDays,               // <-- FIX: New schema
       location: app.job_id.location,
-      salary: app.job_id.salary,
+      salaryAmount: app.job_id.salaryAmount,       // <-- FIX: Fixes the missing salary
+      salaryFrequency: app.job_id.salaryFrequency, // <-- FIX: New schema
+      isLongTerm: app.job_id.isLongTerm,           // <-- FIX: New schema
+      noOfDays: app.job_id.noOfDays,               // <-- FIX: New schema
       skillsRequired: app.job_id.skillsRequired,
       postedBy: {
         id: app.job_id.postedBy?._id,
