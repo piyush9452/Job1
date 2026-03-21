@@ -3,7 +3,7 @@ import Application from "../models/applications.js";
 import Employer from "../models/employer.js";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
-
+import sendEmail from "../utils/sendEmail.js";
 
 export const createApplication = errorHandler(async (req, res) => {
  const { jobId } = req.body;
@@ -128,41 +128,72 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
 
 
 // PATCH: /api/applications/:id
-export const updateApplication = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = req.body;
+export const updateApplicationStatus = errorHandler(async (req, res) => {
+  const { id } = req.params;
+  const { status, employerMessage } = req.body;
 
-    // Optional: restrict what can be updated
-    const allowedFields = ["status"];
-    const invalidFields = Object.keys(updates).filter(
-      (field) => !allowedFields.includes(field)
-    );
-    if (invalidFields.length) {
-      return res.status(400).json({
-        message: `Invalid fields: ${invalidFields.join(", ")}`,
-      });
-    }
+  // FACT: Populating the user data to get their email, and the job data for the email subject
+  const application = await Application.findById(id)
+    .populate("appliedBy", "name email")
+    .populate("job_id", "title");
 
-    const application = await Application.findByIdAndUpdate(id, updates, {
-      new: true, // return updated document
-      runValidators: true, // enforce schema validation
-    });
-
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
-    }
-
-    res.status(200).json({
-      message: "Application updated successfully",
-      data: application,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (!application) {
+    res.status(404);
+    throw new Error("Application not found");
   }
-};
 
+  if (application.jobHost.toString() !== req.employerId.toString()) {
+     res.status(403);
+     throw new Error("Not authorized to update this application");
+  }
 
+  application.status = status;
+  if (employerMessage !== undefined) {
+    application.employerMessage = employerMessage;
+  }
+
+  await application.save();
+
+  // --- FACT: THE NEW EMAIL SERVICE TRIGGER ---
+  try {
+    const userEmail = application.appliedBy.email;
+    const userName = application.appliedBy.name;
+    const jobTitle = application.job_id.title;
+
+    const emailHTML = `
+      <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+        <h2 style="color: #4f46e5;">Application Update</h2>
+        <p style="color: #334155; font-size: 16px;">Hi <strong>${userName}</strong>,</p>
+        <p style="color: #334155; font-size: 16px;">Your application for the <strong>${jobTitle}</strong> role has been updated to: <strong style="color: #4f46e5; text-transform: uppercase;">${status}</strong>.</p>
+        
+        ${employerMessage ? `
+          <div style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-left: 4px solid #4f46e5; border-radius: 5px;">
+            <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: bold;">Message from the Employer:</p>
+            <p style="color: #1e293b; font-size: 15px; white-space: pre-wrap;">${employerMessage}</p>
+          </div>
+        ` : ''}
+
+        <p style="color: #64748b; font-size: 14px; margin-top: 30px;">Log in to your JobOne dashboard to view more details.</p>
+      </div>
+    `;
+
+    await sendEmail({
+      email: userEmail,
+      subject: `Update on your application for ${jobTitle}`,
+      html: emailHTML,
+    });
+
+    console.log(`Notification email successfully sent to ${userEmail}`);
+  } catch (emailError) {
+    console.error("Critical: Status updated, but email failed to send.", emailError);
+    // We log the error but do NOT crash the API response, so the status still updates on the frontend.
+  }
+
+  res.status(200).json({
+    message: "Status updated successfully and email triggered.",
+    application,
+  });
+});
 
 export const getJobApplications = errorHandler(async (req, res) => {
   const { jobId } = req.params;
