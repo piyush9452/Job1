@@ -222,36 +222,3 @@ export const getJobApplications = errorHandler(async (req, res) => {
 
 
 
-export const updateApplicationStatus = errorHandler(async (req, res) => {
-  const { id } = req.params; // Application ID
-  
-  // FACT: Extract both the status and the new employerMessage from the request body
-  const { status, employerMessage } = req.body;
-
-  const application = await Application.findById(id);
-
-  if (!application) {
-    res.status(404);
-    throw new Error("Application not found");
-  }
-
-  // Security Check: Ensure the logged-in employer owns this application
-  if (application.jobHost.toString() !== req.employerId.toString()) {
-     res.status(403);
-     throw new Error("Not authorized to update this application");
-  }
-
-  application.status = status;
-  
-  // FACT: Safely append the message to the database document if the employer provided one
-  if (employerMessage !== undefined) {
-    application.employerMessage = employerMessage;
-  }
-
-  await application.save();
-
-  res.status(200).json({
-    message: "Status updated successfully",
-    application,
-  });
-});
