@@ -8,15 +8,33 @@ import {
   Phone,
   ChevronRight,
   User,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+  FileText,
+  CheckSquare,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function JobApplicants() {
   const { id } = useParams(); // Job ID
   const navigate = useNavigate();
+
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState("");
+
+  // FACT: State for Bulk Actions
+  const [selectedApps, setSelectedApps] = useState([]);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionModal, setActionModal] = useState({
+    show: false,
+    status: "",
+    title: "",
+    requireMessage: false,
+  });
+  const [employerMessage, setEmployerMessage] = useState("");
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -26,19 +44,15 @@ export default function JobApplicants() {
 
         const { token } = JSON.parse(stored);
 
-        // 1. Get Applications
         const { data } = await axios.get(
           `https://jobone-mrpy.onrender.com/applications/job/${id}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         setApplicants(data);
 
-        // 2. Get Job Title
         const jobRes = await axios.get(
           `https://jobone-mrpy.onrender.com/jobs/${id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         setJobTitle(jobRes.data.title || jobRes.data.job?.title || "Job");
       } catch (err) {
@@ -51,130 +65,409 @@ export default function JobApplicants() {
     fetchApplicants();
   }, [id, navigate]);
 
+  // --- SELECTION LOGIC ---
+  const handleSelectAll = () => {
+    if (selectedApps.length === applicants.length) {
+      setSelectedApps([]); // Deselect all
+    } else {
+      setSelectedApps(applicants.map((app) => app._id)); // Select all
+    }
+  };
+
+  const handleSelectOne = (appId) => {
+    if (selectedApps.includes(appId)) {
+      setSelectedApps(selectedApps.filter((id) => id !== appId));
+    } else {
+      setSelectedApps([...selectedApps, appId]);
+    }
+  };
+
+  // --- BULK UPDATE LOGIC ---
+  const handleBulkStatusUpdate = async () => {
+    if (selectedApps.length === 0) return;
+    setActionLoading(true);
+
+    try {
+      const stored = localStorage.getItem("employerInfo");
+      const { token } = JSON.parse(stored);
+
+      // FACT: Fires updates in parallel for all selected candidates
+      await Promise.all(
+        selectedApps.map((appId) =>
+          axios.patch(
+            `https://jobone-mrpy.onrender.com/applications/${appId}/status`,
+            { status: actionModal.status, employerMessage: employerMessage },
+            { headers: { Authorization: `Bearer ${token}` } },
+          ),
+        ),
+      );
+
+      // Instantly update the UI table without needing to refresh the page
+      setApplicants((prev) =>
+        prev.map((app) =>
+          selectedApps.includes(app._id)
+            ? { ...app, status: actionModal.status }
+            : app,
+        ),
+      );
+
+      setSelectedApps([]);
+      setActionModal({
+        show: false,
+        status: "",
+        title: "",
+        requireMessage: false,
+      });
+      setEmployerMessage("");
+    } catch (error) {
+      console.error("Bulk update failed", error);
+      alert("Failed to update some candidates.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // FACT: Phase 1 Status Badges
   const getStatusBadge = (status) => {
-    const styles = {
-      applied: "bg-blue-50 text-blue-700 border-blue-200",
-      shortlisted: "bg-indigo-50 text-indigo-700 border-indigo-200",
-      interview: "bg-purple-50 text-purple-700 border-purple-200",
-      hired: "bg-green-50 text-green-700 border-green-200",
-      rejected: "bg-red-50 text-red-700 border-red-200",
-    };
-    return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${styles[status] || styles.applied}`}
-      >
-        {status}
-      </span>
-    );
+    switch (status) {
+      case "hired":
+        return (
+          <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-md text-xs font-bold uppercase border border-emerald-200">
+            Hired
+          </span>
+        );
+      case "NCTT":
+        return (
+          <span className="bg-rose-100 text-rose-700 px-3 py-1 rounded-md text-xs font-bold uppercase border border-rose-200">
+            NCTT
+          </span>
+        );
+      case "Interview Scheduled":
+        return (
+          <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-md text-xs font-bold uppercase border border-purple-200">
+            Interview
+          </span>
+        );
+      case "Assignment Scheduled":
+        return (
+          <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-md text-xs font-bold uppercase border border-orange-200">
+            Assignment
+          </span>
+        );
+      case "shortlisted":
+        return (
+          <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-xs font-bold uppercase border border-blue-200">
+            Shortlisted
+          </span>
+        );
+      default:
+        return (
+          <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md text-xs font-bold uppercase border border-slate-200">
+            Applied
+          </span>
+        );
+    }
   };
 
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin text-blue-600" size={40} />
+        <Loader2 className="animate-spin text-indigo-600" size={40} />
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 font-sans">
+    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 font-sans pb-32">
       <div className="max-w-7xl mx-auto">
+        {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-2 transition-colors font-medium"
+              className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-2 transition-colors font-bold text-sm uppercase tracking-wide"
             >
-              <ArrowLeft size={18} /> Back to Job
+              <ArrowLeft size={16} /> Back to Job
             </button>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
               Applicants for {jobTitle}
             </h1>
           </div>
-          <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-sm font-bold text-slate-600">
-            Total: <span className="text-blue-600">{applicants.length}</span>
+          <div className="bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm text-sm font-bold text-slate-600">
+            Total Candidates:{" "}
+            <span className="text-indigo-600 text-lg ml-1">
+              {applicants.length}
+            </span>
           </div>
         </div>
 
+        {/* BULK ACTION TOOLBAR (Floating) */}
+        <AnimatePresence>
+          {selectedApps.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 bg-slate-900 p-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-4"
+            >
+              <div className="px-4 text-white font-bold border-r border-slate-700">
+                {selectedApps.length} Selected
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() =>
+                    setActionModal({
+                      show: true,
+                      status: "shortlisted",
+                      title: "Shortlist Candidates",
+                      requireMessage: true,
+                    })
+                  }
+                  className="px-4 py-2 bg-slate-800 text-blue-400 font-bold rounded-xl hover:bg-slate-700 transition-colors text-sm"
+                >
+                  Shortlist
+                </button>
+                <button
+                  onClick={() =>
+                    setActionModal({
+                      show: true,
+                      status: "Interview Scheduled",
+                      title: "Schedule Interviews",
+                      requireMessage: true,
+                    })
+                  }
+                  className="px-4 py-2 bg-slate-800 text-purple-400 font-bold rounded-xl hover:bg-slate-700 transition-colors text-sm"
+                >
+                  Interview
+                </button>
+                <button
+                  onClick={() =>
+                    setActionModal({
+                      show: true,
+                      status: "Assignment Scheduled",
+                      title: "Schedule Assignments",
+                      requireMessage: true,
+                    })
+                  }
+                  className="px-4 py-2 bg-slate-800 text-orange-400 font-bold rounded-xl hover:bg-slate-700 transition-colors text-sm"
+                >
+                  Assignment
+                </button>
+                <button
+                  onClick={() =>
+                    setActionModal({
+                      show: true,
+                      status: "NCTT",
+                      title: "Mark as NCTT",
+                      requireMessage: false,
+                    })
+                  }
+                  className="px-4 py-2 bg-slate-800 text-rose-400 font-bold rounded-xl hover:bg-slate-700 transition-colors text-sm"
+                >
+                  NCTT
+                </button>
+                <button
+                  onClick={() =>
+                    setActionModal({
+                      show: true,
+                      status: "hired",
+                      title: "Hire Candidates",
+                      requireMessage: false,
+                    })
+                  }
+                  className="px-5 py-2 bg-emerald-500 text-slate-900 font-extrabold rounded-xl hover:bg-emerald-400 transition-colors text-sm shadow-lg shadow-emerald-500/20"
+                >
+                  Hire
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* DATA TABLE */}
         {applicants.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="text-slate-300" size={32} />
+          <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+              <User className="text-slate-400" size={32} />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-xl font-extrabold text-slate-900">
               No applications yet
             </h3>
-            <p className="text-slate-500">
+            <p className="text-slate-500 mt-2 font-medium">
               Candidates will appear here once they apply.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {applicants.map((app) => {
-              // FACT: Handle backend variance gracefully
-              const candidate = app.appliedBy || app.applicant;
-              if (!candidate) return null;
-
-              return (
-                <motion.div
-                  key={app._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
-                >
-                  <div className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <img
-                        src={
-                          candidate.profilePicture ||
-                          "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="p-4 w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          selectedApps.length === applicants.length &&
+                          applicants.length > 0
                         }
-                        alt="Avatar"
-                        className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm bg-slate-100"
+                        onChange={handleSelectAll}
+                        className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                       />
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-lg text-slate-900 leading-tight truncate">
-                          {candidate.name}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-mono mt-0.5">
-                          Applied:{" "}
+                    </th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Candidate
+                    </th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Applied On
+                    </th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {applicants.map((app) => {
+                    const candidate = app.appliedBy || app.applicant;
+                    if (!candidate) return null;
+
+                    const isSelected = selectedApps.includes(app._id);
+
+                    return (
+                      <tr
+                        key={app._id}
+                        className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-indigo-50/30" : ""}`}
+                      >
+                        <td className="p-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectOne(app._id)}
+                            className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={
+                                candidate.profilePicture ||
+                                "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                              }
+                              alt="Avatar"
+                              className="w-10 h-10 rounded-full object-cover border border-slate-200"
+                            />
+                            <span className="font-bold text-slate-900">
+                              {candidate.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="space-y-1 text-sm text-slate-600 font-medium">
+                            <div className="flex items-center gap-2">
+                              <Mail size={14} className="text-slate-400" />{" "}
+                              {candidate.email}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone size={14} className="text-slate-400" />{" "}
+                              {candidate.phone || "N/A"}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm font-bold text-slate-600">
                           {new Date(app.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mb-4">{getStatusBadge(app.status)}</div>
-
-                    <div className="space-y-3 text-sm text-slate-600 mb-6">
-                      <div className="flex items-center gap-2">
-                        <Mail size={14} className="text-slate-400 shrink-0" />
-                        <span className="truncate">{candidate.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone size={14} className="text-slate-400 shrink-0" />
-                        <span>{candidate.phone || "N/A"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-auto border-t border-slate-100 p-4 bg-slate-50">
-                    {/* FACT: Navigate to the PublicProfile component and pass the Application data in state */}
-                    <button
-                      onClick={() =>
-                        navigate(`/profile/${candidate._id}`, {
-                          state: { applicationId: app._id, status: app.status },
-                        })
-                      }
-                      className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-blue-600 font-bold py-2.5 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm"
-                    >
-                      View Full Profile <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
+                        </td>
+                        <td className="p-4">{getStatusBadge(app.status)}</td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() =>
+                              navigate(`/profile/${candidate._id}`, {
+                                state: {
+                                  applicationId: app._id,
+                                  status: app.status,
+                                },
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-indigo-600 font-bold px-4 py-2 rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-all text-sm shadow-sm"
+                          >
+                            View Profile <ChevronRight size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
+
+      {/* UNIFIED MESSAGE MODAL */}
+      {actionModal.show && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
+            <h3 className="text-xl font-extrabold text-slate-900 mb-2">
+              {actionModal.title}
+            </h3>
+
+            {actionModal.requireMessage ? (
+              <div className="mb-6 mt-4">
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Message (Sent to {selectedApps.length} Candidates via Email)
+                </label>
+                <textarea
+                  value={employerMessage}
+                  onChange={(e) => setEmployerMessage(e.target.value)}
+                  placeholder="Enter meeting links, dates, or assignment instructions here..."
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 h-32 resize-y text-sm font-medium"
+                />
+              </div>
+            ) : (
+              <p className="text-slate-600 mb-6 mt-2 font-medium">
+                Are you sure you want to apply{" "}
+                <strong className="text-slate-900">{actionModal.status}</strong>{" "}
+                to {selectedApps.length} candidates?
+              </p>
+            )}
+
+            <div className="flex gap-4 justify-end">
+              <button
+                onClick={() => {
+                  setActionModal({
+                    show: false,
+                    status: "",
+                    title: "",
+                    requireMessage: false,
+                  });
+                  setEmployerMessage("");
+                }}
+                className="px-5 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkStatusUpdate}
+                disabled={
+                  actionLoading ||
+                  (actionModal.requireMessage && !employerMessage.trim())
+                }
+                className="px-5 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-200"
+              >
+                {actionLoading ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <CheckSquare size={18} />
+                )}{" "}
+                Confirm Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
