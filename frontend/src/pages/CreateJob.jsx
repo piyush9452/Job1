@@ -3,7 +3,8 @@ import axios from "axios";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 import LocationPicker from "../components/LocationPicker.jsx";
 import JobConfirmModal from "../components/JobConfirmModal.jsx";
-import { useNavigate } from "react-router-dom"; // <-- ADD THIS LINE
+import ElasticTitleDropdown from "../components/ElasticTitleDropdown.jsx"; // <-- FACT: New Import
+import { useNavigate } from "react-router-dom";
 
 import {
   MapPin,
@@ -29,19 +30,19 @@ export default function CreateJob() {
   const [job, setJob] = useState({
     title: "",
     description: "",
-    workDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], // FACT: Replaced jobType with Array for Grid selection
+    workDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
     skillsRequired: [],
     location: "",
     latitude: null,
     longitude: null,
     pinCode: "",
-    salaryAmount: "", // FACT: Unified salary field
-    salaryFrequency: "Monthly", // FACT: Default to Monthly per meeting notes
+    salaryAmount: "",
+    salaryFrequency: "Monthly",
     durationType: "Month",
     startDate: "",
     endDate: "",
-    isLongTerm: false, // FACT: Dedicated boolean flag
-    shifts: [{ shiftName: "Shift 1", startTime: "", endTime: "" }], // FACT: Multi-shift array
+    isLongTerm: false,
+    shifts: [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
     mode: "Work from Home",
     noOfDays: "",
     noOfPeopleRequired: "",
@@ -55,8 +56,6 @@ export default function CreateJob() {
   const [preview, setPreview] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [typingTimeout, setTypingTimeout] = useState(null);
-  const [titleSuggestions, setTitleSuggestions] = useState([]);
-  const [titleTypingTimeout, setTitleTypingTimeout] = useState(null);
   const [step, setStep] = useState(1);
   const [generatingAI, setGeneratingAI] = useState(false);
 
@@ -105,51 +104,11 @@ export default function CreateJob() {
     "Java",
   ];
 
-  // FACT: Expanded Elastic Job Titles
-  const jobTitleSuggestions = [
-    "Senior React Developer",
-    "Frontend Developer",
-    "Backend Developer",
-    "Full Stack Developer",
-    "MERN Stack Developer",
-    "Node.js Developer",
-    "Python Developer",
-    "Django Developer",
-    "DevOps Engineer",
-    "UI/UX Designer",
-    "Software Engineer",
-    "Mobile App Developer",
-    "Data Analyst",
-    "Machine Learning Engineer",
-    "Product Manager",
-    "Marketing Executive",
-    "Sales Associate",
-    "Customer Support Representative",
-  ];
-
   // --- HANDLERS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setJob((prev) => ({ ...prev, [name]: value }));
     if (touched[name]) validateField(name, value);
-  };
-
-  const handleTitleChange = (e) => {
-    const value = e.target.value;
-    setJob((prev) => ({ ...prev, title: value }));
-    if (titleTypingTimeout) clearTimeout(titleTypingTimeout);
-
-    const timeout = setTimeout(() => {
-      if (value.trim().length > 0) {
-        const filtered = jobTitleSuggestions.filter((title) =>
-          title.toLowerCase().includes(value.toLowerCase()),
-        );
-        setTitleSuggestions(filtered.slice(0, 8)); // Show more options for elasticity
-      } else {
-        setTitleSuggestions([]);
-      }
-    }, 300);
-    setTitleTypingTimeout(timeout);
   };
 
   const toggleWorkDay = (day) => {
@@ -164,7 +123,6 @@ export default function CreateJob() {
     });
   };
 
-  // --- MULTI-SHIFT HANDLERS ---
   const updateShift = (index, field, value) => {
     setJob((prev) => {
       const updatedShifts = [...prev.shifts];
@@ -191,10 +149,7 @@ export default function CreateJob() {
     setJob((prev) => {
       const updatedShifts = prev.shifts
         .filter((_, i) => i !== index)
-        .map((shift, i) => ({
-          ...shift,
-          shiftName: `Shift ${i + 1}`, // Rename remaining shifts to keep sequence
-        }));
+        .map((shift, i) => ({ ...shift, shiftName: `Shift ${i + 1}` }));
       return { ...prev, shifts: updatedShifts };
     });
   };
@@ -277,11 +232,8 @@ export default function CreateJob() {
   };
 
   const handleAIGenerate = async () => {
-    if (!job.title?.trim()) {
-      alert("You must enter a Job Title in Step 1 first!");
-      return;
-    }
-
+    if (!job.title?.trim())
+      return alert("You must enter a Job Title in Step 1 first!");
     setGeneratingAI(true);
     setJobSummary("");
     setKeyResponsibilities("");
@@ -338,8 +290,7 @@ export default function CreateJob() {
       isValid = false;
     }
 
-    // Validate Shifts
-    job.shifts.forEach((shift, index) => {
+    job.shifts.forEach((shift) => {
       if (!shift.startTime || !shift.endTime) {
         isValid = false;
         alert(`Please complete Start and End times for ${shift.shiftName}`);
@@ -352,11 +303,8 @@ export default function CreateJob() {
   };
 
   const handleNextStep = () => {
-    if (validateStep1()) {
-      setStep(2);
-    } else {
-      alert("Please fill in all required fields highlighted in red.");
-    }
+    if (validateStep1()) setStep(2);
+    else alert("Please fill in all required fields highlighted in red.");
   };
 
   const handleSubmit = async () => {
@@ -366,25 +314,20 @@ export default function CreateJob() {
     ) {
       setTouched((prev) => ({ ...prev, location: true }));
       setErrors((prev) => ({ ...prev, location: "Location is required" }));
-      alert("Please drop a pin on the map to set the job location.");
-      return;
+      return alert("Please drop a pin on the map to set the job location.");
     }
 
-    if (!jobSummary.trim() || !keyResponsibilities.trim()) {
-      alert("Job Summary and Key Responsibilities are required.");
-      return;
-    }
+    if (!jobSummary.trim() || !keyResponsibilities.trim())
+      return alert("Job Summary and Key Responsibilities are required.");
 
     try {
       setLoading(true);
       const storedData = localStorage.getItem("employerInfo");
       const token = storedData ? JSON.parse(storedData).token : null;
-
       if (!token) return alert("No token found. Please log in again.");
 
       const combinedDescription =
         `Job Summary:\n${jobSummary}\n\nKey Responsibilities:\n${keyResponsibilities}`.trim();
-
       const payload = {
         ...job,
         description: combinedDescription,
@@ -444,41 +387,16 @@ export default function CreateJob() {
         {/* STEP 1 */}
         {step === 1 && (
           <div className="space-y-8">
-            {/* JOB TITLE */}
+            {/* FACT: New Elastic Dropdown Component Injected Here */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Job Title<span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Briefcase
-                  className="absolute left-3 top-3.5 text-gray-400"
-                  size={18}
-                />
-                <input
-                  name="title"
-                  value={job.title}
-                  onChange={handleTitleChange}
-                  onBlur={handleBlur}
-                  placeholder="e.g. Senior React Developer"
-                  className={getInputClass("title", true)}
-                />
-                {titleSuggestions.length > 0 && (
-                  <ul className="absolute top-full left-0 w-full bg-white border rounded-xl shadow-lg z-20 mt-2 max-h-48 overflow-y-auto">
-                    {titleSuggestions.map((suggestion, index) => (
-                      <li
-                        key={index}
-                        onClick={() => {
-                          setJob((prev) => ({ ...prev, title: suggestion }));
-                          setTitleSuggestions([]);
-                        }}
-                        className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-0"
-                      >
-                        {suggestion}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              <ElasticTitleDropdown
+                value={job.title}
+                onChange={(val) => {
+                  setJob((prev) => ({ ...prev, title: val }));
+                  if (touched.title) validateField("title", val);
+                }}
+                hasError={touched.title && errors.title}
+              />
               {touched.title && errors.title && (
                 <p className="text-red-500 text-xs mt-1 font-medium">
                   {errors.title}
@@ -486,7 +404,7 @@ export default function CreateJob() {
               )}
             </div>
 
-            {/* FACT: WORK DAYS GRID */}
+            {/* WORK DAYS GRID */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Work Days <span className="text-red-500">*</span>
@@ -567,7 +485,7 @@ export default function CreateJob() {
               </div>
             </div>
 
-            {/* FACT: MULTI-SHIFT SELECTOR */}
+            {/* MULTI-SHIFT SELECTOR */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center justify-between">
                 Shift Timings <span className="text-red-500">*</span>
@@ -636,7 +554,7 @@ export default function CreateJob() {
                   {
                     val: "Work from Office/Field",
                     icon: <Building size={16} />,
-                  }, // FACT: Updated to exact string
+                  },
                   { val: "Hybrid", icon: <Globe size={16} /> },
                 ].map((m) => (
                   <label
@@ -664,7 +582,7 @@ export default function CreateJob() {
               </div>
             </div>
 
-            {/* FACT: RADIO BUTTON SALARY */}
+            {/* RADIO BUTTON SALARY */}
             <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl">
               <label className="block text-sm font-bold text-green-900 mb-3">
                 Compensation Details <span className="text-red-500">*</span>
@@ -842,26 +760,64 @@ export default function CreateJob() {
             </div>
 
             {/* SKILLS MAP */}
-            <div className="flex flex-wrap gap-2">
-              {job.skillsRequired.map((skill, index) => (
-                <div
-                  key={index}
-                  className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm border border-blue-100 font-medium shadow-sm"
-                >
-                  <span>{skill}</span>
-                  <button
-                    onClick={() => {
-                      const updated = job.skillsRequired.filter(
-                        (_, i) => i !== index,
-                      );
-                      setJob({ ...job, skillsRequired: updated });
-                    }}
-                    className="ml-2 text-blue-400 hover:text-red-500 transition-colors"
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Skills Required
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {job.skillsRequired.map((skill, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm border border-blue-100 font-medium shadow-sm"
                   >
-                    ×
-                  </button>
-                </div>
-              ))}
+                    <span>{skill}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = job.skillsRequired.filter(
+                          (_, i) => i !== index,
+                        );
+                        setJob({ ...job, skillsRequired: updated });
+                      }}
+                      className="ml-2 text-blue-400 hover:text-red-500 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={skillsInput}
+                  onChange={handleSkillInputChange}
+                  placeholder="Type a skill..."
+                  className="w-full p-2.5 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-200"
+                />
+                <button
+                  type="button"
+                  onClick={handleSkills}
+                  className="bg-gray-100 px-4 rounded-xl font-bold hover:bg-gray-200"
+                >
+                  Add
+                </button>
+              </div>
+              {suggestions.length > 0 && (
+                <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg">
+                  {suggestions.map((s, i) => (
+                    <li
+                      key={i}
+                      onClick={() => {
+                        setSkillsInput(s);
+                        setSuggestions([]);
+                      }}
+                      className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                    >
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <hr className="border-gray-200 my-6" />
@@ -871,7 +827,7 @@ export default function CreateJob() {
               job.mode === "Hybrid") && (
               <div className="space-y-4">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                  <MapPin className="text-blue-600" /> Job Location
+                  <MapPin className="text-blue-600" /> Job Location{" "}
                   <span className="text-red-500 text-sm">*</span>
                 </h3>
 

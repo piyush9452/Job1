@@ -278,38 +278,40 @@ export default function JobDetailsModal({ job, onClose }) {
           </div>
         </div>
 
+        {/* SIMILAR JOBS ENGINE UI - COMPACT VERSION */}
         {!loadingSimilar && similarJobs.length > 0 && (
-          <div className="mt-10 pt-8 border-t border-slate-200">
-            <h3 className="text-lg font-extrabold text-slate-900 mb-6 flex items-center gap-2">
-              <Sparkles className="text-amber-500" size={20} /> Similar Jobs You
-              Might Like
+          <div className="mt-6 pt-6 border-t border-slate-200 shrink-0 pl-4 pr-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-4 mb-3 flex items-center gap-1.5">
+              <Sparkles className="text-amber-500" size={14} /> Similar Roles
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {similarJobs.map((simJob) => (
                 <div
                   key={simJob._id}
                   onClick={() => {
-                    onClose(); // Close current modal
-                    navigate(`/job/${simJob._id}`); // Navigate to new job (adjust path if needed)
+                    onClose();
+                    navigate(`/job/${simJob._id}`);
                   }}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer group"
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer group flex flex-col justify-between"
                 >
-                  <h4 className="font-bold text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">
-                    {simJob.title}
-                  </h4>
-                  <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
-                    <Building2 size={12} />{" "}
-                    {simJob.postedByCompany || "Company"}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                      {simJob.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1 truncate">
+                      <Building2 size={12} />{" "}
+                      {simJob.postedByCompany || "Company"}
+                    </p>
+                  </div>
+                  <div className="mt-2.5 flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-100/50 border border-emerald-100 px-1.5 py-0.5 rounded">
                       ₹{" "}
                       {simJob.salaryAmount
                         ? simJob.salaryAmount.toLocaleString()
                         : "TBD"}
                     </span>
                     <ChevronRight
-                      size={16}
+                      size={14}
                       className="text-slate-300 group-hover:text-indigo-500 transition-colors"
                     />
                   </div>
