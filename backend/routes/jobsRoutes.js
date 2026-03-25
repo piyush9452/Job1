@@ -1,4 +1,4 @@
-import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob,getEmployerCreatedJobs,getJobApplicants,getJobsNearby} from "../controllers/jobsControllers.js";
+import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob,getEmployerCreatedJobs,getJobApplicants,getSimilarJobs} from "../controllers/jobsControllers.js";
 import protect from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js";
 import express from "express";
@@ -20,7 +20,8 @@ router.get("/employer/:id",protectEmployer, jobCreatedByUser);
 
 
 router.get("/", getJobs);
-router.get("/nearby", getJobsNearby);
+
+router.get("/:id/similar", getSimilarJobs);
 
 router.get("/:id", getJob);
 
