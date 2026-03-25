@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
@@ -15,11 +15,37 @@ import {
   FileText,
   ArrowRight,
   Loader2,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 
 export default function JobDetailsModal({ job, onClose }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  // FACT: New state for Similar Jobs
+  const [similarJobs, setSimilarJobs] = useState([]);
+  const [loadingSimilar, setLoadingSimilar] = useState(true);
+
+  // FACT: Fetch recommendations when the modal opens
+  useEffect(() => {
+    if (!job) return;
+
+    const fetchSimilarJobs = async () => {
+      try {
+        const { data } = await axios.get(
+          `https://jobone-mrpy.onrender.com/jobs/${job._id || job.id}/similar`,
+        );
+        setSimilarJobs(data);
+      } catch (error) {
+        console.error("Failed to fetch similar jobs", error);
+      } finally {
+        setLoadingSimilar(false);
+      }
+    };
+
+    fetchSimilarJobs();
+  }, [job]);
 
   if (!job) return null;
 
@@ -60,7 +86,6 @@ export default function JobDetailsModal({ job, onClose }) {
         : job.location || "Office";
   const companyName =
     job.postedByCompany || job.postedByName || "Company Confidential";
-
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md">
       <motion.div
@@ -252,6 +277,48 @@ export default function JobDetailsModal({ job, onClose }) {
             </div>
           </div>
         </div>
+
+        {!loadingSimilar && similarJobs.length > 0 && (
+          <div className="mt-10 pt-8 border-t border-slate-200">
+            <h3 className="text-lg font-extrabold text-slate-900 mb-6 flex items-center gap-2">
+              <Sparkles className="text-amber-500" size={20} /> Similar Jobs You
+              Might Like
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {similarJobs.map((simJob) => (
+                <div
+                  key={simJob._id}
+                  onClick={() => {
+                    onClose(); // Close current modal
+                    navigate(`/job/${simJob._id}`); // Navigate to new job (adjust path if needed)
+                  }}
+                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer group"
+                >
+                  <h4 className="font-bold text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                    {simJob.title}
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                    <Building2 size={12} />{" "}
+                    {simJob.postedByCompany || "Company"}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                      ₹{" "}
+                      {simJob.salaryAmount
+                        ? simJob.salaryAmount.toLocaleString()
+                        : "TBD"}
+                    </span>
+                    <ChevronRight
+                      size={16}
+                      className="text-slate-300 group-hover:text-indigo-500 transition-colors"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* END SIMILAR JOBS ENGINE */}
 
         {/* Footer Actions */}
         <div className="p-6 border-t border-slate-100 bg-white flex gap-4 sticky bottom-0 z-20">
