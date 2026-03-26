@@ -6,13 +6,14 @@ import {
   allApplicationFromUser, 
   createApplication, 
   getJobApplications,   // Import this
-  updateApplicationStatus // Import this
+  updateApplicationStatus ,markApplicationAsSeen// Import this
 } from "../controllers/applicationControllers.js";
 
 const router = express.Router();
 
 // --- USER ROUTES ---
 router.post("/", protect, createApplication);
+router.patch("/:id/seen", protect, markApplicationAsSeen);
 router.get("/:id", protect, allApplicationFromUser); 
 
 // --- EMPLOYER ROUTES (These were missing) ---

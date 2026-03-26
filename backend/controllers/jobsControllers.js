@@ -22,7 +22,6 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   }
 
   // --- STRICT PROFILE CHECK ---
-  // Define what "Fully Completed" means for your platform
   const requiredFields = ['companyName', 'phone', 'location', 'industry', 'description', 'companyWebsite'];
   const missingFields = requiredFields.filter(field => !employer[field] || employer[field].trim() === '');
 
@@ -32,25 +31,20 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   }
   // -----------------------------
 
+  // FACT: Extract the NEW frontend fields here!
   const { 
-    title, description, jobType, skillsRequired, 
-    salary, durationType, startDate, endDate, 
-    dailyWorkingHours, mode, workFrom, workTo, 
-    noOfDays, noOfPeopleRequired, genderPreference, 
-    paymentPerHour, pinCode,
-    latitude, longitude, address 
+    title, description, workDays, skillsRequired, 
+    salaryAmount, salaryFrequency, durationType, startDate, endDate, isLongTerm,
+    shifts, mode, noOfDays, noOfPeopleRequired, genderPreference, 
+    pinCode, location 
   } = req.body;
 
-  // 3. Construct Location (Same as before)
+  // 3. Construct Location
   let locationData;
-  if (latitude && longitude) {
-    locationData = {
-      type: 'Point',
-      coordinates: [parseFloat(longitude), parseFloat(latitude)],
-      address: address || "Location not specified"
-    };
+  if (location && location.type === 'Point') {
+    locationData = location;
   } else {
-    if (mode !== 'Online') {
+    if (mode !== 'Online' && mode !== 'Work from Home') {
         res.status(400);
         throw new Error("Please pick a location on the map.");
     }
@@ -61,19 +55,30 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     };
   }
 
-  // 4. Create Job
+  // 4. Create Job mapping the exact Mongoose schema requirements
   const newJob = new Job({
-    title, description, jobType, skillsRequired, 
-    salary, durationType, startDate, endDate, 
-    dailyWorkingHours, mode, workFrom, workTo, 
-    noOfDays, noOfPeopleRequired, genderPreference, 
-    paymentPerHour, pinCode,
+    title, 
+    description, 
+    workDays, 
+    skillsRequired, 
+    salaryAmount,       // Fixes the crash
+    salaryFrequency,    // Fixes the crash
+    durationType, 
+    startDate, 
+    endDate, 
+    isLongTerm,         // Fixes the crash
+    shifts,             // Fixes the crash
+    mode, 
+    noOfDays, 
+    noOfPeopleRequired, 
+    genderPreference, 
+    pinCode,
     location: locationData,
 
     postedBy: req.employerId,
     postedByName: employer.name, 
     postedByImage: employer.profilePicture || '', 
-    postedByCompany: employer.companyName, // Now guaranteed to exist
+    postedByCompany: employer.companyName,
   });
 
   const savedJob = await newJob.save();
@@ -84,7 +89,6 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   
   res.status(201).json(savedJob);
 });
-
 
 export const getJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;

@@ -95,6 +95,7 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
     applicationId: app._id,
     status: app.status,
     employerMessage: app.employerMessage || "", // <-- FIX: Passing the message to the frontend!
+    applicantHasSeen: app.applicantHasSeen,
     appliedAt: app.appliedAt,
     job: {
       id: app.job_id._id,
@@ -151,7 +152,7 @@ export const updateApplicationStatus = errorHandler(async (req, res) => {
   if (employerMessage !== undefined) {
     application.employerMessage = employerMessage;
   }
-
+  application.applicantHasSeen = false;
   await application.save();
 
   // --- FACT: THE NEW EMAIL SERVICE TRIGGER ---
@@ -218,6 +219,23 @@ export const getJobApplications = errorHandler(async (req, res) => {
     .sort({ appliedAt: -1 });
 
   res.status(200).json(applications);
+});
+
+
+export const markApplicationAsSeen = errorHandler(async (req, res) => {
+  const { id } = req.params;
+  const application = await Application.findOneAndUpdate(
+    { _id: id, appliedBy: req.user._id },
+    { applicantHasSeen: true },
+    { new: true }
+  );
+
+  if (!application) {
+    res.status(404);
+    throw new Error("Application not found");
+  }
+
+  res.status(200).json({ success: true });
 });
 
 
