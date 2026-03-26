@@ -9,10 +9,10 @@ import {
   Clock,
   FileText,
   X,
+  Check,
 } from "lucide-react";
 
 export default function GlobalNotificationPopup() {
-  // FACT: Now holds an array of all unread notifications to display simultaneously
   const [unreadQueue, setUnreadQueue] = useState([]);
 
   useEffect(() => {
@@ -34,7 +34,6 @@ export default function GlobalNotificationPopup() {
 
         const apps = data.applications || [];
 
-        // Filter ONLY unread applications that have a status change
         const unread = apps.filter(
           (app) => app.applicantHasSeen === false && app.status !== "applied",
         );
@@ -52,8 +51,8 @@ export default function GlobalNotificationPopup() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // FACT: Permanently dismisses the notification by updating the database
   const handleAcknowledge = async (applicationId) => {
-    // FACT: Optimistically remove it from the UI immediately for a snappy feel
     setUnreadQueue((prev) =>
       prev.filter((app) => app.applicationId !== applicationId),
     );
@@ -62,7 +61,6 @@ export default function GlobalNotificationPopup() {
       const storedUser = localStorage.getItem("userInfo");
       const { token } = JSON.parse(storedUser);
 
-      // Tell the database this specific notification has been read
       await axios.patch(
         `https://jobone-mrpy.onrender.com/applications/${applicationId}/seen`,
         {},
@@ -71,6 +69,13 @@ export default function GlobalNotificationPopup() {
     } catch (error) {
       console.error("Failed to mark as seen", error);
     }
+  };
+
+  // FACT: Temporarily hides the notification for this session only (will reappear on next login)
+  const handleDismissLocal = (applicationId) => {
+    setUnreadQueue((prev) =>
+      prev.filter((app) => app.applicationId !== applicationId),
+    );
   };
 
   const getStatusBadge = (status) => {
@@ -111,8 +116,6 @@ export default function GlobalNotificationPopup() {
   };
 
   return (
-    // FACT: "pointer-events-none" prevents the container from blocking clicks on the page beneath it
-    // FACT: Top-24 pushes it below the navbar, right-6 aligns it cleanly to the right side
     <div className="fixed top-24 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
       <AnimatePresence>
         {unreadQueue.map((app) => (
@@ -133,9 +136,9 @@ export default function GlobalNotificationPopup() {
                 </span>
               </div>
               <button
-                onClick={() => handleAcknowledge(app.applicationId)}
+                onClick={() => handleDismissLocal(app.applicationId)}
                 className="text-indigo-200 hover:text-white transition-colors p-1"
-                title="Mark as read"
+                title="Dismiss for now (will remind later)"
               >
                 <X size={16} />
               </button>
@@ -143,14 +146,17 @@ export default function GlobalNotificationPopup() {
 
             {/* Toast Body */}
             <div className="p-4">
-              <p className="text-sm font-extrabold text-slate-900 leading-tight mb-2 truncate">
+              <p
+                className="text-sm font-extrabold text-slate-900 leading-tight mb-2 truncate"
+                title={app.job?.title}
+              >
                 {app.job?.title || "Job Title Unavailable"}
               </p>
 
               <div className="mb-3">{getStatusBadge(app.status)}</div>
 
               {app.employerMessage && (
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-3">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                     <MessageCircle size={10} /> Note from Employer
                   </p>
@@ -159,6 +165,17 @@ export default function GlobalNotificationPopup() {
                   </p>
                 </div>
               )}
+
+              {/* FACT: The explicit Acknowledge button */}
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => handleAcknowledge(app.applicationId)}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-lg transition-colors"
+                  title="Mark as read permanently"
+                >
+                  <Check size={14} /> Acknowledge
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}
