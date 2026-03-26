@@ -8,17 +8,16 @@ import {
   XCircle,
   Clock,
   FileText,
-  AlertCircle,
+  X,
 } from "lucide-react";
 
 export default function GlobalNotificationPopup() {
+  // FACT: Now holds an array of all unread notifications to display simultaneously
   const [unreadQueue, setUnreadQueue] = useState([]);
-  const [activeNotification, setActiveNotification] = useState(null);
 
   useEffect(() => {
     const fetchUnreadApplications = async () => {
       try {
-        // Only run this for Jobseekers, not Employers
         const storedUser = localStorage.getItem("userInfo");
         if (!storedUser) return;
 
@@ -42,7 +41,6 @@ export default function GlobalNotificationPopup() {
 
         if (unread.length > 0) {
           setUnreadQueue(unread);
-          setActiveNotification(unread[0]);
         }
       } catch (error) {
         console.error("Error fetching global notifications:", error);
@@ -50,13 +48,15 @@ export default function GlobalNotificationPopup() {
     };
 
     fetchUnreadApplications();
-    // Set up an interval to check every 30 seconds if they leave the tab open
     const intervalId = setInterval(fetchUnreadApplications, 30000);
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleAcknowledge = async () => {
-    if (!activeNotification) return;
+  const handleAcknowledge = async (applicationId) => {
+    // FACT: Optimistically remove it from the UI immediately for a snappy feel
+    setUnreadQueue((prev) =>
+      prev.filter((app) => app.applicationId !== applicationId),
+    );
 
     try {
       const storedUser = localStorage.getItem("userInfo");
@@ -64,18 +64,12 @@ export default function GlobalNotificationPopup() {
 
       // Tell the database this specific notification has been read
       await axios.patch(
-        `https://jobone-mrpy.onrender.com/applications/${activeNotification.applicationId}/seen`,
+        `https://jobone-mrpy.onrender.com/applications/${applicationId}/seen`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-
-      // Move to the next notification in the queue, if any
-      const nextQueue = unreadQueue.slice(1);
-      setUnreadQueue(nextQueue);
-      setActiveNotification(nextQueue.length > 0 ? nextQueue[0] : null);
     } catch (error) {
       console.error("Failed to mark as seen", error);
-      setActiveNotification(null); // Failsafe close
     }
   };
 
@@ -83,31 +77,31 @@ export default function GlobalNotificationPopup() {
     switch (status) {
       case "hired":
         return (
-          <span className="flex justify-center items-center gap-1 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider border border-emerald-200">
+          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider">
             <CheckCircle2 size={12} /> Hired
           </span>
         );
       case "NCTT":
         return (
-          <span className="flex justify-center items-center gap-1 bg-rose-100 text-rose-700 px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider border border-rose-200">
+          <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider">
             <XCircle size={12} /> Not Considered
           </span>
         );
       case "Interview Scheduled":
         return (
-          <span className="flex justify-center items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider border border-purple-200">
+          <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider">
             <Clock size={12} /> Interview
           </span>
         );
       case "Assignment Scheduled":
         return (
-          <span className="flex justify-center items-center gap-1 bg-orange-100 text-orange-700 px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider border border-orange-200">
+          <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider">
             <FileText size={12} /> Assignment
           </span>
         );
       case "shortlisted":
         return (
-          <span className="flex justify-center items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider border border-blue-200">
+          <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider">
             <CheckCircle2 size={12} /> Shortlisted
           </span>
         );
@@ -117,73 +111,58 @@ export default function GlobalNotificationPopup() {
   };
 
   return (
-    <AnimatePresence>
-      {activeNotification && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4"
-        >
+    // FACT: "pointer-events-none" prevents the container from blocking clicks on the page beneath it
+    // FACT: Top-24 pushes it below the navbar, right-6 aligns it cleanly to the right side
+    <div className="fixed top-24 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+      <AnimatePresence>
+        {unreadQueue.map((app) => (
           <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl relative overflow-hidden border-t-8 border-indigo-500"
+            key={app.applicationId}
+            layout
+            initial={{ opacity: 0, x: 50, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+            className="pointer-events-auto bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 overflow-hidden flex flex-col"
           >
-            <div className="flex items-center gap-4 mb-6">
-              <div className="p-4 bg-indigo-100 text-indigo-600 rounded-full animate-pulse">
-                <BellRing size={28} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-extrabold text-slate-900">
-                  Application Update!
-                </h3>
-                <p className="text-sm font-bold text-slate-500 mt-1">
-                  Status changed for{" "}
-                  <span className="text-indigo-600">
-                    {activeNotification.job?.title}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-6 flex justify-center">
-              <div className="px-6 py-2 bg-slate-100 rounded-xl border border-slate-200 w-full">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block text-center mb-1">
-                  New Status
+            {/* Toast Header */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-indigo-600 text-white">
+              <div className="flex items-center gap-2">
+                <BellRing size={14} className="animate-pulse" />
+                <span className="text-xs font-bold tracking-wide">
+                  Application Update
                 </span>
-                {getStatusBadge(activeNotification.status)}
               </div>
-            </div>
-
-            {activeNotification.employerMessage && (
-              <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 mb-6">
-                <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                  <MessageCircle size={14} /> Message from Employer
-                </p>
-                <div className="text-indigo-950 whitespace-pre-wrap leading-relaxed text-sm font-medium">
-                  {activeNotification.employerMessage}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3">
-              {unreadQueue.length > 1 && (
-                <span className="text-xs font-bold text-slate-400 self-center mr-auto">
-                  {unreadQueue.length - 1} more update(s) pending
-                </span>
-              )}
               <button
-                onClick={handleAcknowledge}
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all w-full"
+                onClick={() => handleAcknowledge(app.applicationId)}
+                className="text-indigo-200 hover:text-white transition-colors p-1"
+                title="Mark as read"
               >
-                Acknowledge & Close
+                <X size={16} />
               </button>
             </div>
+
+            {/* Toast Body */}
+            <div className="p-4">
+              <p className="text-sm font-extrabold text-slate-900 leading-tight mb-2 truncate">
+                {app.job?.title || "Job Title Unavailable"}
+              </p>
+
+              <div className="mb-3">{getStatusBadge(app.status)}</div>
+
+              {app.employerMessage && (
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <MessageCircle size={10} /> Note from Employer
+                  </p>
+                  <p className="text-xs text-slate-700 font-medium line-clamp-3">
+                    {app.employerMessage}
+                  </p>
+                </div>
+              )}
+            </div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        ))}
+      </AnimatePresence>
+    </div>
   );
 }
