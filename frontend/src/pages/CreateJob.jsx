@@ -1,126 +1,114 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import axios from "axios";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 import LocationPicker from "../components/LocationPicker.jsx";
 import JobConfirmModal from "../components/JobConfirmModal.jsx";
-import ElasticTitleDropdown from "../components/ElasticTitleDropdown.jsx"; // <-- FACT: New Import
+import ElasticTitleDropdown from "../components/ElasticTitleDropdown.jsx";
 import { useNavigate } from "react-router-dom";
 
+// FACT: Cleaned up unused imports causing red blocks
 import {
   MapPin,
-  CheckCircle,
-  AlertCircle,
   Loader2,
-  Briefcase,
-  CalendarDays,
-  Clock,
   IndianRupee,
   Users,
-  Globe,
   Monitor,
   Building,
   FileText,
   ListChecks,
   Plus,
   X,
+  Globe,
 } from "lucide-react";
 
 export default function CreateJob() {
   const navigate = useNavigate();
+
   const [job, setJob] = useState({
     title: "",
     description: "",
-    workDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
     skillsRequired: [],
-    location: "",
-    latitude: null,
-    longitude: null,
-    pinCode: "",
+    jobType: ["full-time"],
+    workDaysPattern: "Mon to Fri",
+    customWorkDaysDescription: "",
+    mode: ["Work from office"],
     salaryAmount: "",
     salaryFrequency: "Monthly",
-    durationType: "Month",
+    incentives: "",
     startDate: "",
     endDate: "",
     isLongTerm: false,
     shifts: [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
-    mode: "Work from Home",
-    noOfDays: "",
+    isFlexibleShifts: false,
     noOfPeopleRequired: "",
     genderPreference: "No Preference",
+    qualifications: [],
+    courses: [],
+    ageLimit: { min: "", max: "", isAny: true },
+    languages: [],
+    useOfficeLocation: false,
+    location: "",
+    latitude: null,
+    longitude: null,
   });
 
   const [jobSummary, setJobSummary] = useState("");
   const [keyResponsibilities, setKeyResponsibilities] = useState("");
   const [skillsInput, setSkillsInput] = useState("");
+  const [languageInput, setLanguageInput] = useState("");
+  const [courseInput, setCourseInput] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
-  const [typingTimeout, setTypingTimeout] = useState(null);
   const [step, setStep] = useState(1);
   const [generatingAI, setGeneratingAI] = useState(false);
-
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const DAYS_OF_WEEK = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
-
-  const skillSuggestions = [
-    "React",
-    "Redux",
-    "Node.js",
-    "Express",
-    "MongoDB",
-    "JavaScript",
-    "TypeScript",
-    "Python",
-    "Django",
-    "Flask",
-    "HTML",
-    "CSS",
-    "Tailwind CSS",
-    "Bootstrap",
-    "Git",
-    "GitHub",
-    "Docker",
-    "Kubernetes",
-    "AWS",
-    "Azure",
-    "Firebase",
-    "Next.js",
-    "Vue.js",
-    "SQL",
-    "PostgreSQL",
-    "MySQL",
-    "C++",
-    "Java",
-  ];
-
   // --- HANDLERS ---
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setJob((prev) => ({ ...prev, [name]: value }));
-    if (touched[name]) validateField(name, value);
+    const { name, value, type, checked } = e.target;
+    const finalValue = type === "checkbox" ? checked : value;
+    setJob((prev) => ({ ...prev, [name]: finalValue }));
+    if (touched[name]) validateField(name, finalValue);
   };
 
-  const toggleWorkDay = (day) => {
-    setJob((prev) => {
-      const isSelected = prev.workDays.includes(day);
-      const updatedDays = isSelected
-        ? prev.workDays.filter((d) => d !== day)
-        : [...prev.workDays, day];
+  const handleAgeChange = (field, value) => {
+    setJob((prev) => ({
+      ...prev,
+      ageLimit: { ...prev.ageLimit, [field]: value, isAny: false },
+    }));
+  };
 
-      if (touched.workDays) validateField("workDays", updatedDays);
-      return { ...prev, workDays: updatedDays };
+  const toggleArrayItem = (field, value) => {
+    setJob((prev) => {
+      const arr = prev[field];
+      const newArr = arr.includes(value)
+        ? arr.filter((i) => i !== value)
+        : [...arr, value];
+      if (touched[field]) validateField(field, newArr);
+      return { ...prev, [field]: newArr };
     });
+  };
+
+  const addTag = (field, inputState, setInputState) => {
+    if (inputState.trim() !== "") {
+      if (!job[field].includes(inputState.trim())) {
+        setJob((prev) => ({
+          ...prev,
+          [field]: [...prev[field], inputState.trim()],
+        }));
+      }
+      setInputState("");
+    }
+  };
+
+  const removeTag = (field, index) => {
+    setJob((prev) => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== index),
+    }));
   };
 
   const updateShift = (index, field, value) => {
@@ -131,7 +119,7 @@ export default function CreateJob() {
     });
   };
 
-  const addShift = () => {
+  const addShift = () =>
     setJob((prev) => ({
       ...prev,
       shifts: [
@@ -143,16 +131,14 @@ export default function CreateJob() {
         },
       ],
     }));
-  };
 
-  const removeShift = (index) => {
-    setJob((prev) => {
-      const updatedShifts = prev.shifts
+  const removeShift = (index) =>
+    setJob((prev) => ({
+      ...prev,
+      shifts: prev.shifts
         .filter((_, i) => i !== index)
-        .map((shift, i) => ({ ...shift, shiftName: `Shift ${i + 1}` }));
-      return { ...prev, shifts: updatedShifts };
-    });
-  };
+        .map((s, i) => ({ ...s, shiftName: `Shift ${i + 1}` })),
+    }));
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
@@ -162,21 +148,20 @@ export default function CreateJob() {
 
   const validateField = (name, value) => {
     let errorMsg = "";
-
     if (name === "title" && !value) errorMsg = "Job Title is required";
-    if (name === "workDays" && value.length === 0)
-      errorMsg = "Select at least one work day";
+    if (name === "jobType" && value.length === 0)
+      errorMsg = "Select at least one job type";
+    if (name === "mode" && value.length === 0)
+      errorMsg = "Select at least one work mode";
     if (name === "salaryAmount" && !value)
       errorMsg = "Salary amount is required";
     if (name === "noOfPeopleRequired" && !value) errorMsg = "Openings required";
-
     if (
-      name === "location" &&
-      (job.mode === "Work from Office/Field" || job.mode === "Hybrid") &&
-      !value
-    ) {
-      errorMsg = "Location is required";
-    }
+      name === "workDaysPattern" &&
+      value === "Custom" &&
+      !job.customWorkDaysDescription
+    )
+      errorMsg = "Please describe the custom work days";
 
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
     return errorMsg;
@@ -191,37 +176,6 @@ export default function CreateJob() {
     }));
     setErrors((prev) => ({ ...prev, location: "" }));
   }, []);
-
-  const handleSkillInputChange = (e) => {
-    const value = e.target.value;
-    setSkillsInput(value);
-    if (typingTimeout) clearTimeout(typingTimeout);
-
-    const timeout = setTimeout(() => {
-      if (value.trim().length > 0) {
-        const filtered = skillSuggestions.filter((skill) =>
-          skill.toLowerCase().includes(value.toLowerCase()),
-        );
-        setSuggestions(filtered.slice(0, 5));
-      } else {
-        setSuggestions([]);
-      }
-    }, 300);
-    setTypingTimeout(timeout);
-  };
-
-  const handleSkills = () => {
-    if (skillsInput.trim() !== "") {
-      if (!job.skillsRequired.includes(skillsInput.trim())) {
-        setJob({
-          ...job,
-          skillsRequired: [...job.skillsRequired, skillsInput.trim()],
-        });
-      }
-      setSkillsInput("");
-      setSuggestions([]);
-    }
-  };
 
   const typeWriterEffect = async (text, setterState, speed = 10) => {
     setterState("");
@@ -247,8 +201,8 @@ export default function CreateJob() {
         "https://jobone-mrpy.onrender.com/ai/generate-job-details",
         {
           title: job.title,
-          jobType: job.workDays.join(", ") || "Flexible",
-          mode: job.mode,
+          jobType: job.jobType.join(", "),
+          mode: job.mode.join(", "),
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -263,12 +217,14 @@ export default function CreateJob() {
     }
   };
 
+  // FACT: Shift validation restored here to fix logic gaps
   const validateStep1 = () => {
     let isValid = true;
     const newErrors = {};
     const newTouched = {
       title: true,
-      workDays: true,
+      jobType: true,
+      mode: true,
       salaryAmount: true,
       noOfPeopleRequired: true,
     };
@@ -277,8 +233,12 @@ export default function CreateJob() {
       newErrors.title = "Required";
       isValid = false;
     }
-    if (job.workDays.length === 0) {
-      newErrors.workDays = "Select days";
+    if (job.jobType.length === 0) {
+      newErrors.jobType = "Select type";
+      isValid = false;
+    }
+    if (job.mode.length === 0) {
+      newErrors.mode = "Select mode";
       isValid = false;
     }
     if (!job.salaryAmount) {
@@ -289,13 +249,20 @@ export default function CreateJob() {
       newErrors.noOfPeopleRequired = "Required";
       isValid = false;
     }
+    if (job.workDaysPattern === "Custom" && !job.customWorkDaysDescription) {
+      newErrors.workDaysPattern = "Required";
+      isValid = false;
+    }
 
-    job.shifts.forEach((shift) => {
-      if (!shift.startTime || !shift.endTime) {
-        isValid = false;
-        alert(`Please complete Start and End times for ${shift.shiftName}`);
-      }
-    });
+    // Validate shifts if not flexible
+    if (!job.isFlexibleShifts) {
+      job.shifts.forEach((shift) => {
+        if (!shift.startTime || !shift.endTime) {
+          isValid = false;
+          alert(`Please complete Start and End times for ${shift.shiftName}`);
+        }
+      });
+    }
 
     setTouched((prev) => ({ ...prev, ...newTouched }));
     setErrors((prev) => ({ ...prev, ...newErrors }));
@@ -308,13 +275,14 @@ export default function CreateJob() {
   };
 
   const handleSubmit = async () => {
-    if (
-      (job.mode === "Work from Office/Field" || job.mode === "Hybrid") &&
-      !job.location
-    ) {
-      setTouched((prev) => ({ ...prev, location: true }));
-      setErrors((prev) => ({ ...prev, location: "Location is required" }));
-      return alert("Please drop a pin on the map to set the job location.");
+    const needsLocation =
+      job.mode.includes("Work from office") ||
+      job.mode.includes("Work from field");
+    if (needsLocation && !job.useOfficeLocation && !job.location) {
+      alert(
+        "Please drop a pin on the map or select 'Same as Office Location'.",
+      );
+      return;
     }
 
     if (!jobSummary.trim() || !keyResponsibilities.trim())
@@ -328,25 +296,24 @@ export default function CreateJob() {
 
       const combinedDescription =
         `Job Summary:\n${jobSummary}\n\nKey Responsibilities:\n${keyResponsibilities}`.trim();
+
       const payload = {
         ...job,
         description: combinedDescription,
-        pinCode: job.pinCode ? Number(job.pinCode) : undefined,
         salaryAmount: Number(job.salaryAmount),
-        noOfDays: job.noOfDays ? Number(job.noOfDays) : undefined,
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
       };
 
-      if (job.mode === "Work from Office/Field" || job.mode === "Hybrid") {
+      if (!job.useOfficeLocation && needsLocation) {
         payload.location = {
           type: "Point",
           coordinates: [Number(job.longitude), Number(job.latitude)],
           address: job.location,
         };
       } else {
-        delete payload.location;
         delete payload.latitude;
         delete payload.longitude;
+        delete payload.location;
       }
 
       await axios.post("https://jobone-mrpy.onrender.com/jobs", payload, {
@@ -367,11 +334,7 @@ export default function CreateJob() {
 
   const getInputClass = (fieldName, hasIcon = false) => {
     const base = `w-full p-3 ${hasIcon ? "pl-10" : ""} border rounded-xl outline-none transition-all duration-200`;
-    const state =
-      touched[fieldName] && errors[fieldName]
-        ? "border-red-500 focus:ring-2 focus:ring-red-200 bg-red-50"
-        : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-gray-50 focus:bg-white";
-    return `${base} ${state}`;
+    return `${base} ${touched[fieldName] && errors[fieldName] ? "border-red-500 focus:ring-red-200 bg-red-50" : "border-gray-200 focus:border-blue-500 focus:ring-blue-100 bg-gray-50 focus:bg-white"}`;
   };
 
   return (
@@ -384,11 +347,13 @@ export default function CreateJob() {
           </span>
         </div>
 
-        {/* STEP 1 */}
+        {/* --- STEP 1: CORE DETAILS --- */}
         {step === 1 && (
           <div className="space-y-8">
-            {/* FACT: New Elastic Dropdown Component Injected Here */}
             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Job Title <span className="text-red-500">*</span>
+              </label>
               <ElasticTitleDropdown
                 value={job.title}
                 onChange={(val) => {
@@ -404,196 +369,171 @@ export default function CreateJob() {
               )}
             </div>
 
-            {/* WORK DAYS GRID */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Work Days <span className="text-red-500">*</span>
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Skills Required
               </label>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {DAYS_OF_WEEK.map((day) => {
-                  const isSelected = job.workDays.includes(day);
-                  return (
-                    <button
-                      type="button"
-                      key={day}
-                      onClick={() => toggleWorkDay(day)}
-                      className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all ${
-                        isSelected
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                      }`}
-                    >
-                      {day.substring(0, 3)}
-                    </button>
-                  );
-                })}
-              </div>
-              {touched.workDays && errors.workDays && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
-                  {errors.workDays}
-                </p>
-              )}
-            </div>
-
-            {/* DATES & LONG TERM */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={job.startDate}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                  />
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    Format: DD/MM/YYYY
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={job.isLongTerm ? "" : job.endDate}
-                    onChange={handleChange}
-                    disabled={job.isLongTerm}
-                    className={`w-full p-2.5 border rounded-lg text-sm outline-none ${job.isLongTerm ? "bg-gray-100 border-gray-200 cursor-not-allowed" : "border-gray-200 focus:ring-2 focus:ring-blue-200"}`}
-                  />
-                  <label className="flex items-center gap-2 mt-2 text-xs font-bold text-gray-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      checked={job.isLongTerm}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setJob((prev) => ({
-                          ...prev,
-                          isLongTerm: checked,
-                          endDate: checked ? "" : prev.endDate,
-                        }));
-                      }}
-                    />
-                    Long Term Role (No fixed end date)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* MULTI-SHIFT SELECTOR */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center justify-between">
-                Shift Timings <span className="text-red-500">*</span>
-              </label>
-              <div className="space-y-3">
-                {job.shifts.map((shift, index) => (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {job.skillsRequired.map((skill, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl relative group"
+                    className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm border border-blue-100 font-medium"
                   >
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-blue-600 mb-1">
-                        {shift.shiftName}
-                      </p>
-                      <div className="flex gap-2">
-                        <input
-                          type="time"
-                          value={shift.startTime}
-                          onChange={(e) =>
-                            updateShift(index, "startTime", e.target.value)
-                          }
-                          className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500"
-                        />
-                        <span className="flex items-center text-gray-400">
-                          to
-                        </span>
-                        <input
-                          type="time"
-                          value={shift.endTime}
-                          onChange={(e) =>
-                            updateShift(index, "endTime", e.target.value)
-                          }
-                          className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    </div>
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeShift(index)}
-                        className="p-2 text-red-400 hover:text-red-600 bg-red-50 rounded-lg transition-colors mt-5"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
+                    <span>{skill}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeTag("skillsRequired", index)}
+                      className="ml-2 hover:text-red-500"
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={skillsInput}
+                  onChange={(e) => setSkillsInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(),
+                    addTag("skillsRequired", skillsInput, setSkillsInput))
+                  }
+                  placeholder="Type a skill and press Add..."
+                  className="w-full p-2.5 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-sm"
+                />
                 <button
                   type="button"
-                  onClick={addShift}
-                  className="w-full py-2.5 border-2 border-dashed border-blue-200 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors flex justify-center items-center gap-2 text-sm"
+                  onClick={() =>
+                    addTag("skillsRequired", skillsInput, setSkillsInput)
+                  }
+                  className="bg-gray-100 px-4 rounded-xl font-bold hover:bg-gray-200"
                 >
-                  <Plus size={16} /> Add Another Shift
+                  Add
                 </button>
               </div>
             </div>
 
-            {/* WORK MODE */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Work Mode
+                Work Mode <span className="text-red-500">*</span>
               </label>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {[
-                  { val: "Work from Home", icon: <Monitor size={16} /> },
-                  {
-                    val: "Work from Office/Field",
-                    icon: <Building size={16} />,
-                  },
-                  { val: "Hybrid", icon: <Globe size={16} /> },
-                ].map((m) => (
-                  <label
-                    key={m.val}
-                    className={`flex-1 cursor-pointer border rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${
-                      job.mode === m.val
-                        ? "bg-blue-50 border-blue-500 text-blue-700 font-medium ring-1 ring-blue-500 shadow-sm"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="mode"
-                      value={m.val}
-                      checked={job.mode === m.val}
-                      onChange={handleChange}
-                      className="hidden"
-                    />
-                    {m.icon}
-                    <span className="text-xs text-center font-bold">
-                      {m.val}
-                    </span>
-                  </label>
-                ))}
+                  { val: "Work from home", icon: <Monitor size={16} /> },
+                  { val: "Work from office", icon: <Building size={16} /> },
+                  { val: "Work from field", icon: <Globe size={16} /> },
+                ].map((m) => {
+                  const isSelected = job.mode.includes(m.val);
+                  return (
+                    <label
+                      key={m.val}
+                      className={`flex-1 min-w-[120px] cursor-pointer border rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${isSelected ? "bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        onChange={() => toggleArrayItem("mode", m.val)}
+                      />
+                      {m.icon}{" "}
+                      <span className="text-xs text-center font-bold">
+                        {m.val}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
+              {touched.mode && errors.mode && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {errors.mode}
+                </p>
+              )}
             </div>
 
-            {/* RADIO BUTTON SALARY */}
-            <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl">
-              <label className="block text-sm font-bold text-green-900 mb-3">
-                Compensation Details <span className="text-red-500">*</span>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Job Type <span className="text-red-500">*</span>
               </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "permanent",
+                  "temporary",
+                  "internship",
+                  "part-time",
+                  "full-time",
+                  "contractual",
+                  "freelance",
+                ].map((type) => {
+                  const isSelected = job.jobType.includes(type);
+                  return (
+                    <label
+                      key={type}
+                      className={`cursor-pointer px-3 py-1.5 text-xs font-bold rounded-lg border transition-all capitalize ${isSelected ? "bg-indigo-600 text-white border-indigo-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:bg-indigo-50"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        onChange={() => toggleArrayItem("jobType", type)}
+                      />
+                      {type}
+                    </label>
+                  );
+                })}
+              </div>
+              {touched.jobType && errors.jobType && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {errors.jobType}
+                </p>
+              )}
+            </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                {["Monthly", "Weekly", "Daily", "Hourly", "Lump-Sum"].map(
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Work Days <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                {["Mon to Fri", "Mon to Sat", "Sat to Sun", "Custom"].map(
+                  (pattern) => (
+                    <label
+                      key={pattern}
+                      className={`cursor-pointer py-2 px-1 text-center text-[11px] font-extrabold uppercase tracking-wide rounded-lg border transition-all ${job.workDaysPattern === pattern ? "bg-slate-800 text-white border-slate-800 shadow-md" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="workDaysPattern"
+                        value={pattern}
+                        checked={job.workDaysPattern === pattern}
+                        onChange={handleChange}
+                        className="hidden"
+                      />
+                      {pattern}
+                    </label>
+                  ),
+                )}
+              </div>
+              {job.workDaysPattern === "Custom" && (
+                <input
+                  type="text"
+                  name="customWorkDaysDescription"
+                  value={job.customWorkDaysDescription}
+                  onChange={handleChange}
+                  placeholder="e.g. 3 days a week, flexible days..."
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                />
+              )}
+            </div>
+
+            <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl space-y-4">
+              <label className="block text-sm font-bold text-green-900">
+                Compensation <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {["Hourly", "Daily", "Weekly", "Monthly", "Lump-Sum"].map(
                   (freq) => (
                     <label
                       key={freq}
-                      className={`cursor-pointer py-2 px-1 text-center text-[11px] font-extrabold uppercase tracking-wide rounded-lg border transition-all ${job.salaryFrequency === freq ? "bg-green-600 text-white border-green-600 shadow-md" : "bg-white text-green-700 border-green-200 hover:bg-green-100"}`}
+                      className={`cursor-pointer py-2 px-1 text-center text-[10px] font-extrabold uppercase tracking-wide rounded-lg border transition-all ${job.salaryFrequency === freq ? "bg-green-600 text-white border-green-600 shadow-md" : "bg-white text-green-700 border-green-200 hover:bg-green-100"}`}
                     >
                       <input
                         type="radio"
@@ -608,7 +548,6 @@ export default function CreateJob() {
                   ),
                 )}
               </div>
-
               <div className="relative">
                 <IndianRupee
                   className="absolute left-3 top-3.5 text-green-600"
@@ -624,14 +563,21 @@ export default function CreateJob() {
                   className={`w-full p-3 pl-10 border rounded-xl outline-none transition-all ${touched.salaryAmount && errors.salaryAmount ? "border-red-400 bg-red-50" : "border-green-200 focus:ring-2 focus:ring-green-300"}`}
                 />
               </div>
-              {touched.salaryAmount && errors.salaryAmount && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
-                  {errors.salaryAmount}
-                </p>
-              )}
+              <div>
+                <label className="block text-xs font-semibold text-green-800 mb-1">
+                  Incentives / Perks (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="incentives"
+                  value={job.incentives}
+                  onChange={handleChange}
+                  placeholder="e.g. Performance Bonus, Health Insurance..."
+                  className="w-full p-2.5 border border-green-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-300"
+                />
+              </div>
             </div>
 
-            {/* OPENINGS */}
             <div>
               <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
                 No. of Openings <span className="text-red-500">*</span>
@@ -651,218 +597,365 @@ export default function CreateJob() {
                   className={getInputClass("noOfPeopleRequired", true)}
                 />
               </div>
-              {touched.noOfPeopleRequired && errors.noOfPeopleRequired && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
-                  {errors.noOfPeopleRequired}
-                </p>
-              )}
             </div>
           </div>
         )}
 
-        {/* NAV BUTTONS */}
-        <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
-          <button
-            onClick={() => setStep(1)}
-            disabled={step === 1}
-            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${
-              step === 1
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            Back
-          </button>
-          <button
-            onClick={handleNextStep}
-            disabled={step === 2}
-            className={`px-6 py-2.5 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-all ${
-              step === 2 ? "hidden" : "block"
-            }`}
-          >
-            Next Step
-          </button>
-        </div>
-
-        {/* --- STEP 2: DETAILS & LOCATION --- */}
+        {/* --- STEP 2: DEMOGRAPHICS, DATES, AI, LOCATION --- */}
         {step === 2 && (
-          <div className="space-y-6">
-            {/* AI GENERATOR BANNER */}
-            <div className="flex items-center justify-between mb-2 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-              <div>
-                <h4 className="font-bold text-indigo-900 text-sm">
-                  ✨ AI Auto-Writer
-                </h4>
-                <p className="text-xs text-indigo-700">
-                  Let AI write the summary and responsibilities.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleAIGenerate}
-                disabled={generatingAI}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {generatingAI ? (
-                  <>
-                    <Loader2 className="animate-spin" size={16} /> Generating...
-                  </>
-                ) : (
-                  "Generate"
-                )}
-              </button>
-            </div>
+          <div className="space-y-8">
+            <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-5">
+              <h3 className="font-bold text-indigo-900 border-b border-indigo-200 pb-2">
+                Candidate Requirements
+              </h3>
 
-            {/* JOB SUMMARY */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Job Summary <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <FileText
-                  className={`absolute left-3 top-4 transition-colors duration-300 ${generatingAI ? "text-indigo-500 animate-pulse" : "text-gray-400"}`}
-                  size={18}
-                />
-                <textarea
-                  value={jobSummary}
-                  onChange={(e) => setJobSummary(e.target.value)}
-                  placeholder="Briefly describe the role..."
-                  className={`w-full p-4 pl-10 border rounded-xl outline-none h-32 transition-all duration-500 resize-y ${
-                    generatingAI
-                      ? "border-indigo-400 ring-4 ring-indigo-100 shadow-[0_0_20px_rgba(99,102,241,0.3)] bg-indigo-50/30"
-                      : "focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white border-gray-200"
-                  }`}
-                />
-              </div>
-            </div>
-
-            {/* KEY RESPONSIBILITIES */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Key Responsibilities <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <ListChecks
-                  className={`absolute left-3 top-4 transition-colors duration-300 ${generatingAI ? "text-indigo-500 animate-pulse" : "text-gray-400"}`}
-                  size={18}
-                />
-                <textarea
-                  value={keyResponsibilities}
-                  onChange={(e) => setKeyResponsibilities(e.target.value)}
-                  placeholder="List main tasks and duties..."
-                  className={`w-full p-4 pl-10 border rounded-xl outline-none h-32 transition-all duration-500 resize-y ${
-                    generatingAI
-                      ? "border-indigo-400 ring-4 ring-indigo-100 shadow-[0_0_20px_rgba(99,102,241,0.3)] bg-indigo-50/30"
-                      : "focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-gray-50 focus:bg-white border-gray-200"
-                  }`}
-                />
-              </div>
-            </div>
-
-            {/* SKILLS MAP */}
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Skills Required
-              </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {job.skillsRequired.map((skill, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm border border-blue-100 font-medium shadow-sm"
-                  >
-                    <span>{skill}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updated = job.skillsRequired.filter(
-                          (_, i) => i !== index,
-                        );
-                        setJob({ ...job, skillsRequired: updated });
-                      }}
-                      className="ml-2 text-blue-400 hover:text-red-500 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={skillsInput}
-                  onChange={handleSkillInputChange}
-                  placeholder="Type a skill..."
-                  className="w-full p-2.5 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-200"
-                />
-                <button
-                  type="button"
-                  onClick={handleSkills}
-                  className="bg-gray-100 px-4 rounded-xl font-bold hover:bg-gray-200"
-                >
-                  Add
-                </button>
-              </div>
-              {suggestions.length > 0 && (
-                <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg">
-                  {suggestions.map((s, i) => (
-                    <li
-                      key={i}
-                      onClick={() => {
-                        setSkillsInput(s);
-                        setSuggestions([]);
-                      }}
-                      className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
-                    >
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <hr className="border-gray-200 my-6" />
-
-            {/* CONDITIONAL LOCATION PICKER */}
-            {(job.mode === "Work from Office/Field" ||
-              job.mode === "Hybrid") && (
-              <div className="space-y-4">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                  <MapPin className="text-blue-600" /> Job Location{" "}
-                  <span className="text-red-500 text-sm">*</span>
-                </h3>
-
-                <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
-                  <p className="text-sm text-blue-800 mb-3 font-medium">
-                    Step 1: Search & Drop a pin on the map
-                  </p>
-                  <div className="rounded-lg overflow-hidden border border-blue-200 shadow-sm">
-                    <LocationPicker onLocationSelect={handleLocationSelect} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Qualifications
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {[
+                      "10th Pass",
+                      "12th Pass",
+                      "Diploma",
+                      "Graduation",
+                      "Post-Graduation",
+                      "Any",
+                    ].map((q) => (
+                      <label
+                        key={q}
+                        className={`cursor-pointer px-2 py-1 text-[10px] font-bold rounded border transition-all ${job.qualifications.includes(q) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-100"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          onChange={() => toggleArrayItem("qualifications", q)}
+                        />{" "}
+                        {q}
+                      </label>
+                    ))}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 mt-2">
-                    Step 2: Refine Address
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Courses / Streams
                   </label>
-                  <div className="relative">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {job.courses.map((course, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-white text-indigo-700 text-[10px] px-2 py-1 border border-indigo-200 rounded flex items-center"
+                      >
+                        {course}{" "}
+                        <button
+                          type="button"
+                          onClick={() => removeTag("courses", idx)}
+                          className="ml-1 text-red-400"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={courseInput}
+                      onChange={(e) => setCourseInput(e.target.value)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(),
+                        addTag("courses", courseInput, setCourseInput))
+                      }
+                      placeholder="e.g. Commerce, Arts, B.Tech..."
+                      className="w-full p-1.5 border border-indigo-200 rounded outline-none text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addTag("courses", courseInput, setCourseInput)
+                      }
+                      className="bg-indigo-200 px-3 rounded text-xs font-bold text-indigo-800"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Age Limit
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={job.ageLimit.min}
+                      onChange={(e) => handleAgeChange("min", e.target.value)}
+                      disabled={job.ageLimit.isAny}
+                      className="w-16 p-1.5 border rounded text-xs outline-none disabled:bg-gray-100"
+                    />
+                    <span className="text-xs text-indigo-400">to</span>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={job.ageLimit.max}
+                      onChange={(e) => handleAgeChange("max", e.target.value)}
+                      disabled={job.ageLimit.isAny}
+                      className="w-16 p-1.5 border rounded text-xs outline-none disabled:bg-gray-100"
+                    />
+                    <label className="flex items-center gap-1 text-xs font-bold text-indigo-700 ml-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={job.ageLimit.isAny}
+                        onChange={(e) =>
+                          setJob((prev) => ({
+                            ...prev,
+                            ageLimit: {
+                              min: "",
+                              max: "",
+                              isAny: e.target.checked,
+                            },
+                          }))
+                        }
+                        className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                      />{" "}
+                      Any Age
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Languages
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {job.languages.map((lang, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-white text-indigo-700 text-[10px] px-2 py-1 border border-indigo-200 rounded flex items-center"
+                      >
+                        {lang}{" "}
+                        <button
+                          type="button"
+                          onClick={() => removeTag("languages", idx)}
+                          className="ml-1 text-red-400"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={languageInput}
+                      onChange={(e) => setLanguageInput(e.target.value)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(),
+                        addTag("languages", languageInput, setLanguageInput))
+                      }
+                      placeholder="e.g. Hindi, English..."
+                      className="w-full p-1.5 border border-indigo-200 rounded outline-none text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addTag("languages", languageInput, setLanguageInput)
+                      }
+                      className="bg-indigo-200 px-3 rounded text-xs font-bold text-indigo-800"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
+                  Duration
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={job.startDate}
+                    onChange={handleChange}
+                    className="flex-1 p-2 border border-gray-200 rounded text-xs outline-none focus:ring-2 focus:ring-blue-200"
+                    title="Start Date"
+                  />
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={job.isLongTerm ? "" : job.endDate}
+                    onChange={handleChange}
+                    disabled={job.isLongTerm}
+                    className="flex-1 p-2 border border-gray-200 rounded text-xs outline-none disabled:bg-gray-100"
+                    title="End Date"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="isLongTerm"
+                    checked={job.isLongTerm}
+                    onChange={handleChange}
+                    className="rounded"
+                  />{" "}
+                  Long Term Role
+                </label>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Timings
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isFlexibleShifts"
+                      checked={job.isFlexibleShifts}
+                      onChange={handleChange}
+                      className="rounded text-blue-600"
+                    />{" "}
+                    Flexible
+                  </label>
+                </div>
+
+                {!job.isFlexibleShifts && (
+                  <div className="space-y-2">
+                    {job.shifts.map((shift, index) => (
+                      <div key={index} className="flex gap-1 items-center">
+                        <input
+                          type="time"
+                          value={shift.startTime}
+                          onChange={(e) =>
+                            updateShift(index, "startTime", e.target.value)
+                          }
+                          className="flex-1 p-1.5 border rounded text-xs outline-none"
+                        />
+                        <span className="text-gray-400 text-xs">to</span>
+                        <input
+                          type="time"
+                          value={shift.endTime}
+                          onChange={(e) =>
+                            updateShift(index, "endTime", e.target.value)
+                          }
+                          className="flex-1 p-1.5 border rounded text-xs outline-none"
+                        />
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => removeShift(index)}
+                            className="text-red-400 p-1"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addShift}
+                      className="text-xs text-blue-600 font-bold flex items-center gap-1 mt-1"
+                    >
+                      <Plus size={12} /> Add Shift
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="border border-indigo-100 rounded-2xl overflow-hidden">
+              <div className="flex items-center justify-between bg-indigo-50 p-4 border-b border-indigo-100">
+                <div>
+                  <h4 className="font-bold text-indigo-900 text-sm">
+                    ✨ AI Auto-Writer
+                  </h4>
+                  <p className="text-xs text-indigo-700">
+                    Auto-generate the summary and responsibilities.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAIGenerate}
+                  disabled={generatingAI}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {generatingAI ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    "Generate"
+                  )}
+                </button>
+              </div>
+              <div className="p-4 space-y-4 bg-white">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Job Summary <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={jobSummary}
+                    onChange={(e) => setJobSummary(e.target.value)}
+                    className="w-full p-3 border border-gray-200 rounded-xl outline-none h-24 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Key Responsibilities <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={keyResponsibilities}
+                    onChange={(e) => setKeyResponsibilities(e.target.value)}
+                    className="w-full p-3 border border-gray-200 rounded-xl outline-none h-24 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {(job.mode.includes("Work from office") ||
+              job.mode.includes("Work from field")) && (
+              <div className="space-y-4">
+                <h3 className="font-bold text-gray-800 flex items-center justify-between text-lg">
+                  <span className="flex items-center gap-2">
+                    <MapPin className="text-blue-600" /> Job Location{" "}
+                    <span className="text-red-500 text-sm">*</span>
+                  </span>
+                  <label className="flex items-center gap-2 text-sm font-bold text-indigo-600 cursor-pointer bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                    <input
+                      type="checkbox"
+                      name="useOfficeLocation"
+                      checked={job.useOfficeLocation}
+                      onChange={handleChange}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    Same as Office Location
+                  </label>
+                </h3>
+                {!job.useOfficeLocation && (
+                  <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                    <p className="text-sm text-blue-800 mb-3 font-medium">
+                      Search & Drop a pin on the map
+                    </p>
+                    <div className="rounded-lg overflow-hidden border border-blue-200 mb-3">
+                      <LocationPicker onLocationSelect={handleLocationSelect} />
+                    </div>
                     <input
                       name="location"
                       value={job.location}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      placeholder="e.g. 303-B, Sweethomes Apt, Bhopal..."
-                      className={`w-full p-3 pl-10 border rounded-xl outline-none focus:ring-2 transition-all ${
-                        touched.location && errors.location
-                          ? "border-red-500 focus:ring-red-200 bg-red-50"
-                          : "border-gray-300 focus:border-blue-500 focus:ring-blue-200 bg-gray-50 focus:bg-white"
-                      }`}
-                    />
-                    <MapPin
-                      className="absolute left-3 top-3.5 text-gray-400"
-                      size={18}
+                      placeholder="Refine Address (e.g. 303-B, Sweethomes Apt...)"
+                      className="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-sm"
                     />
                   </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -883,22 +976,36 @@ export default function CreateJob() {
               <button
                 onClick={() => setShowConfirm(true)}
                 disabled={loading}
-                className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-blue-300 font-bold shadow-lg shadow-blue-200 transition-all"
+                className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-blue-300 font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="animate-spin" size={18} /> Posting...
-                  </span>
-                ) : (
-                  "Post Job"
-                )}
+                  <Loader2 className="animate-spin" size={18} />
+                ) : null}{" "}
+                Post Job
               </button>
             </div>
           </div>
         )}
+
+        <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
+          <button
+            onClick={() => setStep(1)}
+            disabled={step === 1}
+            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${step === 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
+          >
+            Back
+          </button>
+          {step === 1 && (
+            <button
+              onClick={handleNextStep}
+              className="px-6 py-2.5 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-all"
+            >
+              Next Step
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* PREVIEW SECTION */}
       <div className="hidden lg:block w-5/12 pl-8 sticky top-10 h-fit">
         {preview ? (
           <JobPreviewCard job={job} onClose={() => setPreview(false)} />
@@ -912,7 +1019,6 @@ export default function CreateJob() {
         )}
       </div>
 
-      {/* MODALS */}
       {preview && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="w-full max-w-lg">
@@ -920,7 +1026,6 @@ export default function CreateJob() {
           </div>
         </div>
       )}
-
       {showConfirm && (
         <JobConfirmModal
           job={job}

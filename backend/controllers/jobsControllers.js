@@ -6,75 +6,82 @@ import Employer from "../models/employer.js"; // Adjust path as needed
 
 
 export const createJob = expressAsyncHandler(async (req, res) => {
-  // 1. Validation
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400);
     throw new Error(errors.array()[0].msg);
   }
 
-  // 2. Fetch the Employer
   const employer = await Employer.findById(req.employerId);
-
   if (!employer) {
     res.status(404);
     throw new Error('Employer not found');
   }
 
-  // --- STRICT PROFILE CHECK ---
+  // Strict Profile Check
   const requiredFields = ['companyName', 'phone', 'location', 'industry', 'description', 'companyWebsite'];
   const missingFields = requiredFields.filter(field => !employer[field] || employer[field].trim() === '');
-
   if (missingFields.length > 0) {
-    res.status(403); // Forbidden
+    res.status(403);
     throw new Error(`You must complete your profile before posting a job. Missing: ${missingFields.join(', ')}`);
   }
-  // -----------------------------
 
-  // FACT: Extract the NEW frontend fields here!
+  // FACT: Extracting the massive new Phase 2 payload
   const { 
-    title, description, workDays, skillsRequired, 
-    salaryAmount, salaryFrequency, durationType, startDate, endDate, isLongTerm,
-    shifts, mode, noOfDays, noOfPeopleRequired, genderPreference, 
-    pinCode, location 
+    title, description, jobType, workDaysPattern, customWorkDaysDescription,
+    skillsRequired, salaryAmount, salaryFrequency, incentives,
+    durationType, startDate, endDate, isLongTerm,
+    shifts, isFlexibleShifts, mode, noOfDays, noOfPeopleRequired, 
+    genderPreference, qualifications, courses, ageLimit, languages,
+    pinCode, location, useOfficeLocation 
   } = req.body;
 
-  // 3. Construct Location
+  // FACT: "Same as Office Location" Logic
   let locationData;
-  if (location && location.type === 'Point') {
+  if (useOfficeLocation) {
+    if (!employer.officeLocation || !employer.officeLocation.coordinates) {
+      res.status(400);
+      throw new Error("Your profile does not have a valid Office Location saved. Please update your profile or pick a location manually.");
+    }
+    locationData = employer.officeLocation;
+  } else if (location && location.type === 'Point') {
     locationData = location;
   } else {
-    if (mode !== 'Online' && mode !== 'Work from Home') {
+    // If they select Office or Field, they MUST provide a location
+    if (mode && (mode.includes('Work from office') || mode.includes('Work from field'))) {
         res.status(400);
-        throw new Error("Please pick a location on the map.");
+        throw new Error("Please pick a location on the map or select 'Same as office location'.");
     }
-    locationData = {
-      type: 'Point',
-      coordinates: [0, 0],
-      address: "Remote"
-    };
+    locationData = { type: 'Point', coordinates: [0, 0], address: "Remote" };
   }
 
-  // 4. Create Job mapping the exact Mongoose schema requirements
   const newJob = new Job({
     title, 
     description, 
-    workDays, 
+    jobType,
+    workDaysPattern,
+    customWorkDaysDescription: workDaysPattern === "Custom" ? customWorkDaysDescription : "",
     skillsRequired, 
-    salaryAmount,       // Fixes the crash
-    salaryFrequency,    // Fixes the crash
+    salaryAmount, 
+    salaryFrequency, 
+    incentives,
     durationType, 
     startDate, 
     endDate, 
-    isLongTerm,         // Fixes the crash
-    shifts,             // Fixes the crash
+    isLongTerm,
+    shifts: isFlexibleShifts ? [] : shifts, // Clear shifts if flexible
+    isFlexibleShifts,
     mode, 
     noOfDays, 
     noOfPeopleRequired, 
     genderPreference, 
+    qualifications,
+    courses,
+    ageLimit,
+    languages,
     pinCode,
     location: locationData,
-
+    status: "active", // Default status for new jobs
     postedBy: req.employerId,
     postedByName: employer.name, 
     postedByImage: employer.profilePicture || '', 
@@ -82,13 +89,13 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   });
 
   const savedJob = await newJob.save();
-  
-  // 5. Link to Employer
   employer.createdJobs.push(savedJob._id);
   await employer.save();
   
   res.status(201).json(savedJob);
 });
+
+
 
 export const getJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
