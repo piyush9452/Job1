@@ -254,16 +254,6 @@ export default function CreateJob() {
       isValid = false;
     }
 
-    // Validate shifts if not flexible
-    if (!job.isFlexibleShifts) {
-      job.shifts.forEach((shift) => {
-        if (!shift.startTime || !shift.endTime) {
-          isValid = false;
-          alert(`Please complete Start and End times for ${shift.shiftName}`);
-        }
-      });
-    }
-
     setTouched((prev) => ({ ...prev, ...newTouched }));
     setErrors((prev) => ({ ...prev, ...newErrors }));
     return isValid;
@@ -275,6 +265,18 @@ export default function CreateJob() {
   };
 
   const handleSubmit = async () => {
+    // FACT: Shift validation now happens right before final submission
+    if (!job.isFlexibleShifts) {
+      for (const shift of job.shifts) {
+        if (!shift.startTime || !shift.endTime) {
+          alert(
+            `Please complete Start and End times for ${shift.shiftName} under the Timings section.`,
+          );
+          return;
+        }
+      }
+    }
+
     const needsLocation =
       job.mode.includes("Work from office") ||
       job.mode.includes("Work from field");
