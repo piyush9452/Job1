@@ -1,131 +1,109 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   PlusCircle,
   Briefcase,
-  MapPin,
   LayoutDashboard,
-  Search,
   Users,
-  Clock,
-  ChevronRight,
   Settings,
   LogOut,
+  Eye,
+  RefreshCw,
+  Power,
+  Clock,
 } from "lucide-react";
 import axios from "axios";
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1 },
-};
 
 export default function EmployerDashboard() {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
-  const [employerName, setEmployerName] = useState("Employer"); // <-- ADD THIS
+  const [employerName, setEmployerName] = useState("Employer");
+  const [loading, setLoading] = useState(true);
 
-  // Extract Employer Name and safely fallback to Email or "Employer"
-  //   const employerInfo = JSON.parse(localStorage.getItem("employerInfo") || "{}");
-  //   const employerName =
-  //     employerInfo?.name ||
-  //     employerInfo?.savedEmployer?.name ||
-  //     employerInfo?.email?.split("@")[0] ||
-  //     "Employer";
-
-  // Dynamically calculate real-time stats from your MongoDB jobs array
-  const activeListings = jobs.length;
+  // Dynamic Stats
+  const activeListings = jobs.filter((j) => j.status === "active").length;
   const totalApplicants = jobs.reduce(
-    (sum, job) => sum + (job.applicants ? job.applicants.length : 0),
+    (sum, job) => sum + (job.stats?.total || 0),
     0,
   );
-  const profileViews = jobs.reduce((sum, job) => sum + (job.views || 0), 0); // Defaults to 0 until you add a 'views' tracker to the backend
+  const totalHired = jobs.reduce(
+    (sum, job) => sum + (job.stats?.hired || 0),
+    0,
+  );
 
-  // ✅ Fetch user's job posts using token only
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        // 1. Get Token
         const stored = localStorage.getItem("employerInfo");
         if (!stored) {
-          console.warn("No employer info found in local storage.");
+          navigate("/login");
           return;
         }
 
         const employerInfo = JSON.parse(stored);
         const token = employerInfo?.token;
 
-        if (!token) {
-          console.error("No token found inside employerInfo.");
-          return;
-        }
-
-        try {
-          const employerID = employerInfo.id || employerInfo.employerId;
-          if (employerID) {
+        if (employerInfo.id || employerInfo.employerId) {
+          try {
             const profileRes = await axios.get(
-              `https://jobone-mrpy.onrender.com/employer/profile/${employerID}`,
+              `https://jobone-mrpy.onrender.com/employer/profile/${employerInfo.id || employerInfo.employerId}`,
               { headers: { Authorization: `Bearer ${token}` } },
             );
-            // Prioritize the Contact Name, fallback to Company Name, fallback to "Employer"
             setEmployerName(
               profileRes.data.name || profileRes.data.companyName || "Employer",
             );
+          } catch (profileErr) {
+            console.error("Could not load employer profile name", profileErr);
           }
-        } catch (profileErr) {
-          console.error("Could not load employer profile name", profileErr);
         }
-
-        // 2. API Call
-        console.log(
-          "Fetching jobs with token:",
-          token.substring(0, 10) + "...",
-        ); // Debug log
 
         const { data } = await axios.get(
           `https://jobone-mrpy.onrender.com/jobs/employerJobs`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
 
-        console.log("API Success:", data); // See what you actually got back
-
-        if (Array.isArray(data)) {
-          setJobs(data);
-        } else if (data.jobs) {
-          setJobs(data.jobs);
-        } else {
-          setJobs([]);
-        }
+        setJobs(Array.isArray(data) ? data : data.jobs || []);
       } catch (err) {
-        // 3. Detailed Error Logging
-        console.error("❌ API Error:", {
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          message: err.message,
-        });
-
-        setJobs([]);
-
-        // Optional: Redirect on 401 (Unauthorized)
-        if (err.response?.status === 401) {
-          navigate("/login");
-        }
+        console.error("API Error:", err);
+        if (err.response?.status === 401) navigate("/login");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchJobs();
   }, [navigate]);
 
+  // FACT: Toggle Job Status (Soft Delete)
+  const toggleJobStatus = async (jobId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === "active" ? "closed" : "active";
+      const stored = localStorage.getItem("employerInfo");
+      const token = JSON.parse(stored).token;
+
+      await axios.put(
+        `https://jobone-mrpy.onrender.com/jobs/${jobId}`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      setJobs(
+        jobs.map((j) => (j._id === jobId ? { ...j, status: newStatus } : j)),
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update job status.");
+    }
+  };
+
+  // FACT: Repost handler pushes data to CreateJob via state
+  const handleRepost = (job) => {
+    navigate("/createjob", { state: { repostData: job } });
+  };
+
   return (
-    <div className="min-h-screen py-20 bg-gray-50 p-10">
+    <div className="min-h-screen py-20 bg-slate-50 p-10">
+      {/* Sidebar remains intact */}
       <aside className="fixed left-0 top-15 hidden h-full w-64 border-r border-slate-200 bg-white p-6 md:block">
         <div className="mb-10 flex items-center gap-2 px-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-200">
@@ -135,7 +113,6 @@ export default function EmployerDashboard() {
             JobOne
           </span>
         </div>
-
         <nav className="space-y-1">
           <NavItem
             icon={<LayoutDashboard size={20} />}
@@ -145,197 +122,197 @@ export default function EmployerDashboard() {
           <NavItem icon={<Users size={20} />} label="Candidates" />
           <NavItem icon={<Settings size={20} />} label="Settings" />
         </nav>
-
         <div className="absolute bottom-8 left-6 right-6">
           <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600">
             <LogOut size={20} /> <span className="font-medium">Logout</span>
           </button>
         </div>
       </aside>
-      <h1 className="text-3xl font-bold text-gray-800 mb-10 text-center">
-        My Dashboard
-      </h1>
 
-      {/* ✨ Decorative Post a Job Card */}
-      <main className="flex-1 md:ml-64">
-        <header className="sticky top-0 mb-10 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur-md">
-          <div className="relative w-72  ">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search your jobs..."
-              className="w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/createjob")}
-              className="flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
-            >
-              <PlusCircle size={18} /> Post Job
-            </button>
-          </div>
-        </header>
-        <div>
-          <section className="mb-8">
+      <main className="flex-1 md:ml-64 px-4 sm:px-8">
+        <header className="mb-10 flex items-center justify-between">
+          <div>
             <h1 className="text-3xl font-extrabold text-slate-900">
               Welcome back, {employerName}!
             </h1>
             <p className="mt-1 text-slate-500">
-              Here's what's happening with your job listings today.
+              Here's a live overview of your hiring pipeline.
             </p>
-          </section>
-
-          {/* Quick Stats Grid */}
-          <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <StatCard
-              label="Active Listings"
-              value={activeListings}
-              color="blue"
-            />
-            <StatCard
-              label="Total Applicants"
-              value={totalApplicants}
-              color="emerald"
-            />
-            <StatCard
-              label="Profile Views"
-              value={profileViews}
-              color="purple"
-            />
           </div>
+          <button
+            onClick={() => navigate("/createjob")}
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
+          >
+            <PlusCircle size={18} /> Post New Job
+          </button>
+        </header>
 
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-800">
-              Your Active Listings
+        {/* Quick Stats Grid */}
+        <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <StatCard
+            label="Active Listings"
+            value={activeListings}
+            color="blue"
+          />
+          <StatCard
+            label="Total Applicants"
+            value={totalApplicants}
+            color="purple"
+          />
+          <StatCard label="Total Hired" value={totalHired} color="emerald" />
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h2 className="text-lg font-extrabold text-slate-900">
+              Job Management Tracker
             </h2>
           </div>
 
-          {/*<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">*/}
-          {/*    {[1, 2, 3].map(i => <div key={i} className="h-48 animate-pulse rounded-2xl bg-slate-200"/>)}*/}
-          {/*</div>*/}
-          {jobs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 py-20 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          {loading ? (
+            <div className="p-20 text-center text-slate-400">
+              Loading your data...
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-400">
                 <Briefcase size={32} />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                No active job posts
+              <h3 className="text-lg font-bold text-slate-900">
+                No job posts yet
               </h3>
-              <p className="text-slate-500">
-                Get started by creating your first part-time job listing.
+              <p className="text-slate-500 mt-1">
+                Get started by creating your first listing.
               </p>
             </div>
           ) : (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-            >
-              <AnimatePresence>
-                {jobs.map((job) => (
-                  <motion.div
-                    key={job._id}
-                    variants={itemVariants}
-                    whileHover={{ y: -5 }}
-                    onClick={() => navigate(`/job/${job._id}`)}
-                    className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5"
-                  >
-                    <div>
-                      <div className="mb-4 flex items-start justify-between">
-                        <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                          Part-Time
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[1200px]">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                    <th className="p-4 font-bold">Job Title & Details</th>
+                    <th className="p-4 font-bold text-center">Status</th>
+                    <th className="p-4 font-bold text-center border-l border-slate-100 bg-slate-50/50">
+                      Total
+                    </th>
+                    <th className="p-4 font-bold text-center text-blue-600 bg-blue-50/30">
+                      Shortlisted
+                    </th>
+                    <th className="p-4 font-bold text-center text-purple-600 bg-purple-50/30">
+                      Int. Scheduled
+                    </th>
+                    <th className="p-4 font-bold text-center text-orange-600 bg-orange-50/30">
+                      Int. Conducted
+                    </th>
+                    <th className="p-4 font-bold text-center text-emerald-600 bg-emerald-50/30">
+                      Hired
+                    </th>
+                    <th className="p-4 font-bold text-center text-rose-600 bg-rose-50/30">
+                      NCTT
+                    </th>
+                    <th className="p-4 font-bold text-right border-l border-slate-100">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {jobs.map((job) => (
+                    <tr
+                      key={job._id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      {/* Job Title & Details */}
+                      <td className="p-4">
+                        <div className="font-extrabold text-slate-900 text-sm">
+                          {job.title}
+                        </div>
+                        <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                          <Clock size={12} />
+                          Posted: {new Date(job.postedAt).toLocaleDateString()}
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="p-4 text-center">
+                        <span
+                          className={`px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${job.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}
+                        >
+                          {job.status}
                         </span>
-                        <ChevronRight
-                          className="text-slate-300 transition-transform group-hover:translate-x-1 group-hover:text-blue-500"
-                          size={18}
-                        />
-                      </div>
-                      <h3 className="mb-2 text-lg font-bold text-slate-900 group-hover:text-blue-600">
-                        {job.title}
-                      </h3>
-                      <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-500">
-                        {job.description}
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3 border-t border-slate-100 pt-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <MapPin size={16} className="text-slate-400" />
-                        {/* Safely handles both new WFH jobs and old string-based locations */}
-                        {job.mode === "Work from Home"
-                          ? "Remote"
-                          : job.location?.address ||
-                            job.location ||
-                            "Office/Field"}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Clock size={16} className="text-slate-400" />
-                        Posted 2 days ago
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
+                      </td>
+
+                      {/* Metrics */}
+                      <td className="p-4 text-center font-extrabold text-slate-700 border-l border-slate-100 bg-slate-50/50">
+                        {job.stats?.total || 0}
+                      </td>
+                      <td className="p-4 text-center font-bold text-blue-700 bg-blue-50/30">
+                        {job.stats?.shortlisted || 0}
+                      </td>
+                      <td className="p-4 text-center font-bold text-purple-700 bg-purple-50/30">
+                        {job.stats?.interviewScheduled || 0}
+                      </td>
+                      <td className="p-4 text-center font-bold text-orange-700 bg-orange-50/30">
+                        {job.stats?.interviewConducted || 0}
+                      </td>
+                      <td className="p-4 text-center font-bold text-emerald-700 bg-emerald-50/30">
+                        {job.stats?.hired || 0}
+                      </td>
+                      <td className="p-4 text-center font-bold text-rose-700 bg-rose-50/30">
+                        {job.stats?.nctt || 0}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-4 text-right border-l border-slate-100">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => navigate(`/job/${job._id}`)}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="View Job Page"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleRepost(job)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Repost Job"
+                          >
+                            <RefreshCw size={18} />
+                          </button>
+                          <button
+                            onClick={() => toggleJobStatus(job._id, job.status)}
+                            className={`p-2 rounded-lg transition-colors ${job.status === "active" ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50" : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"}`}
+                            title={
+                              job.status === "active"
+                                ? "Close Job"
+                                : "Reactivate Job"
+                            }
+                          >
+                            <Power size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </main>
-
-      {/* My Job Posts Section */}
-      {/*<div className="max-w-5xl mx-auto mt-14">*/}
-      {/*  <h2 className="text-2xl font-semibold text-gray-800 mb-5">*/}
-      {/*    My Part-Time Job Posts*/}
-      {/*  </h2>*/}
-
-      {/*  {jobs.length === 0 ? (*/}
-      {/*    <p className="text-gray-500 text-center mt-10">*/}
-      {/*      You haven’t posted any part-time jobs yet.*/}
-      {/*    </p>*/}
-      {/*  ) : (*/}
-      {/*    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">*/}
-      {/*      {jobs.map((job) => (*/}
-      {/*        <motion.div*/}
-      {/*          key={job._id}*/}
-      {/*          whileHover={{ scale: 1.02 }}*/}
-      {/*          transition={{ duration: 0.2 }}*/}
-      {/*          onClick={() => navigate(`/job/${job._id}`)}*/}
-      {/*          className="cursor-pointer bg-white shadow-md rounded-xl p-5 hover:shadow-xl hover:border hover:border-blue-300 transition"*/}
-      {/*        >*/}
-      {/*          <h3 className="text-lg font-semibold text-gray-800  mr-30 ">*/}
-      {/*            {job.title}*/}
-      {/*          </h3>*/}
-      {/*          <p className="text-sm text-gray-600 line-clamp-3">*/}
-      {/*            {job.description}*/}
-      {/*          </p>*/}
-      {/*          <div className="mt-3 text-blue-600 font-medium text-sm">*/}
-      {/*            {job.location.address || "Remote"}*/}
-      {/*          </div>*/}
-      {/*        </motion.div>*/}
-      {/*      ))}*/}
-      {/*    </div>*/}
-      {/*  )}*/}
-      {/*</div>*/}
     </div>
   );
 }
+
 function NavItem({ icon, label, active = false }) {
   return (
     <button
-      className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium transition-all ${
-        active
-          ? "bg-blue-50 text-blue-700"
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-      }`}
+      className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium transition-all ${active ? "bg-blue-50 text-blue-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}
     >
       {icon} {label}
     </button>
   );
 }
+
 function StatCard({ label, value, color }) {
   const colors = {
     blue: "bg-blue-50 text-blue-600",
@@ -346,8 +323,7 @@ function StatCard({ label, value, color }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <p className="text-sm font-medium text-slate-500">{label}</p>
       <div className="mt-2 flex items-end justify-between">
-        <h4 className="text-3xl font-bold text-slate-900">{value}</h4>
-        {/* Cleaned out the hardcoded sample percentage */}
+        <h4 className="text-3xl font-extrabold text-slate-900">{value}</h4>
         <span
           className={`rounded-lg px-2 py-1 text-xs font-bold ${colors[color]}`}
         >

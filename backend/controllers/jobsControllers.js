@@ -188,20 +188,42 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
 
 
 
+// FACT: We are using a MongoDB aggregation pipeline to count every ATS stage dynamically.
 export const getEmployerCreatedJobs = expressAsyncHandler(async (req, res) => {
-  // 1. req.employerId is attached by the 'protectEmployer' middleware
-  const employerId = req.employerId;
-  try{
-    const jobs = await Job.find({ postedBy: employerId }).sort({ postedAt: -1 });
+  const employerId = new mongoose.Types.ObjectId(req.employerId);
+  
+  try {
+    const jobs = await Job.aggregate([
+      { $match: { postedBy: employerId } },
+      { $sort: { postedAt: -1 } },
+      {
+        $lookup: {
+          from: "applications", // This maps to your Applications collection
+          localField: "_id",
+          foreignField: "job_id",
+          as: "applicationsData"
+        }
+      },
+      {
+        $addFields: {
+          stats: {
+            total: { $size: "$applicationsData" },
+            shortlisted: { $size: { $filter: { input: "$applicationsData", as: "app", cond: { $eq: ["$$app.status", "shortlisted"] } } } },
+            interviewScheduled: { $size: { $filter: { input: "$applicationsData", as: "app", cond: { $eq: ["$$app.status", "Interview Scheduled"] } } } },
+            interviewConducted: { $size: { $filter: { input: "$applicationsData", as: "app", cond: { $eq: ["$$app.status", "Interview Conducted"] } } } },
+            hired: { $size: { $filter: { input: "$applicationsData", as: "app", cond: { $eq: ["$$app.status", "hired"] } } } },
+            nctt: { $size: { $filter: { input: "$applicationsData", as: "app", cond: { $eq: ["$$app.status", "NCTT"] } } } }
+          }
+        }
+      },
+      { $project: { applicationsData: 0 } } // Exclude the heavy array to keep the payload lightning fast
+    ]);
+    
     res.status(200).json(jobs);
-  }
-  catch(error){
+  } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
-
   }
- 
 });
-
 
 
 
