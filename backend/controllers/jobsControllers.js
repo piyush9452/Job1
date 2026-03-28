@@ -1,6 +1,7 @@
 import expressAsyncHandler from "express-async-handler";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
+import mongoose from "mongoose";
 import { validationResult } from "express-validator";
 import Employer from "../models/employer.js"; // Adjust path as needed
 
@@ -190,15 +191,23 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
 
 // FACT: We are using a MongoDB aggregation pipeline to count every ATS stage dynamically.
 export const getEmployerCreatedJobs = expressAsyncHandler(async (req, res) => {
-  const employerId = new mongoose.Types.ObjectId(req.employerId);
-  
+  // 1. Safety check for the employer ID from your auth middleware
+  if (!req.employerId) {
+    res.status(401);
+    throw new Error("Not authorized. No Employer ID found.");
+  }
+
   try {
+    // 2. Safely convert to MongoDB ObjectId
+    const employerId = new mongoose.Types.ObjectId(req.employerId);
+    
+    // 3. The Aggregation Pipeline
     const jobs = await Job.aggregate([
       { $match: { postedBy: employerId } },
       { $sort: { postedAt: -1 } },
       {
         $lookup: {
-          from: "applications", // This maps to your Applications collection
+          from: "applications", // Mongoose automatically lowercase-pluralizes "Application" to "applications"
           localField: "_id",
           foreignField: "job_id",
           as: "applicationsData"
@@ -216,15 +225,15 @@ export const getEmployerCreatedJobs = expressAsyncHandler(async (req, res) => {
           }
         }
       },
-      { $project: { applicationsData: 0 } } // Exclude the heavy array to keep the payload lightning fast
+      { $project: { applicationsData: 0 } } // Strip out the heavy array before sending to frontend
     ]);
     
     res.status(200).json(jobs);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Aggregation Error:", error); // This will log the exact issue to your backend terminal
+    res.status(500).json({ message: "Failed to fetch dashboard stats", error: error.message });
   }
 });
-
 
 
 export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
