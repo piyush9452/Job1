@@ -33,4 +33,8 @@ router.delete("/:id",protectEmployer,deleteJob);
 
 router.patch("/:id",protectEmployer,updateJob);
 
+router.put("/:id",protectEmployer,updateJob);
+
+router.patch("/:id",protectEmployer,updateJob);
+
 export default router;

@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+// FACT: Imported LocationPicker
+import LocationPicker from "../components/LocationPicker.jsx";
 import {
   Loader2,
   Save,
@@ -19,31 +21,27 @@ import {
 
 export default function EmployerEditProfile() {
   const navigate = useNavigate();
-  const location = useLocation(); // Required to read the 'showWarning' flag
+  const location = useLocation();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // --- POPUP STATE ---
   const [showPopup, setShowPopup] = useState(false);
 
   const [form, setForm] = useState({
     companyName: "",
-    name: "", // Contact person name
+    name: "",
     phone: "",
     companyWebsite: "",
     location: "",
+    latitude: null, // FACT: Added lat/lng to state
+    longitude: null,
     industry: "",
     description: "",
     profilePicture: "",
   });
 
-  // --- 1. HANDLE POPUP & LOAD DATA ---
   useEffect(() => {
-    // Check if redirected from Google Login with incomplete profile
-    if (location.state?.showWarning) {
-      setShowPopup(true);
-    }
+    if (location.state?.showWarning) setShowPopup(true);
 
     const loadProfile = async () => {
       try {
@@ -64,9 +62,7 @@ export default function EmployerEditProfile() {
 
         const { data } = await axios.get(
           `https://jobone-mrpy.onrender.com/employer/profile/${employerID}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
 
         setForm({
@@ -74,7 +70,10 @@ export default function EmployerEditProfile() {
           name: data.name || "",
           phone: data.phone ? String(data.phone) : "",
           companyWebsite: data.companyWebsite || "",
-          location: data.location || "",
+          // FACT: Pre-load the map coordinates if they exist
+          location: data.officeLocation?.address || data.location || "",
+          latitude: data.officeLocation?.coordinates?.[1] || null,
+          longitude: data.officeLocation?.coordinates?.[0] || null,
           industry: data.industry || "",
           description: data.description || "",
           profilePicture: data.profilePicture || "",
@@ -89,17 +88,27 @@ export default function EmployerEditProfile() {
     loadProfile();
   }, [navigate, location]);
 
-  // --- 2. HANDLERS ---
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // FACT: Handle map pin drops
+  const handleLocationSelect = useCallback((locData) => {
+    setForm((prev) => ({
+      ...prev,
+      location: locData.address,
+      latitude: locData.latitude,
+      longitude: locData.longitude,
+    }));
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // STRICT CHECK: Ensure critical fields are filled before saving
-    if (!form.companyName?.trim() || !form.phone?.trim()) {
-      alert("Company Name and Phone Number are mandatory.");
+    if (!form.companyName?.trim() || !form.phone?.trim() || !form.latitude) {
+      alert(
+        "Company Name, Phone Number, and Office Location on the map are mandatory.",
+      );
       return;
     }
 
@@ -108,18 +117,22 @@ export default function EmployerEditProfile() {
     try {
       const stored = localStorage.getItem("employerInfo");
       const token = stored ? JSON.parse(stored).token : null;
+      if (!token) return alert("Authentication error. Please log in again.");
 
-      if (!token) {
-        alert("Authentication error. Please log in again.");
-        return;
+      // FACT: Construct the GeoJSON object before saving
+      const payload = { ...form };
+      if (form.latitude && form.longitude) {
+        payload.officeLocation = {
+          type: "Point",
+          coordinates: [Number(form.longitude), Number(form.latitude)],
+          address: form.location,
+        };
       }
 
       await axios.post(
         "https://jobone-mrpy.onrender.com/employer/updateProfile",
-        form,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       alert("Profile updated successfully!");
@@ -135,17 +148,16 @@ export default function EmployerEditProfile() {
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex justify-center items-center h-screen text-slate-500 gap-2">
         <Loader2 className="animate-spin" /> Loading profile...
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 relative">
-      {/* --- STRICT POPUP MODAL --- */}
+      {/* ... [POPUP REMAINS THE SAME] ... */}
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative border-t-4 border-red-500 transform scale-100 transition-all">
@@ -155,7 +167,6 @@ export default function EmployerEditProfile() {
             >
               <X size={20} />
             </button>
-
             <div className="flex flex-col items-center text-center">
               <div className="bg-red-100 p-3 rounded-full mb-4">
                 <AlertTriangle className="text-red-600" size={32} />
@@ -165,14 +176,16 @@ export default function EmployerEditProfile() {
               </h3>
               <p className="text-gray-600 mb-6 leading-relaxed text-sm">
                 To start posting jobs, we need a few more details:
-                <br />
-                <br />
-                <ul className="text-left bg-gray-50 p-3 rounded-lg border border-gray-100 list-disc list-inside">
+                <ul className="text-left bg-gray-50 p-3 rounded-lg border border-gray-100 list-disc list-inside mt-2">
                   <li>
                     <strong>Company Name</strong> (Required)
                   </li>
                   <li>
                     <strong>Phone Number</strong> (Required for candidates)
+                  </li>
+                  <li>
+                    <strong>Office Map Location</strong> (Required for job
+                    posts)
                   </li>
                 </ul>
               </p>
@@ -187,7 +200,6 @@ export default function EmployerEditProfile() {
         </div>
       )}
 
-      {/* --- MAIN FORM --- */}
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-slate-100">
         <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
           <div>
@@ -207,7 +219,6 @@ export default function EmployerEditProfile() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Section 1: Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
@@ -223,7 +234,6 @@ export default function EmployerEditProfile() {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
                 <User size={16} className="text-blue-500" /> Contact Person
@@ -237,7 +247,6 @@ export default function EmployerEditProfile() {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
                 <Phone size={16} className="text-blue-500" /> Phone Number{" "}
@@ -254,7 +263,6 @@ export default function EmployerEditProfile() {
             </div>
           </div>
 
-          {/* Section 2: Online Presence */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
@@ -282,21 +290,32 @@ export default function EmployerEditProfile() {
             </div>
           </div>
 
-          {/* Section 3: Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
-                <MapPin size={16} className="text-blue-500" /> Location
-              </label>
-              <input
-                name="location"
-                value={form.location}
-                onChange={onChange}
-                className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
-                placeholder="City, Country"
-              />
+          {/* FACT: The new GeoSpatial Map Location block */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
+              <MapPin size={16} className="text-blue-500" /> Office Location{" "}
+              <span className="text-red-500">*</span>
+            </label>
+            <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 mb-3">
+              <p className="text-sm text-blue-800 mb-3 font-medium">
+                Pinpoint your exact office location on the map
+              </p>
+              <div className="rounded-lg overflow-hidden border border-blue-200 shadow-sm">
+                <LocationPicker onLocationSelect={handleLocationSelect} />
+              </div>
             </div>
-            <div>
+            <input
+              name="location"
+              value={form.location}
+              onChange={onChange}
+              className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
+              placeholder="Refine specific address (e.g. Building No., Street)"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
                 <Briefcase size={16} className="text-blue-500" /> Industry
               </label>
@@ -310,7 +329,6 @@ export default function EmployerEditProfile() {
             </div>
           </div>
 
-          {/* Section 4: About */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
               <FileText size={16} className="text-blue-500" /> About Company
@@ -324,7 +342,6 @@ export default function EmployerEditProfile() {
             />
           </div>
 
-          {/* Submit Button */}
           <div className="pt-6 border-t border-slate-100">
             <button
               type="submit"

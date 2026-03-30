@@ -195,47 +195,31 @@ export const loginEmployer = expressAsyncHandler(async (req, res) => {
 
 
 export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
-  // 1. Find employer, but select all fields EXCEPT password
   const employer = await Employer.findById(req.employerId).select('-password');
 
   if (employer) {
-    // 2. Check each field for updates (the correct way)
-    if (req.body.name !== undefined) {
-      employer.name = req.body.name;
-    }
-    if (req.body.phone !== undefined) {
-      employer.phone = req.body.phone;
-    }
-    if (req.body.companyName !== undefined) { 
-      employer.companyName = req.body.companyName;
-    }
-    if (req.body.companyWebsite !== undefined) { 
-      employer.companyWebsite = req.body.companyWebsite;
-    }
-    if (req.body.location !== undefined) { 
-      employer.location = req.body.location;
-    }
-    if (req.body.industry !== undefined) { 
-      employer.industry = req.body.industry;
-    }
-    if (req.body.description !== undefined) { 
-      employer.description = req.body.description;
-    }
-    if (req.body.profilePicture !== undefined) {
-      employer.profilePicture = req.body.profilePicture;
-    }
+    if (req.body.name !== undefined) employer.name = req.body.name;
+    if (req.body.phone !== undefined) employer.phone = req.body.phone;
+    if (req.body.companyName !== undefined) employer.companyName = req.body.companyName;
+    if (req.body.companyWebsite !== undefined) employer.companyWebsite = req.body.companyWebsite;
+    if (req.body.location !== undefined) employer.location = req.body.location; // Legacy text field
     
-    // 3. Save the updated employer
-    const updatedEmployer = await employer.save();
+    // FACT: Safely save the new GeoJSON office location map data
+    if (req.body.officeLocation !== undefined) {
+      employer.officeLocation = req.body.officeLocation;
+    }
 
-    // 4. Return the full, updated employer object
+    if (req.body.industry !== undefined) employer.industry = req.body.industry;
+    if (req.body.description !== undefined) employer.description = req.body.description;
+    if (req.body.profilePicture !== undefined) employer.profilePicture = req.body.profilePicture;
+    
+    const updatedEmployer = await employer.save();
     res.status(200).json(updatedEmployer);
   } else {
     res.status(404);
     throw new Error('Employer not found');
   }
 });
-
 export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => {
  
   const { id } = req.params;

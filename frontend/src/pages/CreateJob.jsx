@@ -1,12 +1,11 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 import LocationPicker from "../components/LocationPicker.jsx";
 import JobConfirmModal from "../components/JobConfirmModal.jsx";
 import ElasticTitleDropdown from "../components/ElasticTitleDropdown.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-// FACT: Cleaned up unused imports causing red blocks
 import {
   MapPin,
   Loader2,
@@ -19,14 +18,18 @@ import {
   Plus,
   X,
   Globe,
+  Zap,
+  Calendar,
 } from "lucide-react";
 
 export default function CreateJob() {
   const navigate = useNavigate();
+  const locationState = useLocation().state;
 
   const [job, setJob] = useState({
     title: "",
     description: "",
+    jobFeatures: ["", ""],
     skillsRequired: [],
     jobType: ["full-time"],
     workDaysPattern: "Mon to Fri",
@@ -37,6 +40,7 @@ export default function CreateJob() {
     incentives: "",
     startDate: "",
     endDate: "",
+    applicationDeadline: "", // FACT: Added Deadline state
     isLongTerm: false,
     shifts: [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
     isFlexibleShifts: false,
@@ -66,7 +70,54 @@ export default function CreateJob() {
   const [touched, setTouched] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // --- HANDLERS ---
+  useEffect(() => {
+    if (locationState?.repostData) {
+      const d = locationState.repostData;
+      let parsedSummary = "";
+      let parsedResponsibilities = "";
+      if (d.description) {
+        const parts = d.description.split("Key Responsibilities:");
+        parsedSummary = parts[0].replace("Job Summary:", "").trim();
+        parsedResponsibilities = parts[1] ? parts[1].trim() : "";
+      }
+
+      setJob({
+        title: d.title || "",
+        description: "",
+        jobFeatures: d.jobFeatures?.length === 2 ? d.jobFeatures : ["", ""],
+        skillsRequired: d.skillsRequired || [],
+        jobType: d.jobType?.length ? d.jobType : ["full-time"],
+        workDaysPattern: d.workDaysPattern || "Mon to Fri",
+        customWorkDaysDescription: d.customWorkDaysDescription || "",
+        mode: d.mode?.length ? d.mode : ["Work from office"],
+        salaryAmount: d.salaryAmount || "",
+        salaryFrequency: d.salaryFrequency || "Monthly",
+        incentives: d.incentives || "",
+        startDate: "",
+        endDate: "",
+        applicationDeadline: "", // Keep deadline blank so they pick a new one
+        isLongTerm: d.isLongTerm || false,
+        shifts:
+          d.shifts?.length > 0
+            ? d.shifts
+            : [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
+        isFlexibleShifts: d.isFlexibleShifts || false,
+        noOfPeopleRequired: d.noOfPeopleRequired || "",
+        genderPreference: d.genderPreference || "No Preference",
+        qualifications: d.qualifications || [],
+        courses: d.courses || [],
+        ageLimit: d.ageLimit || { min: "", max: "", isAny: true },
+        languages: d.languages || [],
+        useOfficeLocation: false,
+        location: d.location?.address || "",
+        latitude: d.location?.coordinates?.[1] || null,
+        longitude: d.location?.coordinates?.[0] || null,
+      });
+      setJobSummary(parsedSummary);
+      setKeyResponsibilities(parsedResponsibilities);
+    }
+  }, [locationState]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const finalValue = type === "checkbox" ? checked : value;
@@ -93,15 +144,13 @@ export default function CreateJob() {
   };
 
   const addTag = (field, inputState, setInputState) => {
-    if (inputState.trim() !== "") {
-      if (!job[field].includes(inputState.trim())) {
-        setJob((prev) => ({
-          ...prev,
-          [field]: [...prev[field], inputState.trim()],
-        }));
-      }
-      setInputState("");
+    if (inputState.trim() !== "" && !job[field].includes(inputState.trim())) {
+      setJob((prev) => ({
+        ...prev,
+        [field]: [...prev[field], inputState.trim()],
+      }));
     }
+    setInputState("");
   };
 
   const removeTag = (field, index) => {
@@ -131,7 +180,6 @@ export default function CreateJob() {
         },
       ],
     }));
-
   const removeShift = (index) =>
     setJob((prev) => ({
       ...prev,
@@ -217,7 +265,6 @@ export default function CreateJob() {
     }
   };
 
-  // FACT: Shift validation restored here to fix logic gaps
   const validateStep1 = () => {
     let isValid = true;
     const newErrors = {};
@@ -265,7 +312,6 @@ export default function CreateJob() {
   };
 
   const handleSubmit = async () => {
-    // FACT: Shift validation now happens right before final submission
     if (!job.isFlexibleShifts) {
       for (const shift of job.shifts) {
         if (!shift.startTime || !shift.endTime) {
@@ -306,6 +352,11 @@ export default function CreateJob() {
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
       };
 
+      // FACT: Safely delete empty applicationDeadline so Mongoose doesn't throw Cast Error
+      if (!payload.applicationDeadline) {
+        delete payload.applicationDeadline;
+      }
+
       if (!job.useOfficeLocation && needsLocation) {
         payload.location = {
           type: "Point",
@@ -343,7 +394,9 @@ export default function CreateJob() {
     <div className="flex flex-col py-20 md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
       <div className="w-full md:w-1/2 bg-white p-8 rounded-2xl shadow-lg border border-gray-100 overflow-y-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Create a Job</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            {locationState?.repostData ? "Repost a Job" : "Create a Job"}
+          </h1>
           <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
             Step {step} of 2
           </span>
@@ -446,11 +499,6 @@ export default function CreateJob() {
                   );
                 })}
               </div>
-              {touched.mode && errors.mode && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
-                  {errors.mode}
-                </p>
-              )}
             </div>
 
             <div>
@@ -483,11 +531,6 @@ export default function CreateJob() {
                   );
                 })}
               </div>
-              {touched.jobType && errors.jobType && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
-                  {errors.jobType}
-                </p>
-              )}
             </div>
 
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
@@ -780,37 +823,64 @@ export default function CreateJob() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
-                  Duration
+                  Duration & Deadline
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={job.startDate}
-                    onChange={handleChange}
-                    className="flex-1 p-2 border border-gray-200 rounded text-xs outline-none focus:ring-2 focus:ring-blue-200"
-                    title="Start Date"
-                  />
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={job.isLongTerm ? "" : job.endDate}
-                    onChange={handleChange}
-                    disabled={job.isLongTerm}
-                    className="flex-1 p-2 border border-gray-200 rounded text-xs outline-none disabled:bg-gray-100"
-                    title="End Date"
-                  />
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={job.startDate}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none focus:ring-2 focus:ring-blue-200"
+                        title="Start Date"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        name="endDate"
+                        value={job.isLongTerm ? "" : job.endDate}
+                        onChange={handleChange}
+                        disabled={job.isLongTerm}
+                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none disabled:bg-gray-100"
+                        title="End Date"
+                      />
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isLongTerm"
+                      checked={job.isLongTerm}
+                      onChange={handleChange}
+                      className="rounded"
+                    />{" "}
+                    Long Term Role
+                  </label>
+
+                  {/* FACT: New Application Deadline Field */}
+                  <div className="pt-2 border-t border-gray-200">
+                    <label className="text-[10px] text-rose-500 font-bold uppercase mb-1 block flex items-center gap-1">
+                      <Calendar size={12} /> Application Deadline (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      name="applicationDeadline"
+                      value={job.applicationDeadline}
+                      onChange={handleChange}
+                      className="w-full p-2 border border-rose-200 rounded text-xs outline-none focus:ring-2 focus:ring-rose-200 bg-rose-50/50"
+                      title="Application Deadline"
+                    />
+                  </div>
                 </div>
-                <label className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="isLongTerm"
-                    checked={job.isLongTerm}
-                    onChange={handleChange}
-                    className="rounded"
-                  />{" "}
-                  Long Term Role
-                </label>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
@@ -872,6 +942,41 @@ export default function CreateJob() {
                   </div>
                 )}
               </div>
+            </div>
+
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+              <label className="block text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                <Zap size={16} className="text-amber-500" /> Job Highlights
+              </label>
+              <p className="text-xs text-amber-700">
+                Add two key selling points about this role.
+              </p>
+              <input
+                type="text"
+                value={job.jobFeatures[0]}
+                onChange={(e) =>
+                  setJob((p) => {
+                    const arr = [...p.jobFeatures];
+                    arr[0] = e.target.value;
+                    return { ...p, jobFeatures: arr };
+                  })
+                }
+                placeholder="Feature 1 (e.g., Fast-paced startup environment)"
+                className="w-full p-2.5 border border-amber-200 focus:border-amber-400 rounded-xl text-sm outline-none"
+              />
+              <input
+                type="text"
+                value={job.jobFeatures[1]}
+                onChange={(e) =>
+                  setJob((p) => {
+                    const arr = [...p.jobFeatures];
+                    arr[1] = e.target.value;
+                    return { ...p, jobFeatures: arr };
+                  })
+                }
+                placeholder="Feature 2 (e.g., Weekly team lunches)"
+                className="w-full p-2.5 border border-amber-200 focus:border-amber-400 rounded-xl text-sm outline-none"
+              />
             </div>
 
             <div className="border border-indigo-100 rounded-2xl overflow-hidden">

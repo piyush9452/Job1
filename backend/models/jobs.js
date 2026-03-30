@@ -3,19 +3,19 @@ import mongoose from "mongoose";
 const JobSchema = new mongoose.Schema({
   title: { type: String, required: true }, 
   description: { type: String, required: true }, 
+  
+  jobFeatures: { type: [String], default: ["", ""] },
 
-  // CHANGED: Job Type is now a multi-select array
   jobType: [{
     type: String,
     enum: ["permanent", "temporary", "internship", "part-time", "full-time", "contractual", "freelance"]
   }],
 
-  // CHANGED: Workdays pattern and custom input
   workDaysPattern: {
     type: String,
     enum: ["Mon to Fri", "Mon to Sat", "Sat to Sun", "Custom"]
   },
-  customWorkDaysDescription: { type: String }, // For elaboration if "Custom" is selected
+  customWorkDaysDescription: { type: String },
 
   skillsRequired: { type: [String], default: [] },
   
@@ -29,7 +29,6 @@ const JobSchema = new mongoose.Schema({
   salaryAmount: { type: Number, required: true }, 
   salaryFrequency: { type: String, enum: ["Hourly", "Daily", "Weekly", "Monthly", "Lump-Sum"], default: "Monthly" },
   
-  // NEW: Incentives string
   incentives: { type: String, default: "" },
   
   durationType: { type: String, enum: ["Day", "Week", "Month"], required: false },
@@ -37,7 +36,9 @@ const JobSchema = new mongoose.Schema({
   endDate: { type: Date, required: false, default: null },
   isLongTerm: { type: Boolean, default: false },
   
-  // CHANGED: Shifts + Flexible Timings Flag
+  // FACT: New Application Deadline Field
+  applicationDeadline: { type: Date, required: false },
+
   shifts: [{
     shiftName: { type: String, required: true }, 
     startTime: { type: String, required: true },
@@ -45,7 +46,6 @@ const JobSchema = new mongoose.Schema({
   }],
   isFlexibleShifts: { type: Boolean, default: false },
 
-  // CHANGED: Work Mode is now a multi-select array
   mode: [{ 
     type: String, 
     enum: ["Work from home", "Work from office", "Work from field"], 
@@ -55,15 +55,14 @@ const JobSchema = new mongoose.Schema({
   noOfPeopleRequired: { type: Number, required: true },
   genderPreference: { type: String, enum:["Male","Female","Other","No Preference"], default: "No Preference" },
   
-  // NEW: Demographics & Qualifications
-  qualifications: [{ type: String }], // e.g., "Graduation", "Any"
-  courses: [{ type: String }], // e.g., "Commerce", "Arts", "Any"
+  qualifications: [{ type: String }],
+  courses: [{ type: String }],
   ageLimit: {
     min: { type: Number },
     max: { type: Number },
     isAny: { type: Boolean, default: false }
   },
-  languages: [{ type: String }], // e.g., "Hindi", "English", "Any", or custom strings
+  languages: [{ type: String }], 
 
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Employer", required: true },
   postedByImage: { type: String }, 
@@ -72,8 +71,8 @@ const JobSchema = new mongoose.Schema({
   postedAt: { type: Date, default: Date.now },
   expiringAt: { type: Date }, 
   
-  // CHANGED: Soft Delete / Visibility Status
-  status: { type: String, enum: ["active", "inactive", "closed"], default: "active" },
+  // FACT: Status enum updated to prevent 500 crashes
+  status: { type: String, enum: ["active", "inactive", "closed", "deadline passed"], default: "active" },
   
   applicants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], 
 });

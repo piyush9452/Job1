@@ -34,7 +34,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     durationType, startDate, endDate, isLongTerm,
     shifts, isFlexibleShifts, mode, noOfDays, noOfPeopleRequired, 
     genderPreference, qualifications, courses, ageLimit, languages,
-    pinCode, location, useOfficeLocation 
+    pinCode, location, useOfficeLocation ,applicationDeadline,
   } = req.body;
 
   // FACT: "Same as Office Location" Logic
@@ -56,11 +56,14 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     locationData = { type: 'Point', coordinates: [0, 0], address: "Remote" };
   }
 
+  const { jobFeatures}= req.body;
+
   const newJob = new Job({
     title, 
     description, 
     jobType,
     workDaysPattern,
+    jobFeatures,
     customWorkDaysDescription: workDaysPattern === "Custom" ? customWorkDaysDescription : "",
     skillsRequired, 
     salaryAmount, 
@@ -70,6 +73,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     startDate, 
     endDate, 
     isLongTerm,
+    applicationDeadline,
     shifts: isFlexibleShifts ? [] : shifts, // Clear shifts if flexible
     isFlexibleShifts,
     mode, 
