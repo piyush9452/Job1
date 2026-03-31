@@ -1,347 +1,415 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { motion } from "framer-motion";
 import {
-  X,
-  MapPin,
-  Briefcase,
-  IndianRupee,
-  Clock,
-  Calendar,
-  Building2,
-  Users,
-  CheckCircle2,
-  FileText,
-  ArrowRight,
+  Pencil,
+  Trash2,
   Loader2,
-  Sparkles,
-  ChevronRight,
+  MapPin,
+  Calendar,
+  Clock,
+  IndianRupee,
+  Users,
+  Briefcase,
+  CheckCircle2,
+  CalendarDays,
+  Zap,
+  GraduationCap,
+  Languages,
+  UserCircle2,
 } from "lucide-react";
 
-export default function JobDetailsModal({ job, onClose }) {
+export default function EmployerJobDetails() {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // FACT: New state for Similar Jobs
-  const [similarJobs, setSimilarJobs] = useState([]);
-  const [loadingSimilar, setLoadingSimilar] = useState(true);
-
-  // FACT: Fetch recommendations when the modal opens
   useEffect(() => {
-    if (!job) return;
-
-    const fetchSimilarJobs = async () => {
+    const fetchJob = async () => {
       try {
+        const stored = localStorage.getItem("employerInfo");
+        if (!stored) return navigate("/login");
+        const token = JSON.parse(stored)?.token;
+        if (!token) return navigate("/login");
+
         const { data } = await axios.get(
-          `https://jobone-mrpy.onrender.com/jobs/${job._id || job.id}/similar`,
+          `https://jobone-mrpy.onrender.com/jobs/${id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
         );
-        setSimilarJobs(data);
-      } catch (error) {
-        console.error("Failed to fetch similar jobs", error);
+        setJob(data.job || data);
+      } catch (err) {
+        console.error("Failed to load job", err);
+        setJob(null);
       } finally {
-        setLoadingSimilar(false);
+        setLoading(false);
       }
     };
+    fetchJob();
+  }, [id, navigate]);
 
-    fetchSimilarJobs();
-  }, [job]);
-
-  if (!job) return null;
-
-  const handleApplyClick = async () => {
-    setLoading(true);
+  const handleDelete = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this job? This action cannot be undone.",
+      )
+    )
+      return;
     try {
-      const storedUserInfo = localStorage.getItem("userInfo");
-      if (!storedUserInfo) {
-        alert("Please log in to apply.");
-        navigate("/login");
-        return;
-      }
-
-      const token = JSON.parse(storedUserInfo)?.token;
-      if (!token) throw new Error("No token");
-
-      await axios.post(
-        "https://jobone-mrpy.onrender.com/applications",
-        { jobId: job._id || job.id },
-        { headers: { Authorization: `Bearer ${token}` } },
+      const token = JSON.parse(localStorage.getItem("employerInfo"))?.token;
+      await axios.delete(`https://jobone-mrpy.onrender.com/jobs/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Job deleted successfully.");
+      navigate("/employerdashboard");
+    } catch (err) {
+      alert(
+        "Failed to delete job: " + (err.response?.data?.message || err.message),
       );
-
-      alert("Application submitted successfully!");
-      onClose();
-    } catch (error) {
-      console.error("Application failed:", error);
-      alert(error.response?.data?.message || "Failed to apply for job.");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const displayLocation =
-    job.mode === "Work from Home"
-      ? "Remote"
-      : typeof job.location === "object"
-        ? job.location.address
-        : job.location || "Office";
-  const companyName =
-    job.postedByCompany || job.postedByName || "Company Confidential";
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col relative overflow-hidden"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-start p-6 sm:p-8 border-b border-slate-100 bg-white sticky top-0 z-20">
-          <div className="flex gap-5 items-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg shrink-0">
-              {companyName.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
-                {job.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-3 text-slate-500 font-medium mt-1.5 text-sm">
-                <span className="flex items-center gap-1.5">
-                  <Building2 size={16} className="text-slate-400" />{" "}
-                  {companyName}
-                </span>
-                <span className="w-1 h-1 rounded-full bg-slate-300 hidden sm:block"></span>
-                <span className="flex items-center gap-1.5">
-                  <MapPin size={16} className="text-slate-400" />{" "}
-                  {displayLocation.split(",")[0]}
-                </span>
-              </div>
-            </div>
-          </div>
+  // FACT: Smart fallback to handle both legacy strings and new arrays seamlessly
+  const renderArray = (val) => {
+    if (!val) return "Not specified";
+    if (Array.isArray(val))
+      return val.length > 0 ? val.join(", ") : "Not specified";
+    return String(val); // Legacy fallback
+  };
+
+  if (loading)
+    return (
+      <div className="flex h-screen items-center justify-center text-slate-500 bg-slate-50">
+        <Loader2 className="animate-spin mb-4 text-indigo-600" size={40} />
+      </div>
+    );
+  if (!job)
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="text-center p-8 bg-white rounded-3xl border border-slate-200 max-w-md">
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Job Not Found
+          </h2>
           <button
-            onClick={onClose}
-            className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors text-slate-600 shrink-0"
+            onClick={() => navigate("/employerdashboard")}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold mt-4"
           >
-            <X size={20} />
+            Back to Dashboard
           </button>
         </div>
+      </div>
+    );
 
-        {/* Scrollable Content */}
-        <div className="overflow-y-auto p-6 sm:p-8 flex-1 bg-slate-50/50 custom-scrollbar">
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
-                <IndianRupee size={18} />
-              </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Compensation
-              </p>
-              <p className="font-extrabold text-slate-900 mt-1">
-                {job.salaryAmount ? job.salaryAmount.toLocaleString() : "TBD"}
-              </p>
-              <p className="text-[10px] font-bold text-emerald-600 mt-0.5 uppercase">
-                {job.salaryFrequency}
-              </p>
+  const isRemote =
+    renderArray(job.mode).toLowerCase().includes("home") ||
+    job.mode === "Online";
+  const displayLocation = isRemote
+    ? "Remote"
+    : typeof job.location === "object"
+      ? job.location?.address
+      : job.location || "Location not specified";
+
+  const validFeatures =
+    job.jobFeatures?.filter((f) => f && f.trim() !== "") || [];
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 lg:px-8 mt-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-6xl mx-auto space-y-6"
+      >
+        {/* HEADER */}
+        <header className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span
+                className={`px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border ${job.status === "active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-600 border-slate-200"}`}
+              >
+                {job.status || "Active"}
+              </span>
+              <span className="px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">
+                {renderArray(job.mode)}
+              </span>
+              <span className="px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100">
+                {renderArray(job.jobType)}
+              </span>
             </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
-                <Briefcase size={18} />
-              </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Work Mode
-              </p>
-              <p className="font-extrabold text-slate-900 mt-1 truncate">
-                {job.mode}
-              </p>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
-                <Calendar size={18} />
-              </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Duration
-              </p>
-              <p className="font-extrabold text-slate-900 mt-1">
-                {job.isLongTerm
-                  ? "Long Term"
-                  : job.noOfDays
-                    ? `${job.noOfDays} Days`
-                    : "Fixed"}
-              </p>
-              <p className="text-[10px] font-bold text-purple-600 mt-0.5 truncate uppercase">
-                {job.startDate
-                  ? new Date(job.startDate).toLocaleDateString()
-                  : "TBD"}{" "}
-                START
-              </p>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center mb-3">
-                <Users size={18} />
-              </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Openings
-              </p>
-              <p className="font-extrabold text-slate-900 mt-1">
-                {job.noOfPeopleRequired} Spots
-              </p>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+              {job.title}
+            </h1>
+            <div className="flex items-center text-slate-500 text-sm font-medium gap-2">
+              <MapPin size={16} /> {displayLocation}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-8">
-              {/* Description */}
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <FileText className="text-indigo-500" size={20} /> About the
-                  Role
-                </h3>
-                <div className="text-slate-600 leading-relaxed whitespace-pre-wrap text-sm sm:text-base bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                  {job.description}
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-3 relative z-10">
+            <button
+              onClick={() => navigate(`/job/${job._id}/applicants`)}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow-sm"
+            >
+              <Users size={16} /> Applicants
+            </button>
+            <button
+              onClick={() => navigate(`/editjob/${job._id}`)}
+              className="flex items-center gap-2 bg-white text-slate-700 px-5 py-2.5 rounded-xl font-bold hover:bg-slate-50 border border-slate-200 shadow-sm"
+            >
+              <Pencil size={16} /> Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-2 bg-rose-50 text-rose-600 px-5 py-2.5 rounded-xl font-bold hover:bg-rose-100 border border-rose-100"
+            >
+              <Trash2 size={16} /> Delete
+            </button>
+          </div>
+        </header>
 
-            <div className="space-y-6">
-              {/* Shifts & Days */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide border-b border-slate-100 pb-3">
-                  Schedule Info
-                </h3>
-
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-slate-400 mb-2 uppercase">
-                    Work Days
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {job.workDays?.length > 0 ? (
-                      job.workDays.map((d, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md"
-                        >
-                          {d.substring(0, 3)}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm font-medium text-slate-600">
-                        Flexible Days
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {job.shifts?.length > 0 && (
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 mb-2 uppercase">
-                      Shifts
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* MAIN CONTENT */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Job Highlights (If any) */}
+            {validFeatures.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {validFeatures.map((feature, i) => (
+                  <div
+                    key={i}
+                    className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-start gap-3"
+                  >
+                    <Zap className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                    <p className="text-sm font-bold text-amber-900">
+                      {feature}
                     </p>
-                    <div className="space-y-2">
-                      {job.shifts.map((s, i) => (
-                        <div
-                          key={i}
-                          className="flex justify-between items-center bg-indigo-50/50 px-3 py-2 rounded-lg border border-indigo-50/50"
-                        >
-                          <span className="text-xs font-bold text-indigo-900">
-                            {s.shiftName}
-                          </span>
-                          <span className="text-xs font-mono font-medium text-indigo-700">
-                            {s.startTime} - {s.endTime}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                )}
+                ))}
+              </div>
+            )}
+
+            {/* Description */}
+            <section className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+              <h2 className="text-lg font-extrabold text-slate-800 mb-4 border-b border-slate-100 pb-4">
+                Job Description
+              </h2>
+              <div className="prose prose-sm max-w-none text-slate-600 whitespace-pre-wrap leading-relaxed font-medium">
+                {job.description}
+              </div>
+            </section>
+
+            {/* Candidate Requirements */}
+            <section className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+              <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                <UserCircle2 size={18} /> Candidate Profile
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase flex items-center gap-1.5 mb-1">
+                    <GraduationCap size={14} /> Education
+                  </p>
+                  <p className="text-sm font-bold text-slate-800">
+                    {renderArray(job.qualifications)}
+                  </p>
+                  {job.courses?.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Streams: {job.courses.join(", ")}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase flex items-center gap-1.5 mb-1">
+                    <Languages size={14} /> Languages
+                  </p>
+                  <p className="text-sm font-bold text-slate-800">
+                    {renderArray(job.languages)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase flex items-center gap-1.5 mb-1">
+                    <Users size={14} /> Age Requirement
+                  </p>
+                  <p className="text-sm font-bold text-slate-800">
+                    {job.ageLimit?.isAny
+                      ? "Any Age"
+                      : job.ageLimit?.min
+                        ? `${job.ageLimit.min} to ${job.ageLimit.max} Years`
+                        : "Not Specified"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase flex items-center gap-1.5 mb-1">
+                    <UserCircle2 size={14} /> Gender
+                  </p>
+                  <p className="text-sm font-bold text-slate-800">
+                    {job.genderPreference || "No Preference"}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Schedule & Timings */}
+            <section className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+              <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                <Clock size={18} /> Schedule & Shifts
+              </h2>
+              <div className="mb-6">
+                <p className="text-xs text-slate-400 font-bold uppercase mb-2">
+                  Working Days
+                </p>
+                <div className="inline-block px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700">
+                  {job.workDaysPattern
+                    ? job.workDaysPattern === "Custom"
+                      ? job.customWorkDaysDescription
+                      : job.workDaysPattern
+                    : renderArray(job.workDays)}
+                </div>
               </div>
 
-              {/* Skills */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide border-b border-slate-100 pb-3">
+              <p className="text-xs text-slate-400 font-bold uppercase mb-2">
+                Shift Timings
+              </p>
+              {job.isFlexibleShifts ? (
+                <span className="px-4 py-2 bg-blue-50 text-blue-700 font-bold text-sm rounded-xl border border-blue-100 inline-block">
+                  Flexible Timings
+                </span>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {job.shifts?.map((shift, i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-200"
+                    >
+                      <span className="font-bold text-slate-800 text-sm">
+                        {shift.shiftName}
+                      </span>
+                      <span className="font-mono text-sm font-bold text-slate-600">
+                        {shift.startTime || "--:--"} -{" "}
+                        {shift.endTime || "--:--"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Skills */}
+            {job.skillsRequired?.length > 0 && (
+              <section className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                <h2 className="text-lg font-extrabold text-slate-800 mb-4 border-b border-slate-100 pb-4">
                   Required Skills
-                </h3>
+                </h2>
                 <div className="flex flex-wrap gap-2">
-                  {job.skillsRequired?.map((skill, index) => (
+                  {job.skillsRequired.map((skill, i) => (
                     <span
-                      key={index}
-                      className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100"
+                      key={i}
+                      className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold"
                     >
                       {skill}
                     </span>
                   ))}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SIMILAR JOBS ENGINE UI - COMPACT VERSION */}
-        {!loadingSimilar && similarJobs.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-slate-200 shrink-0 pl-4 pr-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-4 mb-3 flex items-center gap-1.5">
-              <Sparkles className="text-amber-500" size={14} /> Similar Roles
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {similarJobs.map((simJob) => (
-                <div
-                  key={simJob._id}
-                  onClick={() => {
-                    onClose();
-                    navigate(`/job/${simJob._id}`);
-                  }}
-                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer group flex flex-col justify-between"
-                >
-                  <div>
-                    <h4 className="font-bold text-slate-800 text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors">
-                      {simJob.title}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1 truncate">
-                      <Building2 size={12} />{" "}
-                      {simJob.postedByCompany || "Company"}
-                    </p>
-                  </div>
-                  <div className="mt-2.5 flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-100/50 border border-emerald-100 px-1.5 py-0.5 rounded">
-                      ₹{" "}
-                      {simJob.salaryAmount
-                        ? simJob.salaryAmount.toLocaleString()
-                        : "TBD"}
-                    </span>
-                    <ChevronRight
-                      size={14}
-                      className="text-slate-300 group-hover:text-indigo-500 transition-colors"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {/* END SIMILAR JOBS ENGINE */}
-
-        {/* Footer Actions */}
-        <div className="p-6 border-t border-slate-100 bg-white flex gap-4 sticky bottom-0 z-20">
-          <button
-            onClick={handleApplyClick}
-            disabled={loading}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all transform active:scale-[0.98] flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin" size={20} /> Sending
-                Application...
-              </>
-            ) : (
-              <>
-                Apply for this Job <ArrowRight size={18} />
-              </>
+              </section>
             )}
-          </button>
+          </div>
+
+          {/* SIDEBAR DETAILS */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Compensation Card */}
+            <section className="bg-slate-900 rounded-3xl p-6 shadow-xl text-white">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                Compensation
+              </h3>
+              <div className="flex items-baseline gap-1.5 mb-6">
+                <IndianRupee size={24} className="text-emerald-400" />
+                <span className="text-3xl font-extrabold">
+                  {job.salaryAmount ? job.salaryAmount.toLocaleString() : "TBD"}
+                </span>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 border border-white/10 flex justify-between items-center text-sm font-bold">
+                <span className="text-slate-300">Frequency</span>
+                <span className="text-emerald-400 uppercase">
+                  {job.salaryFrequency || "Monthly"}
+                </span>
+              </div>
+              {job.incentives && (
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">
+                    Incentives / Perks
+                  </p>
+                  <p className="text-sm font-medium text-slate-200">
+                    {job.incentives}
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/* Overview Card */}
+            <section className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-3">
+                Job Overview
+              </h3>
+              <div className="space-y-4">
+                <DetailRow
+                  icon={<CalendarDays size={16} className="text-blue-500" />}
+                  label="Start Date"
+                  value={
+                    job.startDate
+                      ? new Date(job.startDate).toLocaleDateString()
+                      : "TBD"
+                  }
+                />
+                <DetailRow
+                  icon={<Calendar size={16} className="text-rose-500" />}
+                  label="End Date"
+                  value={
+                    job.isLongTerm
+                      ? "Long Term Role"
+                      : job.endDate
+                        ? new Date(job.endDate).toLocaleDateString()
+                        : "TBD"
+                  }
+                />
+                {job.applicationDeadline && (
+                  <DetailRow
+                    icon={<Clock size={16} className="text-amber-500" />}
+                    label="Apply Before"
+                    value={new Date(
+                      job.applicationDeadline,
+                    ).toLocaleDateString()}
+                  />
+                )}
+                <DetailRow
+                  icon={<Users size={16} className="text-purple-500" />}
+                  label="Openings"
+                  value={`${job.noOfPeopleRequired} Spots`}
+                />
+              </div>
+            </section>
+          </div>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+function DetailRow({ icon, label, value }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 bg-slate-50 rounded-lg border border-slate-100">
+          {icon}
+        </div>
+        <span className="text-slate-500 text-xs font-bold uppercase tracking-wide">
+          {label}
+        </span>
+      </div>
+      <span
+        className="text-slate-900 font-extrabold text-sm text-right truncate max-w-[50%]"
+        title={value}
+      >
+        {value}
+      </span>
     </div>
   );
 }
