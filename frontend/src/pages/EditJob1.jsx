@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import LocationPicker from "../components/LocationPicker.jsx";
+import ElasticTitleDropdown from "../components/ElasticTitleDropdown.jsx";
 import {
   Loader2,
   Save,
@@ -13,10 +14,17 @@ import {
   CalendarDays,
   Users,
   AlignLeft,
-  Sparkles,
   X,
   Target,
   Plus,
+  Building,
+  Globe,
+  Monitor,
+  Zap,
+  GraduationCap,
+  Languages,
+  UserCircle2,
+  Calendar,
 } from "lucide-react";
 
 export default function EditJob() {
@@ -24,97 +32,126 @@ export default function EditJob() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [skillsInput, setSkillsInput] = useState("");
-  const [originalLocation, setOriginalLocation] = useState(null);
-  const [jobSummary, setJobSummary] = useState("");
-  const [keyResponsibilities, setKeyResponsibilities] = useState("");
 
-  // FACT: Initialized with the new Phase 1 Schema structure
+  // FACT: Every single schema field is initialized here
   const [job, setJob] = useState({
     title: "",
     description: "",
-    workDays: [],
+    jobFeatures: ["", ""], // Highlights
     skillsRequired: [],
-    locationAddress: "",
+    jobType: [],
+    workDaysPattern: "Mon to Fri",
+    customWorkDaysDescription: "",
+    mode: [],
     salaryAmount: "",
     salaryFrequency: "Monthly",
-    durationType: "Month",
+    incentives: "",
     startDate: "",
     endDate: "",
+    applicationDeadline: "",
     isLongTerm: false,
     shifts: [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
-    mode: "Work from Home",
-    noOfDays: "",
+    isFlexibleShifts: false,
     noOfPeopleRequired: "",
     genderPreference: "No Preference",
+    qualifications: [],
+    courses: [],
+    ageLimit: { min: "", max: "", isAny: true },
+    languages: [],
+    useOfficeLocation: false,
+    location: "",
+    latitude: null,
+    longitude: null,
   });
 
-  const DAYS_OF_WEEK = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
+  const [jobSummary, setJobSummary] = useState("");
+  const [keyResponsibilities, setKeyResponsibilities] = useState("");
+  const [skillsInput, setSkillsInput] = useState("");
+  const [languageInput, setLanguageInput] = useState("");
+  const [courseInput, setCourseInput] = useState("");
+  const [originalLocation, setOriginalLocation] = useState(null);
 
-  // --- FETCH EXISTING JOB ---
+  // --- FETCH & BACKWARD COMPATIBILITY PARSING ---
   useEffect(() => {
     const fetchJobData = async () => {
       try {
         const stored = localStorage.getItem("employerInfo");
         if (!stored) return navigate("/login");
-
         const token = JSON.parse(stored).token;
 
         const { data } = await axios.get(
           `https://jobone-mrpy.onrender.com/jobs/${id}`,
-          { headers: { Authorization: `Bearer ${token}` } },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
         );
 
         const jobData = data.job || data;
+        setOriginalLocation(jobData.location);
 
         const formatDate = (dateStr) => {
           if (!dateStr) return "";
           return new Date(dateStr).toISOString().split("T")[0];
         };
 
-        setOriginalLocation(jobData.location);
-
         const rawDesc = jobData.description || "";
-        const [summaryPart, resPart] = rawDesc.split("Key Responsibilities:");
+        const parts = rawDesc.split("Key Responsibilities:");
         setJobSummary(
-          summaryPart
-            ? summaryPart.replace("Job Summary:", "").trim()
-            : rawDesc,
+          parts[0] ? parts[0].replace("Job Summary:", "").trim() : rawDesc,
         );
-        setKeyResponsibilities(resPart ? resPart.trim() : "");
+        setKeyResponsibilities(parts[1] ? parts[1].trim() : "");
 
-        // FACT: Mapping fetched data to the NEW schema
+        const safeArray = (val, defaultVal) => {
+          if (!val) return defaultVal ? [defaultVal] : [];
+          return Array.isArray(val) ? val : [val];
+        };
+
         setJob({
           title: jobData.title || "",
-          description: jobData.description || "",
-          workDays: jobData.workDays || [],
+          description: "",
+          jobFeatures:
+            jobData.jobFeatures?.length >= 2
+              ? jobData.jobFeatures
+              : [
+                  jobData.jobFeatures?.[0] || "",
+                  jobData.jobFeatures?.[1] || "",
+                ],
           skillsRequired: jobData.skillsRequired || [],
-          locationAddress:
-            typeof jobData.location === "object"
-              ? jobData.location?.address
-              : jobData.location || "",
+          jobType: safeArray(jobData.jobType, "full-time"),
+          workDaysPattern: jobData.workDaysPattern || "Mon to Fri",
+          customWorkDaysDescription: jobData.customWorkDaysDescription || "",
+          mode: safeArray(jobData.mode, "Work from office"),
           salaryAmount: jobData.salaryAmount || "",
           salaryFrequency: jobData.salaryFrequency || "Monthly",
-          durationType: jobData.durationType || "Month",
+          incentives: jobData.incentives || "",
           startDate: formatDate(jobData.startDate),
           endDate: formatDate(jobData.endDate),
+          applicationDeadline: formatDate(jobData.applicationDeadline),
           isLongTerm: jobData.isLongTerm || false,
           shifts:
             jobData.shifts?.length > 0
               ? jobData.shifts
               : [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
-          mode: jobData.mode || "Work from Home",
-          noOfDays: jobData.noOfDays || "",
+          isFlexibleShifts: jobData.isFlexibleShifts || false,
           noOfPeopleRequired: jobData.noOfPeopleRequired || "",
           genderPreference: jobData.genderPreference || "No Preference",
+          qualifications: jobData.qualifications || [],
+          courses: jobData.courses || [],
+          ageLimit: jobData.ageLimit || { min: "", max: "", isAny: true },
+          languages: jobData.languages || [],
+          useOfficeLocation: false,
+          location:
+            typeof jobData.location === "object"
+              ? jobData.location?.address
+              : jobData.location || "",
+          latitude:
+            typeof jobData.location === "object"
+              ? jobData.location?.coordinates?.[1]
+              : null,
+          longitude:
+            typeof jobData.location === "object"
+              ? jobData.location?.coordinates?.[0]
+              : null,
         });
       } catch (err) {
         console.error("Error fetching job:", err);
@@ -128,22 +165,51 @@ export default function EditJob() {
     fetchJobData();
   }, [id, navigate]);
 
-  // --- HANDLERS ---
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setJob((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setJob((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  const toggleWorkDay = (day) => {
+  const handleAgeChange = (field, value) => {
+    setJob((prev) => ({
+      ...prev,
+      ageLimit: { ...prev.ageLimit, [field]: value, isAny: false },
+    }));
+  };
+
+  const toggleArrayItem = (field, value) => {
     setJob((prev) => {
-      const isSelected = prev.workDays.includes(day);
+      const arr = prev[field] || [];
       return {
         ...prev,
-        workDays: isSelected
-          ? prev.workDays.filter((d) => d !== day)
-          : [...prev.workDays, day],
+        [field]: arr.includes(value)
+          ? arr.filter((i) => i !== value)
+          : [...arr, value],
       };
     });
+  };
+
+  const addTag = (field, inputState, setInputState) => {
+    if (
+      inputState.trim() !== "" &&
+      !(job[field] || []).includes(inputState.trim())
+    ) {
+      setJob((prev) => ({
+        ...prev,
+        [field]: [...(prev[field] || []), inputState.trim()],
+      }));
+    }
+    setInputState("");
+  };
+
+  const removeTag = (field, index) => {
+    setJob((prev) => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== index),
+    }));
   };
 
   const updateShift = (index, field, value) => {
@@ -154,7 +220,7 @@ export default function EditJob() {
     });
   };
 
-  const addShift = () => {
+  const addShift = () =>
     setJob((prev) => ({
       ...prev,
       shifts: [
@@ -166,42 +232,41 @@ export default function EditJob() {
         },
       ],
     }));
-  };
-
-  const removeShift = (index) => {
+  const removeShift = (index) =>
     setJob((prev) => ({
       ...prev,
       shifts: prev.shifts
         .filter((_, i) => i !== index)
-        .map((shift, i) => ({ ...shift, shiftName: `Shift ${i + 1}` })),
+        .map((s, i) => ({ ...s, shiftName: `Shift ${i + 1}` })),
     }));
-  };
 
-  const handleSkills = (e) => {
-    if (e.key === "Enter" || e.type === "click") {
-      e.preventDefault();
-      const skill = skillsInput.trim();
-      if (skill && !job.skillsRequired.includes(skill)) {
-        setJob({ ...job, skillsRequired: [...job.skillsRequired, skill] });
-        setSkillsInput("");
-      }
-    }
-  };
-
-  const removeSkill = (skillToRemove) => {
-    setJob({
-      ...job,
-      skillsRequired: job.skillsRequired.filter((s) => s !== skillToRemove),
-    });
-  };
+  const handleLocationSelect = useCallback((locData) => {
+    setJob((prev) => ({
+      ...prev,
+      location: locData.address,
+      latitude: locData.latitude,
+      longitude: locData.longitude,
+    }));
+  }, []);
 
   // --- SAVE UPDATES ---
   const handleUpdate = async (e) => {
     e.preventDefault();
 
-    // Safety checks
-    if (!job.title || !job.salaryAmount || job.workDays.length === 0) {
-      return alert("Title, Salary, and Work Days are required.");
+    if (
+      !job.title ||
+      !job.salaryAmount ||
+      job.mode.length === 0 ||
+      job.jobType.length === 0
+    ) {
+      return alert("Title, Salary, Mode, and Job Type are required.");
+    }
+
+    if (!job.isFlexibleShifts) {
+      for (const shift of job.shifts) {
+        if (!shift.startTime || !shift.endTime)
+          return alert(`Please complete times for ${shift.shiftName}`);
+      }
     }
 
     setSaving(true);
@@ -209,27 +274,50 @@ export default function EditJob() {
     try {
       const stored = localStorage.getItem("employerInfo");
       const token = JSON.parse(stored).token;
+
       const combinedDescription =
         `Job Summary:\n${jobSummary}\n\nKey Responsibilities:\n${keyResponsibilities}`.trim();
-      // Construct payload according to Phase 1 schema
+
       const payload = {
         ...job,
         description: combinedDescription,
         salaryAmount: Number(job.salaryAmount),
-        noOfDays: job.noOfDays ? Number(job.noOfDays) : undefined,
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
       };
 
-      if (job.mode === "Work from Home") {
-        payload.location = { address: "Remote" };
-      } else if (originalLocation && originalLocation.coordinates) {
+      if (!payload.applicationDeadline) delete payload.applicationDeadline;
+      if (!payload.startDate) delete payload.startDate;
+      if (!payload.endDate) delete payload.endDate;
+
+      const needsLocation =
+        job.mode.includes("Work from office") ||
+        job.mode.includes("Work from field");
+
+      if (
+        !job.useOfficeLocation &&
+        needsLocation &&
+        job.latitude &&
+        job.longitude
+      ) {
         payload.location = {
-          ...originalLocation,
-          address: job.locationAddress,
+          type: "Point",
+          coordinates: [Number(job.longitude), Number(job.latitude)],
+          address: job.location,
         };
+      } else if (!needsLocation) {
+        payload.location = {
+          type: "Point",
+          coordinates: [0, 0],
+          address: "Remote",
+        };
+      } else if (!job.useOfficeLocation) {
+        payload.location = originalLocation;
+      } else {
+        delete payload.location;
       }
 
-      delete payload.locationAddress;
+      delete payload.latitude;
+      delete payload.longitude;
 
       await axios.patch(
         `https://jobone-mrpy.onrender.com/jobs/${id}`,
@@ -253,15 +341,13 @@ export default function EditJob() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center">
         <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
-        <p className="text-slate-500 font-medium animate-pulse">
-          Loading workspace...
-        </p>
+        <p className="text-slate-500 font-medium">Loading workspace...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans selection:bg-indigo-100 selection:text-indigo-900 mt-20">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans mt-16 sm:mt-20">
       {/* STICKY HEADER */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -273,7 +359,7 @@ export default function EditJob() {
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 leading-tight">
+              <h1 className="text-xl font-extrabold text-slate-900 leading-tight">
                 Edit Posting
               </h1>
               <p className="text-xs font-medium text-slate-500 truncate max-w-[200px] md:max-w-md">
@@ -298,172 +384,90 @@ export default function EditJob() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-        <form className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* LEFT COLUMN - CORE DETAILS */}
-          <div className="xl:col-span-2 space-y-8">
-            {/* Bento Box 1: Primary Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100"
-            >
-              <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-4">
-                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-                  <Briefcase size={20} />
-                </div>
-                <h2 className="text-xl font-extrabold text-slate-800">
-                  Core Identity
-                </h2>
-              </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-8">
+        {/* CORE DETAILS */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
+          <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+            <Briefcase size={20} className="text-indigo-600" /> Core Details
+          </h2>
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Job Title
-                  </label>
-                  <input
-                    name="title"
-                    value={job.title}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-semibold"
-                  />
-                </div>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Job Title
+              </label>
+              <ElasticTitleDropdown
+                value={job.title}
+                onChange={(val) => setJob((prev) => ({ ...prev, title: val }))}
+              />
+            </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Work Mode
-                  </label>
-                  <select
-                    name="mode"
-                    value={job.mode}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium appearance-none"
-                  >
-                    <option value="Work from Home">Work from Home</option>
-                    <option value="Work from Office/Field">
-                      Work from Office/Field
-                    </option>
-                    <option value="Hybrid">Hybrid</option>
-                  </select>
-                </div>
-
-                {job.mode !== "Work from Home" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                  >
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      Office Address
-                    </label>
-                    <div className="relative">
-                      <MapPin
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                        size={18}
-                      />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Work Mode
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { val: "Work from home", icon: <Monitor size={14} /> },
+                    { val: "Work from office", icon: <Building size={14} /> },
+                    { val: "Work from field", icon: <Globe size={14} /> },
+                  ].map((m) => (
+                    <label
+                      key={m.val}
+                      className={`flex-1 cursor-pointer border rounded-xl p-2.5 flex items-center justify-center gap-2 transition-all ${job.mode.includes(m.val) ? "bg-indigo-50 border-indigo-500 text-indigo-700 ring-1 ring-indigo-500" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                    >
                       <input
-                        name="locationAddress"
-                        value={job.locationAddress}
-                        onChange={handleChange}
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl pl-11 pr-4 py-3.5 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium"
+                        type="checkbox"
+                        className="hidden"
+                        onChange={() => toggleArrayItem("mode", m.val)}
                       />
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Bento Box 2: Description */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100"
-            >
-              <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
-                  <AlignLeft size={20} />
-                </div>
-                <h2 className="text-xl font-extrabold text-slate-800">
-                  Job Description
-                </h2>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Job Summary
-                  </label>
-                  <textarea
-                    value={jobSummary}
-                    onChange={(e) => setJobSummary(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-5 py-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[300px] resize-y leading-relaxed"
-                    placeholder="Briefly describe the role..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Key Responsibilities
-                  </label>
-                  <textarea
-                    value={keyResponsibilities}
-                    onChange={(e) => setKeyResponsibilities(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-5 py-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[300px] resize-y leading-relaxed"
-                    placeholder="List main tasks and duties..."
-                  />
+                      {m.icon}{" "}
+                      <span className="text-xs font-bold">{m.val}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-            </motion.div>
-          </div>
 
-          {/* RIGHT COLUMN - METADATA */}
-          <div className="space-y-8">
-            {/* Compensation Box */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-3xl p-8 shadow-sm border border-emerald-200 relative overflow-hidden"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-emerald-600 text-white rounded-xl">
-                  <IndianRupee size={20} />
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Job Type
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "permanent",
+                    "temporary",
+                    "internship",
+                    "part-time",
+                    "full-time",
+                    "contractual",
+                    "freelance",
+                  ].map((type) => (
+                    <label
+                      key={type}
+                      className={`cursor-pointer px-3 py-1.5 text-xs font-bold rounded-lg border transition-all capitalize ${job.jobType.includes(type) ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        onChange={() => toggleArrayItem("jobType", type)}
+                      />{" "}
+                      {type}
+                    </label>
+                  ))}
                 </div>
-                <h2 className="text-xl font-bold text-emerald-900">
-                  Compensation
-                </h2>
               </div>
+            </div>
 
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-                  {["Monthly", "Weekly", "Daily", "Hourly", "Lump-Sum"].map(
-                    (freq) => (
-                      <label
-                        key={freq}
-                        className={`cursor-pointer py-2 px-1 text-center text-[10px] font-extrabold uppercase tracking-wide rounded-lg border transition-all ${job.salaryFrequency === freq ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50"}`}
-                      >
-                        <input
-                          type="radio"
-                          name="salaryFrequency"
-                          value={freq}
-                          checked={job.salaryFrequency === freq}
-                          onChange={handleChange}
-                          className="hidden"
-                        />
-                        {freq}
-                      </label>
-                    ),
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
-                    Salary Amount
-                  </label>
-                  <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+              <div>
+                <label className="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
+                  Salary & Frequency
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
                     <IndianRupee
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600"
                       size={16}
                     />
                     <input
@@ -471,176 +475,34 @@ export default function EditJob() {
                       name="salaryAmount"
                       value={job.salaryAmount}
                       onChange={handleChange}
-                      className="w-full bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                      className="w-full bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
+                  <select
+                    name="salaryFrequency"
+                    value={job.salaryFrequency}
+                    onChange={handleChange}
+                    className="bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {["Hourly", "Daily", "Weekly", "Monthly", "Lump-Sum"].map(
+                      (f) => (
+                        <option key={f} value={f}>
+                          {f}
+                        </option>
+                      ),
+                    )}
+                  </select>
                 </div>
               </div>
-            </motion.div>
 
-            {/* Schedule Box */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100"
-            >
-              <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                <div className="p-2.5 bg-orange-50 text-orange-600 rounded-xl">
-                  <Clock size={20} />
-                </div>
-                <h2 className="text-xl font-extrabold text-slate-800">
-                  Schedule
-                </h2>
-              </div>
-
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={job.startDate}
-                      onChange={handleChange}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={job.isLongTerm ? "" : job.endDate}
-                      onChange={handleChange}
-                      disabled={job.isLongTerm}
-                      className={`w-full border rounded-lg px-3 py-2.5 text-sm outline-none ${job.isLongTerm ? "bg-slate-100 border-slate-200 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-700 focus:border-indigo-500"}`}
-                    />
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={job.isLongTerm}
-                    onChange={(e) =>
-                      setJob((prev) => ({
-                        ...prev,
-                        isLongTerm: e.target.checked,
-                        endDate: e.target.checked ? "" : prev.endDate,
-                      }))
-                    }
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                  />
-                  Long Term Role (No fixed end date)
-                </label>
-
-                <div className="border-t border-slate-100 pt-4">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                    Work Days
-                  </label>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {DAYS_OF_WEEK.map((day) => (
-                      <button
-                        type="button"
-                        key={day}
-                        onClick={() => toggleWorkDay(day)}
-                        className={`py-1.5 text-[10px] font-bold rounded border transition-all ${job.workDays.includes(day) ? "bg-indigo-600 text-white border-indigo-600 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
-                      >
-                        {day.substring(0, 3)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-100 pt-4">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex justify-between items-center">
-                    Shifts
-                    <button
-                      type="button"
-                      onClick={addShift}
-                      className="text-indigo-600 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded"
-                    >
-                      <Plus size={12} /> Add
-                    </button>
-                  </label>
-                  <div className="space-y-3">
-                    {job.shifts.map((shift, index) => (
-                      <div
-                        key={index}
-                        className="p-3 bg-slate-50 border border-slate-200 rounded-xl relative"
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <input
-                            value={shift.shiftName}
-                            onChange={(e) =>
-                              updateShift(index, "shiftName", e.target.value)
-                            }
-                            className="bg-transparent font-bold text-xs text-indigo-600 outline-none w-24"
-                          />
-                          {index > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => removeShift(index)}
-                              className="text-rose-400 hover:text-rose-600"
-                            >
-                              <X size={14} />
-                            </button>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <input
-                            type="time"
-                            value={shift.startTime}
-                            onChange={(e) =>
-                              updateShift(index, "startTime", e.target.value)
-                            }
-                            className="flex-1 p-1.5 border border-slate-200 rounded text-xs outline-none focus:border-indigo-500"
-                          />
-                          <input
-                            type="time"
-                            value={shift.endTime}
-                            onChange={(e) =>
-                              updateShift(index, "endTime", e.target.value)
-                            }
-                            className="flex-1 p-1.5 border border-slate-200 rounded text-xs outline-none focus:border-indigo-500"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Requirements Box */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100"
-            >
-              <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
-                  <Target size={20} />
-                </div>
-                <h2 className="text-xl font-extrabold text-slate-800">
-                  Requirements
-                </h2>
-              </div>
-
-              <div className="space-y-6">
+              <div className="flex flex-col gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Openings
+                  <label className="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
+                    Openings required
                   </label>
                   <div className="relative">
                     <Users
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600"
                       size={16}
                     />
                     <input
@@ -648,63 +510,531 @@ export default function EditJob() {
                       name="noOfPeopleRequired"
                       value={job.noOfPeopleRequired}
                       onChange={handleChange}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm focus:bg-white focus:border-indigo-500 outline-none transition-all font-semibold"
+                      className="w-full bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl pl-9 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Required Skills
-                  </label>
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      value={skillsInput}
-                      onChange={(e) => setSkillsInput(e.target.value)}
-                      onKeyDown={handleSkills}
-                      className="flex-1 bg-slate-50 border border-slate-200 text-sm rounded-xl px-4 py-2.5 focus:bg-white focus:border-indigo-500 outline-none transition-all"
-                      placeholder="e.g. React, Node.js"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSkills}
-                      className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 rounded-xl font-bold text-sm transition-colors"
-                    >
-                      Add
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {job.skillsRequired.length === 0 ? (
-                      <span className="text-xs text-slate-400 italic">
-                        No skills added yet.
-                      </span>
-                    ) : (
-                      job.skillsRequired.map((skill, i) => (
-                        <motion.span
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          key={i}
-                          className="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 shadow-sm"
-                        >
-                          <Sparkles size={12} className="text-indigo-300" />{" "}
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => removeSkill(skill)}
-                            className="hover:text-rose-400 transition-colors ml-1"
-                          >
-                            <X size={14} />
-                          </button>
-                        </motion.span>
-                      ))
-                    )}
                   </div>
                 </div>
               </div>
-            </motion.div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
+                  Incentives & Perks (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="incentives"
+                  value={job.incentives}
+                  onChange={handleChange}
+                  placeholder="e.g. Performance Bonus, Health Insurance..."
+                  className="w-full bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
           </div>
-        </form>
+        </section>
+
+        {/* DEMOGRAPHICS & SKILLS */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
+          <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+            <UserCircle2 size={20} className="text-blue-600" /> Candidate
+            Profile & Skills
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Qualifications
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "10th Pass",
+                  "12th Pass",
+                  "Diploma",
+                  "Graduation",
+                  "Post-Graduation",
+                  "Any",
+                ].map((q) => (
+                  <label
+                    key={q}
+                    className={`cursor-pointer px-2.5 py-1 text-[10px] font-bold rounded border ${job.qualifications.includes(q) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200"}`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      onChange={() => toggleArrayItem("qualifications", q)}
+                    />{" "}
+                    {q}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Courses / Streams
+              </label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {job.courses.map((course, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-slate-100 text-slate-700 text-[10px] px-2 py-1 rounded flex items-center font-bold"
+                  >
+                    {course}{" "}
+                    <button
+                      type="button"
+                      onClick={() => removeTag("courses", idx)}
+                      className="ml-1 text-red-400"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={courseInput}
+                  onChange={(e) => setCourseInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(),
+                    addTag("courses", courseInput, setCourseInput))
+                  }
+                  placeholder="e.g. Commerce, B.Tech..."
+                  className="flex-1 p-1.5 border rounded outline-none text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => addTag("courses", courseInput, setCourseInput)}
+                  className="bg-slate-100 px-3 rounded text-xs font-bold"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Age Limit
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={job.ageLimit.min}
+                  onChange={(e) => handleAgeChange("min", e.target.value)}
+                  disabled={job.ageLimit.isAny}
+                  className="w-20 p-2 border rounded-lg text-sm outline-none disabled:bg-slate-100"
+                />
+                <span className="text-sm text-slate-400">to</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={job.ageLimit.max}
+                  onChange={(e) => handleAgeChange("max", e.target.value)}
+                  disabled={job.ageLimit.isAny}
+                  className="w-20 p-2 border rounded-lg text-sm outline-none disabled:bg-slate-100"
+                />
+                <label className="flex items-center gap-1 text-xs font-bold text-indigo-600 ml-2">
+                  <input
+                    type="checkbox"
+                    checked={job.ageLimit.isAny}
+                    onChange={(e) =>
+                      setJob((prev) => ({
+                        ...prev,
+                        ageLimit: { min: "", max: "", isAny: e.target.checked },
+                      }))
+                    }
+                    className="rounded"
+                  />{" "}
+                  Any
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Gender Preference
+              </label>
+              <select
+                name="genderPreference"
+                value={job.genderPreference}
+                onChange={handleChange}
+                className="w-full p-2.5 border rounded-xl text-sm outline-none font-bold text-slate-700 bg-white"
+              >
+                <option value="No Preference">No Preference</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Languages
+              </label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {job.languages.map((lang, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-slate-100 text-slate-700 text-[10px] px-2 py-1 rounded flex items-center font-bold"
+                  >
+                    {lang}{" "}
+                    <button
+                      type="button"
+                      onClick={() => removeTag("languages", idx)}
+                      className="ml-1 text-red-400"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={languageInput}
+                  onChange={(e) => setLanguageInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(),
+                    addTag("languages", languageInput, setLanguageInput))
+                  }
+                  placeholder="e.g. Hindi, English..."
+                  className="w-full md:w-1/2 p-2 border rounded-xl text-sm outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    addTag("languages", languageInput, setLanguageInput)
+                  }
+                  className="bg-slate-100 px-4 rounded-xl font-bold text-sm"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Required Skills
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {job.skillsRequired.map((skill, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                  >
+                    {skill}{" "}
+                    <button
+                      type="button"
+                      onClick={() => removeTag("skillsRequired", i)}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={skillsInput}
+                  onChange={(e) => setSkillsInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(),
+                    addTag("skillsRequired", skillsInput, setSkillsInput))
+                  }
+                  placeholder="Add skill..."
+                  className="p-2 border border-slate-200 rounded-lg text-sm flex-1 outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    addTag("skillsRequired", skillsInput, setSkillsInput)
+                  }
+                  className="bg-slate-100 px-4 rounded-lg font-bold text-sm"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* TIMINGS & DATES */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
+          <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+            <Clock size={20} className="text-purple-600" /> Schedule & Deadlines
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Work Days
+                </label>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {["Mon to Fri", "Mon to Sat", "Sat to Sun", "Custom"].map(
+                    (p) => (
+                      <label
+                        key={p}
+                        className={`cursor-pointer py-2 text-center text-xs font-bold rounded-lg border ${job.workDaysPattern === p ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="workDaysPattern"
+                          value={p}
+                          checked={job.workDaysPattern === p}
+                          onChange={handleChange}
+                          className="hidden"
+                        />{" "}
+                        {p}
+                      </label>
+                    ),
+                  )}
+                </div>
+                {job.workDaysPattern === "Custom" && (
+                  <input
+                    type="text"
+                    name="customWorkDaysDescription"
+                    value={job.customWorkDaysDescription}
+                    onChange={handleChange}
+                    placeholder="Describe days..."
+                    className="w-full p-2 border rounded-lg text-sm outline-none"
+                  />
+                )}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Shifts
+                  </label>
+                  <label className="text-xs font-bold text-indigo-600 flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isFlexibleShifts"
+                      checked={job.isFlexibleShifts}
+                      onChange={handleChange}
+                      className="rounded"
+                    />{" "}
+                    Flexible
+                  </label>
+                </div>
+                {!job.isFlexibleShifts && (
+                  <div className="space-y-2">
+                    {job.shifts.map((shift, index) => (
+                      <div
+                        key={index}
+                        className="flex gap-2 items-center p-2 bg-slate-50 rounded-lg border border-slate-200"
+                      >
+                        <input
+                          value={shift.shiftName}
+                          onChange={(e) =>
+                            updateShift(index, "shiftName", e.target.value)
+                          }
+                          className="w-20 bg-transparent text-xs font-bold outline-none"
+                        />
+                        <input
+                          type="time"
+                          value={shift.startTime}
+                          onChange={(e) =>
+                            updateShift(index, "startTime", e.target.value)
+                          }
+                          className="flex-1 p-1 border rounded text-xs outline-none"
+                        />
+                        <span className="text-slate-400">-</span>
+                        <input
+                          type="time"
+                          value={shift.endTime}
+                          onChange={(e) =>
+                            updateShift(index, "endTime", e.target.value)
+                          }
+                          className="flex-1 p-1 border rounded text-xs outline-none"
+                        />
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => removeShift(index)}
+                            className="text-rose-500"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addShift}
+                      className="text-xs font-bold text-indigo-600 flex items-center gap-1 mt-1"
+                    >
+                      <Plus size={12} /> Add Shift
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={job.startDate}
+                    onChange={handleChange}
+                    className="w-full p-2.5 border rounded-xl text-sm outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={job.isLongTerm ? "" : job.endDate}
+                    onChange={handleChange}
+                    disabled={job.isLongTerm}
+                    className="w-full p-2.5 border rounded-xl text-sm outline-none disabled:bg-slate-100"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="isLongTerm"
+                  checked={job.isLongTerm}
+                  onChange={handleChange}
+                  className="rounded"
+                />{" "}
+                Long Term Role
+              </label>
+
+              <div className="pt-4 border-t border-slate-100 mt-2">
+                <label className="text-xs font-bold text-rose-500 uppercase tracking-wider mb-1 flex items-center gap-1 block">
+                  <Calendar size={14} /> Application Deadline
+                </label>
+                <input
+                  type="date"
+                  name="applicationDeadline"
+                  value={job.applicationDeadline}
+                  onChange={handleChange}
+                  className="w-full p-2.5 border border-rose-200 bg-rose-50/50 rounded-xl text-sm outline-none focus:border-rose-500"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURES & DESCRIPTION */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
+          <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+            <AlignLeft size={20} className="text-amber-500" /> Description &
+            Highlights
+          </h2>
+
+          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 rounded-2xl p-5 mb-8 shadow-sm">
+            <label className="block text-sm font-extrabold text-amber-900 uppercase mb-3 flex items-center gap-1.5">
+              <Zap size={16} /> Job Highlights / Features
+            </label>
+            <p className="text-xs text-amber-700 mb-3">
+              Add two key selling points about this role.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input
+                type="text"
+                value={job.jobFeatures[0] || ""}
+                onChange={(e) =>
+                  setJob((p) => {
+                    const arr = [...p.jobFeatures];
+                    arr[0] = e.target.value;
+                    return { ...p, jobFeatures: arr };
+                  })
+                }
+                placeholder="Feature 1 (e.g., Fast-paced startup environment)"
+                className="p-3 rounded-xl border border-amber-200 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+              />
+              <input
+                type="text"
+                value={job.jobFeatures[1] || ""}
+                onChange={(e) =>
+                  setJob((p) => {
+                    const arr = [...p.jobFeatures];
+                    arr[1] = e.target.value;
+                    return { ...p, jobFeatures: arr };
+                  })
+                }
+                placeholder="Feature 2 (e.g., Weekly team lunches)"
+                className="p-3 rounded-xl border border-amber-200 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Job Summary
+              </label>
+              <textarea
+                value={jobSummary}
+                onChange={(e) => setJobSummary(e.target.value)}
+                className="w-full p-4 border border-slate-200 rounded-xl text-sm min-h-[120px] outline-none focus:border-indigo-500 leading-relaxed font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Key Responsibilities
+              </label>
+              <textarea
+                value={keyResponsibilities}
+                onChange={(e) => setKeyResponsibilities(e.target.value)}
+                className="w-full p-4 border border-slate-200 rounded-xl text-sm min-h-[120px] outline-none focus:border-indigo-500 leading-relaxed font-medium"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* LOCATION */}
+        {(job.mode.includes("Work from office") ||
+          job.mode.includes("Work from field")) && (
+          <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
+            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+              <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                <MapPin size={20} className="text-rose-500" /> Office Location
+              </h2>
+              <label className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg cursor-pointer flex items-center gap-2 border border-indigo-100 hover:bg-indigo-100 transition-colors">
+                <input
+                  type="checkbox"
+                  name="useOfficeLocation"
+                  checked={job.useOfficeLocation}
+                  onChange={handleChange}
+                  className="rounded text-indigo-600"
+                />{" "}
+                Use Profile Office Location
+              </label>
+            </div>
+            {!job.useOfficeLocation && (
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                <div className="rounded-xl overflow-hidden border border-slate-300 mb-3 shadow-sm">
+                  <LocationPicker onLocationSelect={handleLocationSelect} />
+                </div>
+                <input
+                  name="location"
+                  value={job.location}
+                  onChange={handleChange}
+                  placeholder="Refine specific address..."
+                  className="w-full p-3 border border-slate-300 rounded-xl text-sm outline-none focus:border-indigo-500 font-medium"
+                />
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );

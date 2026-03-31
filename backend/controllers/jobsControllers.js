@@ -259,15 +259,35 @@ export const updateJob = expressAsyncHandler(async (req, res) => {
   
   if (!job) return res.status(404).json({ message: "Job not found" });
 
-  // FIX: Use req.employerId, NOT req.user._id
   if (job.postedBy.toString() !== req.employerId.toString()) {
     return res.status(403).json({ message: "Not authorized to update this job" });
   }
 
-  const updatedJob = await Job.findByIdAndUpdate(id, req.body, { new: true });
+  let updateData = { ...req.body };
+
+  // FACT: Handle the "Same as Office Location" logic for edits
+  if (updateData.useOfficeLocation) {
+    const employer = await Employer.findById(req.employerId);
+    if (!employer.officeLocation || !employer.officeLocation.coordinates) {
+      res.status(400);
+      throw new Error("Your profile does not have a valid Office Location saved. Please update your profile or pick a location manually.");
+    }
+    updateData.location = employer.officeLocation;
+  } else if (updateData.location && updateData.location.type === 'Point') {
+    // Keep the new coordinates sent from the frontend map
+  } else if (updateData.mode && (updateData.mode.includes('Work from office') || updateData.mode.includes('Work from field'))) {
+     if(!updateData.location) {
+         res.status(400);
+         throw new Error("Please pick a location on the map or select 'Same as office location'.");
+     }
+  } else {
+    // Remote
+    updateData.location = { type: 'Point', coordinates: [0, 0], address: "Remote" };
+  }
+
+  const updatedJob = await Job.findByIdAndUpdate(id, updateData, { new: true });
   res.status(200).json({ message: "Job updated successfully", job: updatedJob });
 });
-
 
 
 export const deleteJob = expressAsyncHandler(async (req, res) => {
