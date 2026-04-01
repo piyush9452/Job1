@@ -6,7 +6,8 @@ import User from "../models/users.js";
 import sendEmail from "../utils/sendEmail.js";
 
 export const createApplication = errorHandler(async (req, res) => {
- const { jobId } = req.body;
+  // FACT: Extract 'message' from the frontend payload
+  const { jobId, message } = req.body;
   const userId = req.user?._id; // from protect middleware
 
   if (!userId) {
@@ -34,16 +35,18 @@ export const createApplication = errorHandler(async (req, res) => {
     job_id: jobId,
     appliedBy: userId,
   });
+  
   if (existingApplication) {
     res.status(400);
     throw new Error("You have already applied for this job");
   }
 
-
+  // FACT: Save the candidate's pitch to the database
   const application = await Application.create({
     job_id: jobId,
     jobHost: job.postedBy,
     appliedBy: userId,
+    applicantMessage: message || "", // <-- SAVED HERE
   });
 
   job.applicants.push(userId);
@@ -51,7 +54,7 @@ export const createApplication = errorHandler(async (req, res) => {
 
   await User.findByIdAndUpdate(
     userId,
-    { $addToSet: { appliedJobs: jobId } }, // addToSet prevents duplicates
+    { $addToSet: { appliedJobs: jobId } }, 
     { new: true }
   );
 
@@ -60,7 +63,7 @@ export const createApplication = errorHandler(async (req, res) => {
     message: "Application submitted successfully",
     application,
   });
-})
+});
 
 
 

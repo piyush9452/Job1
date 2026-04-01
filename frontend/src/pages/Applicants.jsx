@@ -6,9 +6,9 @@ import {
   Loader2,
   Mail,
   Phone,
-  Calendar,
   ChevronRight,
   User,
+  MessageSquareQuote,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -37,9 +37,7 @@ export default function JobApplicants() {
         // 2. Get Job Title
         const jobRes = await axios.get(
           `https://jobone-mrpy.onrender.com/jobs/${id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         setJobTitle(jobRes.data.title || jobRes.data.job?.title || "Job");
       } catch (err) {
@@ -62,7 +60,7 @@ export default function JobApplicants() {
     };
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${styles[status] || styles.applied}`}
+        className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border ${styles[status] || styles.applied}`}
       >
         {status}
       </span>
@@ -72,101 +70,119 @@ export default function JobApplicants() {
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin text-blue-600" size={40} />
+        <Loader2 className="animate-spin text-indigo-600" size={48} />
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 font-sans mt-10">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
           <div>
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-2 transition-colors font-medium"
+              className="flex items-center gap-2 text-slate-400 hover:text-slate-800 mb-4 transition-colors font-bold text-sm"
             >
-              <ArrowLeft size={18} /> Back to Job
+              <ArrowLeft size={16} /> Back to Job
             </button>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              Applicants for {jobTitle}
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Applicants for <span className="text-indigo-600">{jobTitle}</span>
             </h1>
           </div>
-          <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-sm font-bold text-slate-600">
-            Total: <span className="text-blue-600">{applicants.length}</span>
+          <div className="bg-white px-5 py-3 rounded-xl border border-slate-200 shadow-sm text-sm font-bold text-slate-600 flex items-center gap-2 shrink-0">
+            Total Applicants:{" "}
+            <span className="text-indigo-600 text-lg">{applicants.length}</span>
           </div>
         </div>
 
         {applicants.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="text-slate-300" size={32} />
+          <div className="text-center py-24 bg-white rounded-3xl border border-slate-200 shadow-sm">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-slate-100">
+              <User className="text-slate-400" size={32} />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-xl font-extrabold text-slate-800 mb-2">
               No applications yet
             </h3>
-            <p className="text-slate-500">
+            <p className="text-slate-500 font-medium">
               Candidates will appear here once they apply.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {applicants.map((app) => {
-              // FIX: Use 'appliedBy' instead of 'applicant'
               const candidate = app.appliedBy;
-              if (!candidate) return null; // Safety check
+              if (!candidate) return null;
 
               return (
                 <motion.div
                   key={app._id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                  className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 overflow-hidden flex flex-col"
                 >
-                  <div className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
+                  <div className="p-6 sm:p-8">
+                    <div className="flex items-center gap-4 mb-5">
                       <img
                         src={
                           candidate.profilePicture ||
                           "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
                         }
                         alt="Avatar"
-                        className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm bg-slate-100"
+                        className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-sm bg-slate-50 shrink-0"
                       />
                       <div className="min-w-0">
-                        <h3 className="font-bold text-lg text-slate-900 leading-tight truncate">
+                        <h3 className="font-extrabold text-lg text-slate-900 leading-tight truncate">
                           {candidate.name}
                         </h3>
-                        <p className="text-xs text-slate-500 font-mono mt-0.5">
-                          Applied:{" "}
-                          {new Date(app.createdAt).toLocaleDateString()}
+                        <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">
+                          Applied{" "}
+                          {new Date(
+                            app.appliedAt || app.createdAt,
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mb-4">{getStatusBadge(app.status)}</div>
+                    <div className="mb-5">{getStatusBadge(app.status)}</div>
 
-                    <div className="space-y-3 text-sm text-slate-600 mb-6">
-                      <div className="flex items-center gap-2">
-                        <Mail size={14} className="text-slate-400 shrink-0" />
+                    <div className="space-y-3 text-sm font-bold text-slate-600 mb-6">
+                      <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <Mail size={16} className="text-indigo-400 shrink-0" />
                         <span className="truncate">{candidate.email}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Phone size={14} className="text-slate-400 shrink-0" />
-                        <span>{candidate.phone || "N/A"}</span>
+                      <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <Phone size={16} className="text-indigo-400 shrink-0" />
+                        <span>{candidate.phone || "Not Provided"}</span>
                       </div>
                     </div>
+
+                    {/* FACT: The Pitch Preview is now visible! */}
+                    {app.applicantMessage && (
+                      <div className="bg-amber-50/50 border border-amber-100 p-4 rounded-2xl relative">
+                        <MessageSquareQuote
+                          className="absolute top-3 right-3 text-amber-200/50"
+                          size={32}
+                        />
+                        <p className="text-xs font-bold text-amber-900 mb-1.5 uppercase tracking-widest">
+                          Pitch:
+                        </p>
+                        <p className="text-sm font-medium text-amber-800 line-clamp-3 relative z-10 leading-relaxed">
+                          "{app.applicantMessage}"
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="mt-auto border-t border-slate-100 p-4 bg-slate-50">
+                  <div className="mt-auto border-t border-slate-100 p-5 bg-slate-50">
                     <button
                       onClick={() =>
                         navigate(`/application/${app._id}`, {
                           state: { application: app },
                         })
                       }
-                      className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-blue-600 font-bold py-2.5 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm"
+                      className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-indigo-600 font-bold py-3 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all shadow-sm active:scale-[0.98]"
                     >
-                      View Full Profile <ChevronRight size={16} />
+                      Review Full Profile <ChevronRight size={18} />
                     </button>
                   </div>
                 </motion.div>

@@ -7,11 +7,10 @@ import {
   Users,
   Settings,
   LogOut,
-  Eye,
   RefreshCw,
   Power,
   Clock,
-} from "lucide-react";
+} from "lucide-react"; // FACT: Removed the Eye icon
 import axios from "axios";
 
 export default function EmployerDashboard() {
@@ -74,7 +73,6 @@ export default function EmployerDashboard() {
     fetchJobs();
   }, [navigate]);
 
-  // FACT: Toggle Job Status (Soft Delete)
   const toggleJobStatus = async (jobId, currentStatus) => {
     try {
       const newStatus = currentStatus === "active" ? "closed" : "active";
@@ -96,14 +94,13 @@ export default function EmployerDashboard() {
     }
   };
 
-  // FACT: Repost handler pushes data to CreateJob via state
   const handleRepost = (job) => {
     navigate("/createjob", { state: { repostData: job } });
   };
 
   return (
     <div className="min-h-screen py-20 bg-slate-50 p-10">
-      {/* Sidebar remains intact */}
+      {/* Sidebar */}
       <aside className="fixed left-0 top-15 hidden h-full w-64 border-r border-slate-200 bg-white p-6 md:block">
         <div className="mb-10 flex items-center gap-2 px-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-200">
@@ -219,11 +216,12 @@ export default function EmployerDashboard() {
                   {jobs.map((job) => (
                     <tr
                       key={job._id}
-                      className="hover:bg-slate-50 transition-colors"
+                      onClick={() => navigate(`/job/${job._id}`)}
+                      className="hover:bg-slate-50 transition-colors cursor-pointer group"
                     >
                       {/* Job Title & Details */}
                       <td className="p-4">
-                        <div className="font-extrabold text-slate-900 text-sm">
+                        <div className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
                           {job.title}
                         </div>
                         <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
@@ -265,21 +263,20 @@ export default function EmployerDashboard() {
                       <td className="p-4 text-right border-l border-slate-100">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => navigate(`/job/${job._id}`)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="View Job Page"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleRepost(job)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // FACT: Prevents row click
+                              handleRepost(job);
+                            }}
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                             title="Repost Job"
                           >
                             <RefreshCw size={18} />
                           </button>
                           <button
-                            onClick={() => toggleJobStatus(job._id, job.status)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // FACT: Prevents row click
+                              toggleJobStatus(job._id, job.status);
+                            }}
                             className={`p-2 rounded-lg transition-colors ${job.status === "active" ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50" : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"}`}
                             title={
                               job.status === "active"

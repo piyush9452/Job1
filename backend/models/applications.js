@@ -5,14 +5,13 @@ const applicationSchema = new mongoose.Schema({
   jobHost: { type: mongoose.Schema.Types.ObjectId, ref: "Employer", required: true },
   appliedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   
-  // CHANGED: Added Interview Conducted
   status: { 
     type: String, 
     enum: [
       "applied", 
       "shortlisted", 
       "Interview Scheduled", 
-      "Interview Conducted", // <-- NEW
+      "Interview Conducted", 
       "Assignment Scheduled", 
       "hired", 
       "NCTT"
@@ -21,6 +20,10 @@ const applicationSchema = new mongoose.Schema({
   },
   applicantHasSeen: { type: Boolean, default: true },
   employerMessage: { type: String, default: "" },
+  
+  // FACT: Added field to store the "Pitch Yourself" message
+  applicantMessage: { type: String, default: "" }, 
+  
   appliedAt: { type: Date, default: Date.now },
 }); 
 
