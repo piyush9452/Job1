@@ -17,6 +17,7 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Jobs from "./pages/Jobs";
 import PublicProfile from "./pages/PublicProfile";
+import CompanyProfile from "./pages/CompanyProfile";
 
 // --- USER PAGES ---
 import UserDashboard from "./pages/UserDashboard";
@@ -124,6 +125,7 @@ function App() {
             </EmployerProtectedRoute>
           }
         />
+        <Route path="/company/:id" element={<CompanyProfile />} />
         <Route
           path="/employerprofile"
           element={

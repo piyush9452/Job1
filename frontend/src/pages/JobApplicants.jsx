@@ -14,6 +14,8 @@ import {
   AlertCircle,
   FileText,
   CheckSquare,
+  MessageSquareQuote,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,6 +37,13 @@ export default function JobApplicants() {
     requireMessage: false,
   });
   const [employerMessage, setEmployerMessage] = useState("");
+
+  // FACT: State for the Pitch Preview Modal
+  const [pitchModal, setPitchModal] = useState({
+    show: false,
+    message: "",
+    name: "",
+  });
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -91,7 +100,6 @@ export default function JobApplicants() {
       const stored = localStorage.getItem("employerInfo");
       const { token } = JSON.parse(stored);
 
-      // FACT: Fires updates in parallel for all selected candidates
       await Promise.all(
         selectedApps.map((appId) =>
           axios.patch(
@@ -102,7 +110,6 @@ export default function JobApplicants() {
         ),
       );
 
-      // Instantly update the UI table without needing to refresh the page
       setApplicants((prev) =>
         prev.map((app) =>
           selectedApps.includes(app._id)
@@ -127,7 +134,6 @@ export default function JobApplicants() {
     }
   };
 
-  // FACT: Phase 1 Status Badges
   const getStatusBadge = (status) => {
     switch (status) {
       case "hired":
@@ -378,23 +384,43 @@ export default function JobApplicants() {
                           </div>
                         </td>
                         <td className="p-4 text-sm font-bold text-slate-600">
-                          {new Date(app.createdAt).toLocaleDateString()}
+                          {new Date(
+                            app.createdAt || app.appliedAt,
+                          ).toLocaleDateString()}
                         </td>
                         <td className="p-4">{getStatusBadge(app.status)}</td>
                         <td className="p-4 text-right">
-                          <button
-                            onClick={() =>
-                              navigate(`/profile/${candidate._id}`, {
-                                state: {
-                                  applicationId: app._id,
-                                  status: app.status,
-                                },
-                              })
-                            }
-                            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-indigo-600 font-bold px-4 py-2 rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-all text-sm shadow-sm"
-                          >
-                            View Profile <ChevronRight size={16} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {/* FACT: "Read Pitch" Button Added Here */}
+                            {app.applicantMessage && (
+                              <button
+                                onClick={() =>
+                                  setPitchModal({
+                                    show: true,
+                                    message: app.applicantMessage,
+                                    name: candidate.name,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 font-bold px-3 py-2 rounded-lg hover:bg-amber-100 transition-all text-sm shadow-sm"
+                                title="Read Pitch"
+                              >
+                                <MessageSquareQuote size={16} /> Pitch
+                              </button>
+                            )}
+                            <button
+                              onClick={() =>
+                                navigate(`/profile/${candidate._id}`, {
+                                  state: {
+                                    applicationId: app._id,
+                                    status: app.status,
+                                  },
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-indigo-600 font-bold px-4 py-2 rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-all text-sm shadow-sm"
+                            >
+                              Profile <ChevronRight size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -405,6 +431,46 @@ export default function JobApplicants() {
           </div>
         )}
       </div>
+
+      {/* FACT: The Pitch Modal */}
+      <AnimatePresence>
+        {pitchModal.show && (
+          <div
+            className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() =>
+              setPitchModal({ show: false, message: "", name: "" })
+            }
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl relative"
+            >
+              <button
+                onClick={() =>
+                  setPitchModal({ show: false, message: "", name: "" })
+                }
+                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
+              <div className="flex items-center gap-3 mb-4 text-amber-600">
+                <MessageSquareQuote size={28} />
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  Pitch from {pitchModal.name}
+                </h3>
+              </div>
+              <div className="p-5 bg-amber-50 border border-amber-100 rounded-2xl">
+                <p className="text-slate-700 leading-relaxed font-medium whitespace-pre-wrap">
+                  "{pitchModal.message}"
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* UNIFIED MESSAGE MODAL */}
       {actionModal.show && (

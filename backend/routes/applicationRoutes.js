@@ -6,13 +6,14 @@ import {
   allApplicationFromUser, 
   createApplication, 
   getJobApplications,   // Import this
-  updateApplicationStatus ,markApplicationAsSeen// Import this
+  updateApplicationStatus ,markApplicationAsSeen,requestInterviewReschedule// Import this
 } from "../controllers/applicationControllers.js";
 
 const router = express.Router();
 
 // --- USER ROUTES ---
 router.post("/", protect, createApplication);
+router.post("/:id/reschedule", protect, requestInterviewReschedule);
 router.patch("/:id/seen", protect, markApplicationAsSeen);
 router.get("/:id", protect, allApplicationFromUser); 
 

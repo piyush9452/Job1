@@ -89,7 +89,13 @@ export default function JobDetailsModal({ job, onClose }) {
                 {job.title}
               </h1>
               <div className="flex flex-wrap items-center text-slate-500 text-xs sm:text-sm font-bold gap-3 mt-2">
-                <span className="text-slate-700">
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevents triggering the job card click
+                    if (job.postedBy) navigate(`/company/${job.postedBy}`);
+                  }}
+                  className="text-slate-700 hover:text-indigo-600 hover:underline cursor-pointer"
+                >
                   {job.postedByCompany ||
                     job.postedByName ||
                     "Confidential Employer"}
