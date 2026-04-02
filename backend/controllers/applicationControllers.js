@@ -222,65 +222,6 @@ export const markApplicationAsSeen = errorHandler(async (req, res) => {
   res.status(200).json({ success: true });
 });
 
-// --- FACT: NEW ROUTE - CANDIDATE RESCHEDULE REQUEST ---
-export const requestInterviewReschedule = errorHandler(async (req, res) => {
-  const { id } = req.params;
-  const { reason, proposedTime } = req.body;
-  const userId = req.user._id;
-
-  const application = await Application.findOne({ _id: id, appliedBy: userId })
-    .populate("job_id", "title")
-    .populate("jobHost", "email name")
-    .populate("appliedBy", "name");
-
-  if (!application) {
-    res.status(404);
-    throw new Error("Application not found");
-  }
-
-  if (application.status !== "Interview Scheduled") {
-    res.status(400);
-    throw new Error("You can only reschedule applications that currently have an active interview status.");
-  }
-
-  // FACT: Appending the reschedule request to the candidate's pitch so the employer sees it on their dashboard
-  const rescheduleNote = `\n\n--- RESCHEDULE REQUEST ---\nReason: ${reason}\nProposed Time: ${proposedTime}`;
-  application.applicantMessage = (application.applicantMessage || "") + rescheduleNote;
-  
-  await application.save();
-
-  // FACT: Send a notification email to the employer
-  try {
-    const employerEmail = application.jobHost.email;
-    const jobTitle = application.job_id.title;
-    const candidateName = application.appliedBy.name;
-
-    const emailHTML = `
-      <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
-        <h2 style="color: #f59e0b;">Interview Reschedule Request</h2>
-        <p style="color: #334155; font-size: 16px;">Candidate <strong>${candidateName}</strong> has requested to reschedule their interview for the <strong>${jobTitle}</strong> role.</p>
-        <div style="margin-top: 20px; padding: 15px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 5px;">
-          <p style="color: #78350f; font-size: 15px; margin-bottom: 5px;"><strong>Reason:</strong> ${reason}</p>
-          <p style="color: #78350f; font-size: 15px; margin-top: 0;"><strong>Proposed Time:</strong> ${proposedTime}</p>
-        </div>
-        <p style="color: #64748b; font-size: 14px; margin-top: 30px;">Log in to your JobOne Employer Dashboard to review and update the candidate's schedule.</p>
-      </div>
-    `;
-
-    await sendEmail({
-      email: employerEmail,
-      subject: `Reschedule Request: ${candidateName} for ${jobTitle}`,
-      html: emailHTML,
-    });
-  } catch (emailError) {
-    console.error("Failed to send reschedule email to employer", emailError);
-  }
-
-  res.status(200).json({
-    success: true,
-    message: "Reschedule request sent successfully to the employer.",
-  });
-});
 
 
 
