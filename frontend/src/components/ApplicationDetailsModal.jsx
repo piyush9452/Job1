@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import {
   X,
@@ -16,13 +17,63 @@ import {
   Monitor,
   Building,
   Globe,
+  CalendarClock,
+  Loader2,
 } from "lucide-react";
 
 export default function ApplicationDetailsModal({ application, onClose }) {
   if (!application) return null;
 
-  const { job, status, appliedAt, employerMessage } = application;
+  // FACT: Added state for the Reschedule Form
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [rescheduleData, setRescheduleData] = useState({
+    reason: "",
+    proposedTime: "",
+  });
+  const [rescheduleStatus, setRescheduleStatus] = useState("idle"); // idle, loading, success, error
+  const [rescheduleFeedback, setRescheduleFeedback] = useState("");
+
+  const { job, status, appliedAt, employerMessage, applicationId } =
+    application;
   const companyName = job.postedBy?.name || "Company Confidential";
+
+  // --- RESCHEDULE HANDLER ---
+  const handleRescheduleSubmit = async (e) => {
+    e.preventDefault();
+    if (!rescheduleData.reason || !rescheduleData.proposedTime) return;
+
+    setRescheduleStatus("loading");
+    setRescheduleFeedback("");
+
+    try {
+      const storedUser = localStorage.getItem("userInfo");
+      const token = JSON.parse(storedUser)?.token;
+
+      await axios.post(
+        `https://jobone-mrpy.onrender.com/applications/${applicationId}/reschedule`,
+        rescheduleData,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      setRescheduleStatus("success");
+      setRescheduleFeedback(
+        "Reschedule request sent successfully! The employer will be notified.",
+      );
+
+      // Reset after a few seconds
+      setTimeout(() => {
+        setIsRescheduling(false);
+        setRescheduleStatus("idle");
+      }, 4000);
+    } catch (err) {
+      console.error("Reschedule Error:", err);
+      setRescheduleStatus("error");
+      setRescheduleFeedback(
+        err.response?.data?.message ||
+          "Failed to send request. Please try again.",
+      );
+    }
+  };
 
   // Helper to style the status section mapped to Phase 1 Schema
   const getStatusUI = (status) => {
@@ -80,24 +131,30 @@ export default function ApplicationDetailsModal({ application, onClose }) {
 
   const statusUI = getStatusUI(status);
 
-  const isRemote = job.mode === "Work from Home";
+  // FACT: Safe fallback for arrays vs strings
+  const renderArray = (val) => {
+    if (!val) return "Not specified";
+    if (Array.isArray(val))
+      return val.length > 0 ? val.join(", ") : "Not specified";
+    return String(val);
+  };
+
+  const modeStr = renderArray(job.mode);
+  const isRemote =
+    modeStr.toLowerCase().includes("home") || modeStr === "Online";
   const displayLocation = isRemote
     ? "Remote"
     : typeof job.location === "object"
       ? job.location?.address
       : job.location || "Office";
 
-  const getModeIcon = (mode) => {
-    switch (mode) {
-      case "Work from Home":
-        return <Monitor size={14} className="text-slate-400" />;
-      case "Work from Office/Field":
-        return <Building size={14} className="text-slate-400" />;
-      case "Hybrid":
-        return <Globe size={14} className="text-slate-400" />;
-      default:
-        return <Briefcase size={14} className="text-slate-400" />;
-    }
+  const getModeIcon = (modeString) => {
+    const m = modeString.toLowerCase();
+    if (m.includes("home"))
+      return <Monitor size={14} className="text-slate-400" />;
+    if (m.includes("hybrid"))
+      return <Globe size={14} className="text-slate-400" />;
+    return <Building size={14} className="text-slate-400" />;
   };
 
   return (
@@ -109,9 +166,9 @@ export default function ApplicationDetailsModal({ application, onClose }) {
         className="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col relative border border-slate-100 overflow-hidden"
       >
         {/* Header */}
-        <div className="flex justify-between items-start p-6 sm:p-8 border-b border-slate-100 bg-white relative z-10">
-          <div className="flex gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-2xl font-extrabold text-indigo-600 shadow-sm shrink-0">
+        <div className="flex justify-between items-start p-6 sm:p-8 border-b border-slate-100 bg-white relative z-10 shrink-0">
+          <div className="flex gap-4 items-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-2xl font-extrabold text-indigo-600 shadow-sm shrink-0">
               {job.postedBy?.image ? (
                 <img
                   src={job.postedBy.image}
@@ -151,27 +208,157 @@ export default function ApplicationDetailsModal({ application, onClose }) {
             <p className="text-sm font-bold leading-relaxed opacity-90 pl-9 mt-1 relative z-10">
               {statusUI.message}
             </p>
+
+            {/* FACT: Reschedule Button Appears ONLY if Interview is Scheduled */}
+            {status === "Interview Scheduled" && (
+              <div className="mt-4 pl-9 relative z-10">
+                {application.rescheduleRequest?.isRequested ? (
+                  <div
+                    className={`p-3 rounded-xl text-sm font-bold border ${
+                      application.rescheduleRequest.requestStatus === "pending"
+                        ? "bg-orange-50 border-orange-200 text-orange-700"
+                        : application.rescheduleRequest.requestStatus ===
+                            "approved"
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                          : "bg-rose-50 border-rose-200 text-rose-700"
+                    }`}
+                  >
+                    <span className="uppercase tracking-wider text-[10px] block mb-1">
+                      Reschedule Status
+                    </span>
+                    {application.rescheduleRequest.requestStatus ===
+                      "pending" &&
+                      "Pending Employer Approval for: " +
+                        application.rescheduleRequest.proposedTime}
+                    {application.rescheduleRequest.requestStatus ===
+                      "approved" &&
+                      "Approved! Check employer messages for the final link."}
+                    {application.rescheduleRequest.requestStatus ===
+                      "rejected" &&
+                      "Request Denied. Please attend the original time or message the employer."}
+                  </div>
+                ) : !isRescheduling ? (
+                  <button
+                    onClick={() => setIsRescheduling(true)}
+                    className="flex items-center gap-2 bg-white border border-purple-200 text-purple-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-purple-50 transition-colors"
+                  >
+                    <CalendarClock size={16} /> Request Reschedule
+                  </button>
+                ) : null}
+              </div>
+            )}
+
             <div className="mt-4 pt-4 border-t border-black/10 flex items-center gap-2 text-xs font-extrabold opacity-70 pl-9 relative z-10">
               <Calendar size={14} /> Applied on{" "}
               {new Date(appliedAt).toLocaleDateString()}
             </div>
           </div>
 
-          {/* FACT: New Employer Message Block */}
+          {/* FACT: Reschedule Form Modal/Dropdown */}
+          {isRescheduling && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="bg-white rounded-2xl p-6 border border-purple-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden"
+            >
+              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-4">
+                <CalendarClock size={18} className="text-purple-600" /> Request
+                a New Time
+              </h3>
+
+              {rescheduleStatus === "success" ? (
+                <div className="p-4 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold flex items-center gap-2">
+                  <CheckCircle2 size={18} className="shrink-0" />{" "}
+                  {rescheduleFeedback}
+                </div>
+              ) : (
+                <form onSubmit={handleRescheduleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                      Reason for Rescheduling
+                    </label>
+                    <textarea
+                      required
+                      value={rescheduleData.reason}
+                      onChange={(e) =>
+                        setRescheduleData({
+                          ...rescheduleData,
+                          reason: e.target.value,
+                        })
+                      }
+                      placeholder="E.g., I have an unexpected medical appointment..."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition-all resize-none"
+                      rows="2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                      Proposed Date & Time
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={rescheduleData.proposedTime}
+                      onChange={(e) =>
+                        setRescheduleData({
+                          ...rescheduleData,
+                          proposedTime: e.target.value,
+                        })
+                      }
+                      placeholder="E.g., Tomorrow at 3:00 PM EST, or Friday morning"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition-all"
+                    />
+                  </div>
+
+                  {rescheduleStatus === "error" && (
+                    <p className="text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-lg flex items-center gap-1.5">
+                      <AlertCircle size={14} /> {rescheduleFeedback}
+                    </p>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsRescheduling(false)}
+                      className="px-5 py-2.5 text-slate-500 font-bold hover:bg-slate-100 rounded-xl transition-colors text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={rescheduleStatus === "loading"}
+                      className="px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-colors text-sm flex items-center gap-2 disabled:opacity-70 shadow-lg shadow-purple-200"
+                    >
+                      {rescheduleStatus === "loading" ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <CalendarClock size={16} />
+                      )}
+                      {rescheduleStatus === "loading"
+                        ? "Sending..."
+                        : "Send Request"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          )}
+
+          {/* Employer Message Block */}
           {employerMessage && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 bg-indigo-50 border border-indigo-100 rounded-2xl shadow-sm relative"
+              className="p-6 bg-indigo-50 border border-indigo-100 rounded-2xl shadow-sm relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                <MessageSquare size={100} />
+              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                <MessageSquare size={120} />
               </div>
-              <h3 className="text-sm font-extrabold text-indigo-900 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-extrabold text-indigo-900 mb-3 flex items-center gap-2 relative z-10">
                 <MessageSquare size={16} className="text-indigo-500" /> Message
                 from Employer
               </h3>
-              <div className="text-indigo-800 font-medium whitespace-pre-wrap leading-relaxed text-sm bg-white/60 p-4 rounded-xl border border-indigo-100/50">
+              <div className="text-indigo-900 font-medium whitespace-pre-wrap leading-relaxed text-sm bg-white/60 p-4 rounded-xl border border-indigo-100/50 relative z-10 shadow-sm">
                 {employerMessage}
               </div>
             </motion.div>
@@ -192,7 +379,7 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                   {job.salaryAmount ? job.salaryAmount.toLocaleString() : "TBD"}
                 </p>
                 <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
-                  {job.salaryFrequency}
+                  {job.salaryFrequency || "Monthly"}
                 </p>
               </div>
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
@@ -200,7 +387,7 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                   Work Mode
                 </p>
                 <p className="font-extrabold text-slate-900 flex items-center gap-1.5 truncate">
-                  {getModeIcon(job.mode)} {job.mode}
+                  {getModeIcon(modeStr)} {modeStr}
                 </p>
               </div>
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 col-span-2">
@@ -227,10 +414,10 @@ export default function ApplicationDetailsModal({ application, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 bg-white flex justify-end relative z-10">
+        <div className="p-6 border-t border-slate-100 bg-white flex justify-end relative z-10 shrink-0">
           <button
             onClick={onClose}
-            className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-md"
+            className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-md active:scale-[0.98]"
           >
             Close
           </button>

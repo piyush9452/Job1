@@ -281,3 +281,81 @@ export const requestInterviewReschedule = errorHandler(async (req, res) => {
     message: "Reschedule request sent successfully to the employer.",
   });
 });
+
+
+
+export const requestInterviewReschedule = errorHandler(async (req, res) => {
+  const { id } = req.params;
+  const { reason, proposedTime } = req.body;
+  const userId = req.user._id;
+
+  const application = await Application.findOne({ _id: id, appliedBy: userId })
+    .populate("job_id", "title")
+    .populate("jobHost", "email name")
+    .populate("appliedBy", "name");
+
+  if (!application || application.status !== "Interview Scheduled") {
+    res.status(400);
+    throw new Error("You can only reschedule active interviews.");
+  }
+
+  // FACT: Save structured request to the DB
+  application.rescheduleRequest = {
+    isRequested: true,
+    reason,
+    proposedTime,
+    requestStatus: "pending"
+  };
+  await application.save();
+
+  // Email to Employer
+  try {
+    await sendEmail({
+      email: application.jobHost.email,
+      subject: `Reschedule Request: ${application.appliedBy.name} for ${application.job_id.title}`,
+      html: `<h2>Interview Reschedule Request</h2>
+             <p>Candidate <strong>${application.appliedBy.name}</strong> requested a new time.</p>
+             <p><strong>Reason:</strong> ${reason}</p>
+             <p><strong>Proposed Time:</strong> ${proposedTime}</p>
+             <p>Log in to your Employer Dashboard to Approve or Reject this request.</p>`
+    });
+  } catch (err) { console.error("Email failed", err); }
+
+  res.status(200).json({ success: true, message: "Request sent." });
+});
+
+// --- 2. NEW: EMPLOYER APPROVES OR REJECTS ---
+export const respondToRescheduleRequest = errorHandler(async (req, res) => {
+  const { id } = req.params;
+  const { action, employerMessage } = req.body; // action must be "approved" or "rejected"
+
+  const application = await Application.findById(id).populate("appliedBy", "name email").populate("job_id", "title");
+
+  if (!application || application.jobHost.toString() !== req.employerId.toString()) {
+    res.status(403);
+    throw new Error("Not authorized");
+  }
+
+  application.rescheduleRequest.requestStatus = action;
+  
+  if (employerMessage) {
+    application.employerMessage = employerMessage;
+  }
+  
+  application.applicantHasSeen = false;
+  await application.save();
+
+  // Email to Candidate
+  try {
+    await sendEmail({
+      email: application.appliedBy.email,
+      subject: `Interview Reschedule ${action.toUpperCase()}`,
+      html: `<h2>Reschedule Request ${action.toUpperCase()}</h2>
+             <p>The employer has <strong>${action}</strong> your proposed time for the ${application.job_id.title} interview.</p>
+             ${employerMessage ? `<p><strong>Message from employer:</strong><br/>${employerMessage}</p>` : ''}
+             <p>Check your dashboard for details.</p>`
+    });
+  } catch (err) { console.error("Email failed", err); }
+
+  res.status(200).json({ success: true, application });
+});

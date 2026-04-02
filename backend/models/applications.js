@@ -7,23 +7,21 @@ const applicationSchema = new mongoose.Schema({
   
   status: { 
     type: String, 
-    enum: [
-      "applied", 
-      "shortlisted", 
-      "Interview Scheduled", 
-      "Interview Conducted", 
-      "Assignment Scheduled", 
-      "hired", 
-      "NCTT"
-    ], 
+    enum: ["applied", "shortlisted", "Interview Scheduled", "Interview Conducted", "Assignment Scheduled", "hired", "NCTT"], 
     default: "applied" 
   },
   applicantHasSeen: { type: Boolean, default: true },
   employerMessage: { type: String, default: "" },
-  
-  // FACT: Added field to store the "Pitch Yourself" message
   applicantMessage: { type: String, default: "" }, 
   
+  // FACT: Formal Two-Way Reschedule System
+  rescheduleRequest: {
+    isRequested: { type: Boolean, default: false },
+    reason: { type: String, default: "" },
+    proposedTime: { type: String, default: "" },
+    requestStatus: { type: String, enum: ["pending", "approved", "rejected", "none"], default: "none" }
+  },
+
   appliedAt: { type: Date, default: Date.now },
 }); 
 

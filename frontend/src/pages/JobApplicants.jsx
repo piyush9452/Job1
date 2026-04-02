@@ -83,6 +83,46 @@ export default function JobApplicants() {
     }
   };
 
+  const handleRescheduleResponse = async (action) => {
+    setActionLoading(true);
+    try {
+      const token = JSON.parse(localStorage.getItem("employerInfo")).token;
+      await axios.patch(
+        `https://jobone-mrpy.onrender.com/applications/${actionModal.appId}/reschedule/respond`,
+        { action, employerMessage },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      // Update UI
+      setApplicants((prev) =>
+        prev.map((app) =>
+          app._id === actionModal.appId
+            ? {
+                ...app,
+                rescheduleRequest: {
+                  ...app.rescheduleRequest,
+                  requestStatus: action,
+                },
+                employerMessage,
+              }
+            : app,
+        ),
+      );
+
+      setActionModal({
+        show: false,
+        status: "",
+        title: "",
+        requireMessage: false,
+      });
+      setEmployerMessage("");
+    } catch (err) {
+      alert("Failed to process response.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleSelectOne = (appId) => {
     if (selectedApps.includes(appId)) {
       setSelectedApps(selectedApps.filter((id) => id !== appId));
@@ -405,6 +445,24 @@ export default function JobApplicants() {
                                 title="Read Pitch"
                               >
                                 <MessageSquareQuote size={16} /> Pitch
+                              </button>
+                            )}
+                            {app.rescheduleRequest?.requestStatus ===
+                              "pending" && (
+                              <button
+                                onClick={() =>
+                                  setActionModal({
+                                    show: true,
+                                    status: "reschedule_review", // Custom flag for the modal
+                                    title: "Review Reschedule Request",
+                                    requireMessage: true,
+                                    appId: app._id,
+                                    requestData: app.rescheduleRequest,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 font-bold px-3 py-2 rounded-lg hover:bg-orange-100 transition-all text-sm shadow-sm animate-pulse"
+                              >
+                                <Clock size={16} /> Review Time
                               </button>
                             )}
                             <button

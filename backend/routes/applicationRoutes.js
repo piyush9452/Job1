@@ -6,7 +6,7 @@ import {
   allApplicationFromUser, 
   createApplication, 
   getJobApplications,   // Import this
-  updateApplicationStatus ,markApplicationAsSeen,requestInterviewReschedule// Import this
+  updateApplicationStatus ,markApplicationAsSeen,requestInterviewReschedule,respondToRescheduleRequest// Import this
 } from "../controllers/applicationControllers.js";
 
 const router = express.Router();
@@ -14,6 +14,7 @@ const router = express.Router();
 // --- USER ROUTES ---
 router.post("/", protect, createApplication);
 router.post("/:id/reschedule", protect, requestInterviewReschedule);
+router.patch("/:id/reschedule/respond", protectEmployer, respondToRescheduleRequest);
 router.patch("/:id/seen", protect, markApplicationAsSeen);
 router.get("/:id", protect, allApplicationFromUser); 
 
