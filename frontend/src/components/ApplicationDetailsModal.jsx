@@ -33,8 +33,14 @@ export default function ApplicationDetailsModal({ application, onClose }) {
   const [rescheduleStatus, setRescheduleStatus] = useState("idle"); // idle, loading, success, error
   const [rescheduleFeedback, setRescheduleFeedback] = useState("");
 
-  const { job, status, appliedAt, employerMessage, applicationId } =
-    application;
+  const {
+    job,
+    status,
+    appliedAt,
+    employerMessage,
+    meetingLink,
+    applicationId,
+  } = application;
   const companyName = job.postedBy?.name || "Company Confidential";
 
   // --- RESCHEDULE HANDLER ---
@@ -212,6 +218,21 @@ export default function ApplicationDetailsModal({ application, onClose }) {
             {/* FACT: Reschedule Button Appears ONLY if Interview is Scheduled */}
             {status === "Interview Scheduled" && (
               <div className="mt-4 pl-9 relative z-10">
+                {/* THE NEW JOIN MEETING BUTTON */}
+                {meetingLink && (
+                  <a
+                    href={
+                      meetingLink.startsWith("http")
+                        ? meetingLink
+                        : `https://${meetingLink}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+                  >
+                    <Globe size={16} /> Join Meeting
+                  </a>
+                )}
                 {application.rescheduleRequest?.isRequested ? (
                   <div
                     className={`p-3 rounded-xl text-sm font-bold border ${

@@ -201,6 +201,9 @@ export default function EmployerDashboard() {
                     <th className="p-4 font-bold text-center text-orange-600 bg-orange-50/30">
                       Int. Conducted
                     </th>
+                    <th className="p-4 font-bold text-center text-orange-600 bg-orange-50/30">
+                      Assignment Scheduled
+                    </th>
                     <th className="p-4 font-bold text-center text-emerald-600 bg-emerald-50/30">
                       Hired
                     </th>
@@ -233,30 +236,115 @@ export default function EmployerDashboard() {
                       {/* Status */}
                       <td className="p-4 text-center">
                         <span
-                          className={`px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${job.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}
+                          className={`px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                            job.status === "active"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-200 text-slate-600"
+                          }`}
                         >
                           {job.status}
                         </span>
                       </td>
 
-                      {/* Metrics */}
+                      {/* Metrics - FACT: All wrapped with stopPropagation and correct route filters */}
                       <td className="p-4 text-center font-extrabold text-slate-700 border-l border-slate-100 bg-slate-50/50">
-                        {job.stats?.total || 0}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/job/${job._id}/applicants`); // No filter = Total
+                          }}
+                          className="cursor-pointer hover:text-indigo-600 hover:underline transition-colors block w-full"
+                          title="View All Applicants"
+                        >
+                          {job.stats?.total || 0}
+                        </span>
                       </td>
+
                       <td className="p-4 text-center font-bold text-blue-700 bg-blue-50/30">
-                        {job.stats?.shortlisted || 0}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/job/${job._id}/applicants?status=shortlisted`,
+                            );
+                          }}
+                          className="cursor-pointer hover:text-blue-900 hover:underline transition-colors block w-full"
+                          title="View Shortlisted"
+                        >
+                          {job.stats?.shortlisted || 0}
+                        </span>
                       </td>
+
                       <td className="p-4 text-center font-bold text-purple-700 bg-purple-50/30">
-                        {job.stats?.interviewScheduled || 0}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/job/${job._id}/applicants?status=Interview Scheduled`,
+                            );
+                          }}
+                          className="cursor-pointer hover:text-purple-900 hover:underline transition-colors block w-full"
+                          title="View Interview Scheduled"
+                        >
+                          {job.stats?.interviewScheduled || 0}
+                        </span>
                       </td>
+
                       <td className="p-4 text-center font-bold text-orange-700 bg-orange-50/30">
-                        {job.stats?.interviewConducted || 0}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/job/${job._id}/applicants?status=Interview Conducted`,
+                            );
+                          }}
+                          className="cursor-pointer hover:text-orange-900 hover:underline transition-colors block w-full"
+                          title="View Interview Conducted"
+                        >
+                          {job.stats?.interviewConducted || 0}
+                        </span>
                       </td>
+
+                      {/* FACT: Added the missing Assignment Scheduled status */}
+                      <td className="p-4 text-center font-bold text-amber-700 bg-amber-50/30">
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/job/${job._id}/applicants?status=Assignment Scheduled`,
+                            );
+                          }}
+                          className="cursor-pointer hover:text-amber-900 hover:underline transition-colors block w-full"
+                          title="View Assignment Scheduled"
+                        >
+                          {job.stats?.assignmentScheduled || 0}
+                        </span>
+                      </td>
+
                       <td className="p-4 text-center font-bold text-emerald-700 bg-emerald-50/30">
-                        {job.stats?.hired || 0}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/job/${job._id}/applicants?status=hired`);
+                          }}
+                          className="cursor-pointer hover:text-emerald-900 hover:underline transition-colors block w-full"
+                          title="View Hired"
+                        >
+                          {job.stats?.hired || 0}
+                        </span>
                       </td>
+
                       <td className="p-4 text-center font-bold text-rose-700 bg-rose-50/30">
-                        {job.stats?.nctt || 0}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/job/${job._id}/applicants?status=NCTT`);
+                          }}
+                          className="cursor-pointer hover:text-rose-900 hover:underline transition-colors block w-full"
+                          title="View NCTT"
+                        >
+                          {job.stats?.nctt || 0}
+                        </span>
                       </td>
 
                       {/* Actions */}
@@ -264,7 +352,7 @@ export default function EmployerDashboard() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={(e) => {
-                              e.stopPropagation(); // FACT: Prevents row click
+                              e.stopPropagation();
                               handleRepost(job);
                             }}
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -274,10 +362,14 @@ export default function EmployerDashboard() {
                           </button>
                           <button
                             onClick={(e) => {
-                              e.stopPropagation(); // FACT: Prevents row click
+                              e.stopPropagation();
                               toggleJobStatus(job._id, job.status);
                             }}
-                            className={`p-2 rounded-lg transition-colors ${job.status === "active" ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50" : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"}`}
+                            className={`p-2 rounded-lg transition-colors ${
+                              job.status === "active"
+                                ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+                            }`}
                             title={
                               job.status === "active"
                                 ? "Close Job"

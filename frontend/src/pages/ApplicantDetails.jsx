@@ -14,8 +14,9 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  FileText, // FACT: Added missing import for Assignment icon
 } from "lucide-react";
-import ApplicationDetailsModal from "../components/ApplicationDetailsModal"; // This will now resolve correctly
+import ApplicationDetailsModal from "../components/ApplicationDetailsModal";
 
 export default function MyApplications() {
   const [applications, setApplications] = useState([]);
@@ -61,30 +62,48 @@ export default function MyApplications() {
     setSelectedApp(application);
   };
 
+  // FACT: Updated badge logic to perfectly match the 7 backend schemas
   const getStatusBadge = (status) => {
-    switch (status?.toLowerCase()) {
-      case "accepted":
+    switch (status) {
       case "hired":
         return (
-          <span className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-green-200">
+          <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-emerald-200">
             <CheckCircle2 size={12} /> Hired
           </span>
         );
-      case "rejected":
+      case "NCTT":
         return (
-          <span className="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-red-100">
-            <XCircle size={12} /> Rejected
+          <span className="flex items-center gap-1 bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-rose-200">
+            <XCircle size={12} /> NCTT
           </span>
         );
-      case "interview":
+      case "Interview Scheduled":
         return (
           <span className="flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-purple-200">
             <Clock size={12} /> Interview
           </span>
         );
+      case "Interview Conducted":
+        return (
+          <span className="flex items-center gap-1 bg-cyan-100 text-cyan-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-cyan-200">
+            <CheckCircle2 size={12} /> Conducted
+          </span>
+        );
+      case "Assignment Scheduled":
+        return (
+          <span className="flex items-center gap-1 bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-orange-200">
+            <FileText size={12} /> Assignment
+          </span>
+        );
+      case "shortlisted":
+        return (
+          <span className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-200">
+            <CheckCircle2 size={12} /> Shortlisted
+          </span>
+        );
       default:
         return (
-          <span className="flex items-center gap-1 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-gray-200">
+          <span className="flex items-center gap-1 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-slate-200">
             <AlertCircle size={12} /> Applied
           </span>
         );
@@ -150,7 +169,6 @@ export default function MyApplications() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {applications.map((app) => {
             const job = app.job || {};
-            // Handle location object vs string
             const locationStr =
               typeof job.location === "object"
                 ? job.location.address

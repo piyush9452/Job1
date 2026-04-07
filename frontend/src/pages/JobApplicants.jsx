@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -16,6 +16,7 @@ import {
   CheckSquare,
   MessageSquareQuote,
   X,
+  FilterX,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,11 +24,14 @@ export default function JobApplicants() {
   const { id } = useParams(); // Job ID
   const navigate = useNavigate();
 
+  // FACT: Read the URL search parameters to check if we should filter
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterStatus = searchParams.get("status");
+
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState("");
 
-  // FACT: State for Bulk Actions
   const [selectedApps, setSelectedApps] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionModal, setActionModal] = useState({
@@ -35,10 +39,11 @@ export default function JobApplicants() {
     status: "",
     title: "",
     requireMessage: false,
+    appId: null,
+    requestData: null,
   });
   const [employerMessage, setEmployerMessage] = useState("");
-
-  // FACT: State for the Pitch Preview Modal
+  const [meetingLink, setMeetingLink] = useState("");
   const [pitchModal, setPitchModal] = useState({
     show: false,
     message: "",
@@ -74,12 +79,63 @@ export default function JobApplicants() {
     fetchApplicants();
   }, [id, navigate]);
 
-  // --- SELECTION LOGIC ---
+  // FACT: Dynamically filter the applicants based on the URL parameter
+  const displayApplicants = filterStatus
+    ? applicants.filter((app) => app.status === filterStatus)
+    : applicants;
+
   const handleSelectAll = () => {
-    if (selectedApps.length === applicants.length) {
-      setSelectedApps([]); // Deselect all
-    } else {
-      setSelectedApps(applicants.map((app) => app._id)); // Select all
+    if (selectedApps.length === displayApplicants.length) setSelectedApps([]);
+    else setSelectedApps(displayApplicants.map((app) => app._id));
+  };
+
+  const handleSelectOne = (appId) => {
+    if (selectedApps.includes(appId))
+      setSelectedApps(selectedApps.filter((id) => id !== appId));
+    else setSelectedApps([...selectedApps, appId]);
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (selectedApps.length === 0) return;
+    setActionLoading(true);
+
+    try {
+      const stored = localStorage.getItem("employerInfo");
+      const { token } = JSON.parse(stored);
+
+      await Promise.all(
+        selectedApps.map((appId) =>
+          axios.patch(
+            `https://jobone-mrpy.onrender.com/applications/${appId}/status`,
+            { status: actionModal.status, employerMessage, meetingLink },
+            { headers: { Authorization: `Bearer ${token}` } },
+          ),
+        ),
+      );
+
+      setApplicants((prev) =>
+        prev.map((app) =>
+          selectedApps.includes(app._id)
+            ? { ...app, status: actionModal.status }
+            : app,
+        ),
+      );
+
+      setSelectedApps([]);
+      setActionModal({
+        show: false,
+        status: "",
+        title: "",
+        requireMessage: false,
+        appId: null,
+        requestData: null,
+      });
+      setEmployerMessage("");
+      setMeetingLink("");
+    } catch (error) {
+      alert("Failed to update some candidates.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -93,7 +149,6 @@ export default function JobApplicants() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      // Update UI
       setApplicants((prev) =>
         prev.map((app) =>
           app._id === actionModal.appId
@@ -114,61 +169,12 @@ export default function JobApplicants() {
         status: "",
         title: "",
         requireMessage: false,
+        appId: null,
+        requestData: null,
       });
       setEmployerMessage("");
     } catch (err) {
-      alert("Failed to process response.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleSelectOne = (appId) => {
-    if (selectedApps.includes(appId)) {
-      setSelectedApps(selectedApps.filter((id) => id !== appId));
-    } else {
-      setSelectedApps([...selectedApps, appId]);
-    }
-  };
-
-  // --- BULK UPDATE LOGIC ---
-  const handleBulkStatusUpdate = async () => {
-    if (selectedApps.length === 0) return;
-    setActionLoading(true);
-
-    try {
-      const stored = localStorage.getItem("employerInfo");
-      const { token } = JSON.parse(stored);
-
-      await Promise.all(
-        selectedApps.map((appId) =>
-          axios.patch(
-            `https://jobone-mrpy.onrender.com/applications/${appId}/status`,
-            { status: actionModal.status, employerMessage: employerMessage },
-            { headers: { Authorization: `Bearer ${token}` } },
-          ),
-        ),
-      );
-
-      setApplicants((prev) =>
-        prev.map((app) =>
-          selectedApps.includes(app._id)
-            ? { ...app, status: actionModal.status }
-            : app,
-        ),
-      );
-
-      setSelectedApps([]);
-      setActionModal({
-        show: false,
-        status: "",
-        title: "",
-        requireMessage: false,
-      });
-      setEmployerMessage("");
-    } catch (error) {
-      console.error("Bulk update failed", error);
-      alert("Failed to update some candidates.");
+      alert("Failed to process response. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -192,6 +198,13 @@ export default function JobApplicants() {
         return (
           <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-md text-xs font-bold uppercase border border-purple-200">
             Interview
+          </span>
+        );
+      // FACT: Missing badge logic successfully injected
+      case "Interview Conducted":
+        return (
+          <span className="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-md text-xs font-bold uppercase border border-cyan-200">
+            Conducted
           </span>
         );
       case "Assignment Scheduled":
@@ -225,28 +238,46 @@ export default function JobApplicants() {
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 font-sans pb-32">
       <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-2 transition-colors font-bold text-sm uppercase tracking-wide"
             >
-              <ArrowLeft size={16} /> Back to Job
+              <ArrowLeft size={16} /> Back
             </button>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
               Applicants for {jobTitle}
             </h1>
+
+            {/* Clear Filter UI */}
+            {filterStatus && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 border border-indigo-200">
+                  Filtered by: {filterStatus.toUpperCase()}
+                  <button
+                    onClick={() => {
+                      searchParams.delete("status");
+                      setSearchParams(searchParams);
+                    }}
+                    className="hover:bg-indigo-200 p-1 rounded-md transition-colors"
+                    title="Clear Filter"
+                  >
+                    <FilterX size={14} />
+                  </button>
+                </span>
+              </div>
+            )}
           </div>
           <div className="bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm text-sm font-bold text-slate-600">
-            Total Candidates:{" "}
+            {filterStatus ? "Filtered" : "Total"} Candidates:{" "}
             <span className="text-indigo-600 text-lg ml-1">
-              {applicants.length}
+              {displayApplicants.length}
             </span>
           </div>
         </div>
 
-        {/* BULK ACTION TOOLBAR (Floating) */}
+        {/* BULK ACTION TOOLBAR */}
         <AnimatePresence>
           {selectedApps.length > 0 && (
             <motion.div
@@ -285,6 +316,22 @@ export default function JobApplicants() {
                 >
                   Interview
                 </button>
+
+                {/* FACT: Added the Conducted button */}
+                <button
+                  onClick={() =>
+                    setActionModal({
+                      show: true,
+                      status: "Interview Conducted",
+                      title: "Mark Interview Conducted",
+                      requireMessage: true,
+                    })
+                  }
+                  className="px-4 py-2 bg-slate-800 text-cyan-400 font-bold rounded-xl hover:bg-slate-700 transition-colors text-sm"
+                >
+                  Conducted
+                </button>
+
                 <button
                   onClick={() =>
                     setActionModal({
@@ -330,16 +377,16 @@ export default function JobApplicants() {
         </AnimatePresence>
 
         {/* DATA TABLE */}
-        {applicants.length === 0 ? (
+        {displayApplicants.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
               <User className="text-slate-400" size={32} />
             </div>
             <h3 className="text-xl font-extrabold text-slate-900">
-              No applications yet
+              No candidates found
             </h3>
             <p className="text-slate-500 mt-2 font-medium">
-              Candidates will appear here once they apply.
+              Try clearing your filters or check back later.
             </p>
           </div>
         ) : (
@@ -352,11 +399,11 @@ export default function JobApplicants() {
                       <input
                         type="checkbox"
                         checked={
-                          selectedApps.length === applicants.length &&
-                          applicants.length > 0
+                          selectedApps.length === displayApplicants.length &&
+                          displayApplicants.length > 0
                         }
                         onChange={handleSelectAll}
-                        className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        className="w-5 h-5 rounded border-slate-300 text-indigo-600 cursor-pointer"
                       />
                     </th>
                     <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -377,10 +424,9 @@ export default function JobApplicants() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {applicants.map((app) => {
+                  {displayApplicants.map((app) => {
                     const candidate = app.appliedBy || app.applicant;
                     if (!candidate) return null;
-
                     const isSelected = selectedApps.includes(app._id);
 
                     return (
@@ -393,7 +439,7 @@ export default function JobApplicants() {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectOne(app._id)}
-                            className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            className="w-5 h-5 rounded border-slate-300 text-indigo-600 cursor-pointer"
                           />
                         </td>
                         <td className="p-4">
@@ -431,7 +477,6 @@ export default function JobApplicants() {
                         <td className="p-4">{getStatusBadge(app.status)}</td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {/* FACT: "Read Pitch" Button Added Here */}
                             {app.applicantMessage && (
                               <button
                                 onClick={() =>
@@ -447,15 +492,16 @@ export default function JobApplicants() {
                                 <MessageSquareQuote size={16} /> Pitch
                               </button>
                             )}
+
                             {app.rescheduleRequest?.requestStatus ===
                               "pending" && (
                               <button
                                 onClick={() =>
                                   setActionModal({
                                     show: true,
-                                    status: "reschedule_review", // Custom flag for the modal
-                                    title: "Review Reschedule Request",
-                                    requireMessage: true,
+                                    status: "reschedule_review",
+                                    title: `Review Time: ${candidate.name}`,
+                                    requireMessage: false,
                                     appId: app._id,
                                     requestData: app.rescheduleRequest,
                                   })
@@ -465,6 +511,7 @@ export default function JobApplicants() {
                                 <Clock size={16} /> Review Time
                               </button>
                             )}
+
                             <button
                               onClick={() =>
                                 navigate(`/profile/${candidate._id}`, {
@@ -490,7 +537,7 @@ export default function JobApplicants() {
         )}
       </div>
 
-      {/* FACT: The Pitch Modal */}
+      {/* MODALS */}
       <AnimatePresence>
         {pitchModal.show && (
           <div
@@ -530,7 +577,6 @@ export default function JobApplicants() {
         )}
       </AnimatePresence>
 
-      {/* UNIFIED MESSAGE MODAL */}
       {actionModal.show && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
@@ -538,15 +584,53 @@ export default function JobApplicants() {
               {actionModal.title}
             </h3>
 
-            {actionModal.requireMessage ? (
+            {actionModal.status === "reschedule_review" ? (
               <div className="mb-6 mt-4">
+                <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl mb-5 space-y-2">
+                  <p className="text-sm text-orange-900">
+                    <strong className="font-extrabold text-orange-950">
+                      Reason:
+                    </strong>{" "}
+                    {actionModal.requestData?.reason}
+                  </p>
+                  <p className="text-sm text-orange-900">
+                    <strong className="font-extrabold text-orange-950">
+                      Proposed Time:
+                    </strong>{" "}
+                    {actionModal.requestData?.proposedTime}
+                  </p>
+                </div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Message to Candidate
+                </label>
+                <textarea
+                  value={employerMessage}
+                  onChange={(e) => setEmployerMessage(e.target.value)}
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 h-28 resize-y text-sm font-medium"
+                />
+              </div>
+            ) : actionModal.requireMessage ? (
+              <div className="mb-6 mt-4">
+                {actionModal.status === "Interview Scheduled" && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                      Meeting Link
+                    </label>
+                    <input
+                      type="url"
+                      value={meetingLink}
+                      onChange={(e) => setMeetingLink(e.target.value)}
+                      placeholder="https://zoom.us/j/..."
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+                    />
+                  </div>
+                )}
                 <label className="block text-sm font-bold text-slate-700 mb-2">
                   Message (Sent to {selectedApps.length} Candidates via Email)
                 </label>
                 <textarea
                   value={employerMessage}
                   onChange={(e) => setEmployerMessage(e.target.value)}
-                  placeholder="Enter meeting links, dates, or assignment instructions here..."
                   className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 h-32 resize-y text-sm font-medium"
                 />
               </div>
@@ -558,7 +642,7 @@ export default function JobApplicants() {
               </p>
             )}
 
-            <div className="flex gap-4 justify-end">
+            <div className="flex gap-3 justify-end">
               <button
                 onClick={() => {
                   setActionModal({
@@ -568,26 +652,51 @@ export default function JobApplicants() {
                     requireMessage: false,
                   });
                   setEmployerMessage("");
+                  setMeetingLink("");
                 }}
                 className="px-5 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleBulkStatusUpdate}
-                disabled={
-                  actionLoading ||
-                  (actionModal.requireMessage && !employerMessage.trim())
-                }
-                className="px-5 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-200"
-              >
-                {actionLoading ? (
-                  <Loader2 className="animate-spin" size={16} />
-                ) : (
-                  <CheckSquare size={18} />
-                )}{" "}
-                Confirm Update
-              </button>
+              {actionModal.status === "reschedule_review" ? (
+                <>
+                  <button
+                    onClick={() => handleRescheduleResponse("rejected")}
+                    disabled={actionLoading}
+                    className="px-5 py-2.5 rounded-xl font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleRescheduleResponse("approved")}
+                    disabled={actionLoading}
+                    className="px-5 py-2.5 rounded-xl font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {actionLoading ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <CheckCircle2 size={16} />
+                    )}{" "}
+                    Approve
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleBulkStatusUpdate}
+                  disabled={
+                    actionLoading ||
+                    (actionModal.requireMessage && !employerMessage.trim())
+                  }
+                  className="px-5 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-200"
+                >
+                  {actionLoading ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    <CheckSquare size={18} />
+                  )}{" "}
+                  Confirm
+                </button>
+              )}
             </div>
           </div>
         </div>

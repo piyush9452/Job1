@@ -12,9 +12,12 @@ const applicationSchema = new mongoose.Schema({
   },
   applicantHasSeen: { type: Boolean, default: true },
   employerMessage: { type: String, default: "" },
+  
+  // FACT: Dedicated Meeting Link Field
+  meetingLink: { type: String, default: "" },
+  
   applicantMessage: { type: String, default: "" }, 
   
-  // FACT: Formal Two-Way Reschedule System
   rescheduleRequest: {
     isRequested: { type: Boolean, default: false },
     reason: { type: String, default: "" },

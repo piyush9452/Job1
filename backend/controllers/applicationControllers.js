@@ -90,6 +90,7 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
     applicationId: app._id,
     status: app.status,
     employerMessage: app.employerMessage || "", 
+    meetingLink: app.meetingLink || "",
     applicantHasSeen: app.applicantHasSeen,
     appliedAt: app.appliedAt,
     job: {
@@ -123,7 +124,7 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
 // PATCH: /api/applications/:id
 export const updateApplicationStatus = errorHandler(async (req, res) => {
   const { id } = req.params;
-  const { status, employerMessage } = req.body;
+  const { status, employerMessage, meetingLink } = req.body; // <-- EXTRACT meetingLink
 
   const application = await Application.findById(id)
     .populate("appliedBy", "name email")
@@ -140,9 +141,8 @@ export const updateApplicationStatus = errorHandler(async (req, res) => {
   }
 
   application.status = status;
-  if (employerMessage !== undefined) {
-    application.employerMessage = employerMessage;
-  }
+  if (employerMessage !== undefined) application.employerMessage = employerMessage;
+  if (meetingLink !== undefined) application.meetingLink = meetingLink; // <-- SAVE IT
   application.applicantHasSeen = false;
   await application.save();
 
