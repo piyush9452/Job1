@@ -24,6 +24,11 @@ const employerSchema = new mongoose.Schema({
   googleId: { type: String }, 
   authProvider: { type: String, enum: ["local", "google"], default: "local" },
   isVerified: { type: Boolean, default: false },
+  isApproved: { 
+    type: String, 
+    enum: ["pending", "approved", "rejected"], 
+    default: "pending" // FACT: Every new employer is locked out by default until Admin approves
+  },
   ratingsReceived:[
     {
       userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

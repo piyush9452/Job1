@@ -70,9 +70,12 @@ const JobSchema = new mongoose.Schema({
   postedByCompany: { type: String, default: "" },
   postedAt: { type: Date, default: Date.now },
   expiringAt: { type: Date }, 
-  
   // FACT: Status enum updated to prevent 500 crashes
-  status: { type: String, enum: ["active", "inactive", "closed", "deadline passed"], default: "active" },
+  status: { 
+    type: String, 
+    enum: ["pending_approval", "active", "inactive", "closed", "deadline passed", "rejected"], 
+    default: "pending_approval" 
+  },
   
   applicants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], 
 });

@@ -174,13 +174,17 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
   }
 
   // --- 4. EXECUTE QUERY ---
-  const jobs = await Job.find(filters)
+  // --- 4. EXECUTE QUERY ---
+  // FACT: Merge the user's search filters with the strict Admin security lock
+  const finalQuery = { ...filters, status: "active" };
+
+  const jobs = await Job.find(finalQuery)
     .sort(sortBy)
     .skip(skip)
     .limit(limit);
     
-  // Optional: Get total count for pagination metadata on the frontend
-  const totalJobs = await Job.countDocuments(filters);
+  // FACT: The total count must also respect the security lock so pagination doesn't break
+  const totalJobs = await Job.countDocuments(finalQuery);
 
   res.status(200).json({
     results: jobs.length,

@@ -13,6 +13,7 @@ import jobsRoutes from './routes/jobsRoutes.js';
 import applicationRoutes from './routes/applicationRoutes.js';
 import employerRoutes from './routes/employerRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import adminRoutes from "./routes/adminRoutes.js";
 
 
 connectDB();
@@ -58,6 +59,9 @@ app.use(errorHandler);                                                          
 //-----------------------------ERROR HANDLING MIDDLEWARE--------------------------//
 
 
+
+
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 
