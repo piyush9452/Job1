@@ -1,5 +1,5 @@
 import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob,getEmployerCreatedJobs,getJobApplicants,getSimilarJobs} from "../controllers/jobsControllers.js";
-import protect from "../middleware/authorization.js";
+import {protect}from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js";
 import express from "express";
 

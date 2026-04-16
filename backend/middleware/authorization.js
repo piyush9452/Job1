@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 import User from "../models/users.js";
 import Admin from "../models/admin.js";
+import asyncHandler from "express-async-handler";
 
-const protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -31,7 +32,7 @@ const protect = async (req, res, next) => {
   // }
 };
 
-export const protectAdmin = errorHandler(async (req, res, next) => {
+export const protectAdmin = asyncHandler(async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
@@ -58,4 +59,3 @@ export const protectAdmin = errorHandler(async (req, res, next) => {
   }
 });
 
-export default protect;

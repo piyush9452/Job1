@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { protectEmployer } from "../middleware/employercheck.js";
-import protect from "../middleware/authorization.js";
+import {protect} from "../middleware/authorization.js";
 import { generateJobDetails , parseResume} from "../controllers/aiControllers.js";
 
 const router = express.Router();

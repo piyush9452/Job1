@@ -6,7 +6,7 @@ import {
   reviewEmployer,
   reviewJob
 } from "../controllers/adminControllers.js";
-import { protectAdmin } from "../middleware/authMiddleware.js";
+import { protectAdmin } from "../middleware/authorization.js";
 
 const router = express.Router();
 

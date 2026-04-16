@@ -61,7 +61,7 @@ app.use(errorHandler);                                                          
 
 
 
-app.use("/api/admin", adminRoutes);
+app.use("/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 
