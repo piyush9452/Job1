@@ -31,13 +31,12 @@ export default function AdminDashboard() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [jobsRes, employersRes] = await Promise.all([
-        axios.get("https://jobone-mrpy.onrender.com/api/admin/jobs/pending", {
+        axios.get("https://jobone-mrpy.onrender.com/admin/jobs/pending", {
           headers,
         }),
-        axios.get(
-          "https://jobone-mrpy.onrender.com/api/admin/employers/pending",
-          { headers },
-        ),
+        axios.get("https://jobone-mrpy.onrender.com/admin/employers/pending", {
+          headers,
+        }),
       ]);
 
       setPendingJobs(jobsRes.data);
@@ -54,7 +53,7 @@ export default function AdminDashboard() {
     try {
       const token = JSON.parse(localStorage.getItem("adminInfo")).token;
       await axios.patch(
-        `https://jobone-mrpy.onrender.com/api/admin/jobs/${id}/review`,
+        `https://jobone-mrpy.onrender.com/admin/jobs/${id}/review`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -68,7 +67,7 @@ export default function AdminDashboard() {
     try {
       const token = JSON.parse(localStorage.getItem("adminInfo")).token;
       await axios.patch(
-        `https://jobone-mrpy.onrender.com/api/admin/employers/${id}/review`,
+        `https://jobone-mrpy.onrender.com/admin/employers/${id}/review`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } },
       );

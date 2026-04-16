@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
+import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 
 // --- PUBLIC PAGES ---
@@ -62,6 +63,7 @@ function App() {
           element={<EmployerRegisterOption />}
         />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/jobs" element={<Jobs />} />
 
         {/* FACT: This single route serves as both Public View and Applicant Review */}
