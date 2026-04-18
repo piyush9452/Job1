@@ -194,6 +194,20 @@ export const loginEmployer = expressAsyncHandler(async (req, res) => {
 });
 
 
+export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const employer = await Employer.findById(id).select('-password');
+
+  if (!employer) {
+    res.status(404);
+    throw new Error('Employer not found');
+  }
+
+  res.status(200).json(employer);
+});
+
+
 export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
   const employer = await Employer.findById(req.employerId).select('-password');
 
