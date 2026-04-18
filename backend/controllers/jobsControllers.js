@@ -27,11 +27,34 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   }
 
   // Strict Profile Check
-  const requiredFields = ['companyName', 'phone', 'location', 'industry', 'description', 'companyWebsite'];
-  const missingFields = requiredFields.filter(field => !employer[field] || employer[field].trim() === '');
+  // ==========================================
+  // FACT: Dynamic Profile & Document Check 
+  // ==========================================
+  let missingFields = [];
+  
+  // Universal required fields
+  const baseFields = ['phone', 'location', 'industry', 'description', 'aadharCard', 'panCard'];
+  baseFields.forEach(field => {
+    if (!employer[field] || employer[field].trim() === '') missingFields.push(field);
+  });
+
+  // Conditional required fields based on entity type
+  if (employer.employerType === "company") {
+    const companyFields = ['companyName', 'natureOfBusiness', 'gstForm'];
+    companyFields.forEach(field => {
+      if (!employer[field] || employer[field].trim() === '') missingFields.push(field);
+    });
+  } else {
+    // Individual
+    const individualFields = ['tradeLicense', 'educationDocuments'];
+    individualFields.forEach(field => {
+      if (!employer[field] || employer[field].trim() === '') missingFields.push(field);
+    });
+  }
+
   if (missingFields.length > 0) {
     res.status(403);
-    throw new Error(`You must complete your profile before posting a job. Missing: ${missingFields.join(', ')}`);
+    throw new Error(`You must complete your profile and upload required documents before posting a job. Missing: ${missingFields.join(', ')}`);
   }
 
   const { 

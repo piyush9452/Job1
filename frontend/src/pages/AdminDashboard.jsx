@@ -8,13 +8,14 @@ import {
   Building2,
   Briefcase,
   ShieldAlert,
+  ExternalLink // FACT: Imported the icon for external links
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const [pendingJobs, setPendingJobs] = useState([]);
   const [pendingEmployers, setPendingEmployers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("jobs"); // "jobs" or "employers"
+  const [activeTab, setActiveTab] = useState("jobs"); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,12 +32,8 @@ export default function AdminDashboard() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [jobsRes, employersRes] = await Promise.all([
-        axios.get("https://jobone-mrpy.onrender.com/admin/jobs/pending", {
-          headers,
-        }),
-        axios.get("https://jobone-mrpy.onrender.com/admin/employers/pending", {
-          headers,
-        }),
+        axios.get("https://jobone-mrpy.onrender.com/admin/jobs/pending", { headers }),
+        axios.get("https://jobone-mrpy.onrender.com/admin/employers/pending", { headers }),
       ]);
 
       setPendingJobs(jobsRes.data);
@@ -88,12 +85,10 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
         <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-extrabold flex items-center gap-3">
-              <ShieldAlert className="text-rose-500" size={32} /> Admin Control
-              Center
+              <ShieldAlert className="text-rose-500" size={32} /> Admin Control Center
             </h1>
             <p className="text-slate-400 font-medium mt-2">
               Review and approve platform content.
@@ -110,7 +105,6 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-4 border-b border-slate-200 pb-px">
           <button
             onClick={() => setActiveTab("jobs")}
@@ -122,8 +116,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab("employers")}
             className={`pb-4 px-4 font-extrabold text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === "employers" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <Building2 size={18} /> Pending Employers ({pendingEmployers.length}
-            )
+            <Building2 size={18} /> Pending Employers ({pendingEmployers.length})
           </button>
         </div>
 
@@ -132,33 +125,29 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {pendingJobs.length === 0 ? (
               <div className="bg-white p-10 rounded-2xl text-center border border-slate-200">
-                <CheckCircle
-                  className="mx-auto text-emerald-400 mb-3"
-                  size={48}
-                />
-                <h3 className="text-lg font-bold text-slate-800">
-                  No Pending Jobs
-                </h3>
+                <CheckCircle className="mx-auto text-emerald-400 mb-3" size={48} />
+                <h3 className="text-lg font-bold text-slate-800">No Pending Jobs</h3>
               </div>
             ) : (
               pendingJobs.map((job) => (
-                <div
-                  key={job._id}
-                  className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6"
-                >
+                <div key={job._id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
                   <div>
-                    <h3 className="text-xl font-extrabold text-slate-900">
-                      {job.title}
-                    </h3>
+                    <h3 className="text-xl font-extrabold text-slate-900">{job.title}</h3>
                     <p className="text-sm font-bold text-slate-500 mt-1 flex items-center gap-2">
-                      <Building2 size={14} />{" "}
-                      {job.postedBy?.companyName || "Unknown Company"}
+                      <Building2 size={14} /> {job.postedBy?.companyName || "Unknown Company"}
                     </p>
                     <p className="text-sm text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
                       {job.description}
                     </p>
                   </div>
-                  <div className="flex gap-3 shrink-0">
+                  <div className="flex gap-3 shrink-0 flex-wrap justify-end">
+                    {/* FACT: New View button opens the public job view in a new tab */}
+                    <button
+                      onClick={() => window.open(`/job/${job._id}`, '_blank')}
+                      className="px-5 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-xl border border-blue-200 hover:bg-blue-100 flex items-center gap-2"
+                    >
+                      <ExternalLink size={18} /> View
+                    </button>
                     <button
                       onClick={() => handleReviewJob(job._id, "rejected")}
                       className="px-5 py-2.5 bg-rose-50 text-rose-700 font-bold rounded-xl border border-rose-200 hover:bg-rose-100 flex items-center gap-2"
@@ -183,29 +172,26 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {pendingEmployers.length === 0 ? (
               <div className="bg-white p-10 rounded-2xl text-center border border-slate-200">
-                <CheckCircle
-                  className="mx-auto text-emerald-400 mb-3"
-                  size={48}
-                />
-                <h3 className="text-lg font-bold text-slate-800">
-                  No Pending Employers
-                </h3>
+                <CheckCircle className="mx-auto text-emerald-400 mb-3" size={48} />
+                <h3 className="text-lg font-bold text-slate-800">No Pending Employers</h3>
               </div>
             ) : (
               pendingEmployers.map((emp) => (
-                <div
-                  key={emp._id}
-                  className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6"
-                >
+                <div key={emp._id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
                   <div>
                     <h3 className="text-xl font-extrabold text-slate-900">
                       {emp.companyName || emp.name}
                     </h3>
-                    <p className="text-sm font-bold text-slate-500 mt-1">
-                      {emp.email}
-                    </p>
+                    <p className="text-sm font-bold text-slate-500 mt-1">{emp.email}</p>
                   </div>
-                  <div className="flex gap-3 shrink-0">
+                  <div className="flex gap-3 shrink-0 flex-wrap justify-end">
+                    {/* FACT: New View button opens the company profile in a new tab */}
+                    <button
+                      onClick={() => window.open(`/company/${emp._id}`, '_blank')}
+                      className="px-5 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-xl border border-blue-200 hover:bg-blue-100 flex items-center gap-2"
+                    >
+                      <ExternalLink size={18} /> View Profile
+                    </button>
                     <button
                       onClick={() => handleReviewEmployer(emp._id, "rejected")}
                       className="px-5 py-2.5 bg-rose-50 text-rose-700 font-bold rounded-xl border border-rose-200 hover:bg-rose-100 flex items-center gap-2"
