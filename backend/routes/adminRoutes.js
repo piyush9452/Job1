@@ -4,7 +4,7 @@ import {
   getPendingEmployers,
   getPendingJobs,
   reviewEmployer,
-  reviewJob
+  reviewJob,getEmployerDetailsForAdmin,getAdminViewableDocumentUrl
 } from "../controllers/adminControllers.js";
 import { protectAdmin } from "../middleware/authorization.js";
 
@@ -17,5 +17,7 @@ router.get("/employers/pending", protectAdmin, getPendingEmployers);
 router.get("/jobs/pending", protectAdmin, getPendingJobs);
 router.patch("/employers/:id/review", protectAdmin, reviewEmployer);
 router.patch("/jobs/:id/review", protectAdmin, reviewJob);
+router.get('/employers/:id', protectAdmin, getEmployerDetailsForAdmin);
+router.get('/employers/:id/document', protectAdmin, getAdminViewableDocumentUrl);
 
 export default router;

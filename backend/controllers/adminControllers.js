@@ -1,8 +1,47 @@
 import errorHandler from "express-async-handler";
 import Admin from "../models/admin.js";
-import Employer from "../models/employer.js";
 import Job from "../models/jobs.js";
 import jwt from "jsonwebtoken";
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client } from '@aws-sdk/client-s3';
+import Employer from '../models/employer.js';
+import expressAsyncHandler from "express-async-handler";
+
+// Helper to get S3 Client (duplicate this if it's not already in this file)
+const getS3Client = () => {
+  return new S3Client({
+    region: process.env.AWS_BUCKET_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+};
+
+// 1. Fetch entire confidential profile
+export const getEmployerDetailsForAdmin = expressAsyncHandler(async (req, res) => {
+  const employer = await Employer.findById(req.params.id).select('-password');
+  if (!employer) {
+    res.status(404); throw new Error("Employer not found");
+  }
+  res.status(200).json(employer);
+});
+
+// 2. Fetch specific confidential document
+export const getAdminViewableDocumentUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client(); 
+  const employer = await Employer.findById(req.params.id);
+  const { field } = req.query; 
+
+  if (!employer) { res.status(404); throw new Error("Employer not found"); }
+  if (!field || !employer[field]) { res.status(404); throw new Error(`No document uploaded for ${field}`); }
+
+  const command = new GetObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: employer[field] });
+  const url = await getSignedUrl(client, command, { expiresIn: 300 });
+
+  res.status(200).json({ viewableUrl: url });
+});
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
