@@ -30,10 +30,10 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   // FACT: Extracting the massive new Phase 2 payload
   const { 
     title, description, jobType, workDaysPattern, customWorkDaysDescription,
-    skillsRequired, salaryAmount, salaryFrequency, incentives,
-    durationType, startDate, endDate, isLongTerm,
+    skillsRequired, salaryAmount, salaryFrequency,salaryCurrency, incentives,
+    durationType, startDate, endDate, isFlexibleDuration,
     shifts, isFlexibleShifts, mode, noOfDays, noOfPeopleRequired, 
-    genderPreference, qualifications, courses, ageLimit, languages,
+    genderPreference, qualifications, courses, ageLimit, languages, experience,
     pinCode, location, useOfficeLocation ,applicationDeadline,
   } = req.body;
 
@@ -67,12 +67,13 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     customWorkDaysDescription: workDaysPattern === "Custom" ? customWorkDaysDescription : "",
     skillsRequired, 
     salaryAmount, 
-    salaryFrequency, 
+    salaryFrequency,
+      salaryCurrency,
     incentives,
     durationType, 
     startDate, 
-    endDate, 
-    isLongTerm,
+    endDate,
+      isFlexibleDuration,
     applicationDeadline,
     shifts: isFlexibleShifts ? [] : shifts, // Clear shifts if flexible
     isFlexibleShifts,
@@ -84,6 +85,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     courses,
     ageLimit,
     languages,
+      experience,
     pinCode,
     location: locationData,
     status: "active", // Default status for new jobs

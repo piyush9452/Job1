@@ -146,12 +146,33 @@ export default function GlobalNotificationPopup() {
 
             {/* Toast Body */}
             <div className="p-4">
-              <p
-                className="text-sm font-extrabold text-slate-900 leading-tight mb-2 truncate"
-                title={app.job?.title}
-              >
-                {app.job?.title || "Job Title Unavailable"}
-              </p>
+                <div className="mb-3">
+                    {/* Job Title */}
+                    <p className="text-sm font-extrabold text-slate-900 leading-tight truncate">
+                        {app.job?.title || "Job Title Unavailable"}
+                    </p>
+
+                    {/* Company */}
+                    <p className="text-xs text-slate-500 font-medium">
+                        {app.job?.postedByCompany || "Company"}
+                    </p>
+
+                    {/* Location + Mode */}
+                    <p className="text-[11px] text-slate-400 mt-1">
+                        📍 {app.job?.mode === "Work from Home"
+                        ? "Remote"
+                        : (typeof app.job?.location === "object"
+                        ? app.job?.location?.address
+                        : app.job?.location) || "Office"}
+                    </p>
+
+                    {/* Salary */}
+                    <p className="text-[11px] font-bold text-emerald-600 mt-1">
+                        ₹ {app.job?.salaryAmount
+                        ? app.job.salaryAmount.toLocaleString()
+                        : "TBD"}
+                    </p>
+                </div>
 
               <div className="mb-3">{getStatusBadge(app.status)}</div>
 

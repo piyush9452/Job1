@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
-
+import RecommendedJobs from "./components/RecommendedJobs";
 // --- PUBLIC PAGES ---
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -74,6 +74,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+          <Route path="/recommended-jobs" element={<RecommendedJobs />} />
         <Route
           path="/profile"
           element={

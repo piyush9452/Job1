@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import expressAsyncHandler from "express-async-handler";
 import mammoth from "mammoth";
+import Job from "../models/jobs.js";
+import User from "../models/users.js";
 
 export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   const { title, jobType, mode } = req.body;
@@ -28,7 +30,6 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   try {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    
     const cleanedText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
     const startIndex = cleanedText.indexOf('{');
     const endIndex = cleanedText.lastIndexOf('}');
@@ -50,7 +51,13 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
 
 
 export const parseResume = expressAsyncHandler(async (req, res) => {
-  if (!req.file) {
+    const userId = req.user._id;
+
+    await User.findByIdAndUpdate(userId, {
+        resumeData: parsedData
+    });
+
+    if (!req.file) {
     res.status(400);
     throw new Error("No document uploaded.");
   }
@@ -145,4 +152,125 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
     res.status(500);
     throw new Error("AI failed to process and structure the resume data.");
   }
+});
+
+export const recommendJobs = expressAsyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    // 1. Get user
+    const user = await User.findById(userId);
+
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found.");
+    }
+
+// Use profile skills as fallback if no resume
+    const userSkills = user.resumeData?.skills?.length
+        ? user.resumeData.skills
+        : user.skills || []; // your profile skills field
+
+    if (!userSkills.length) {
+        res.status(400);
+        throw new Error("No skills found. Add skills to your profile or upload a resume.");
+    }
+
+    // 2. Fetch jobs (optimized)
+    const jobs = await Job.find({ status: "active" })
+        .select("title description skillsRequired mode salaryAmount")
+        .limit(15);
+
+    if (!jobs.length) {
+        return res.json({ recommendedJobs: [] });
+    }
+
+    // 3. Pre-filter jobs (FAST)
+    const filteredJobs = jobs.filter(job =>
+        job.skillsRequired?.some(js =>
+            userSkills.some(us => us.toLowerCase() === js.toLowerCase())
+        )
+    );
+
+    const jobsToSend = filteredJobs.length > 0 ? filteredJobs : jobs;
+
+    // 4. Trim data (VERY IMPORTANT for cost)
+    const cleanJobs = jobsToSend.map(job => ({
+        _id: job._id,
+        title: job.title,
+        description: job.description?.substring(0, 300),
+        skillsRequired: job.skillsRequired
+    }));
+
+    // 5. Gemini setup
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const prompt = `
+You are an AI job recommendation engine.
+
+Candidate:
+${JSON.stringify({
+        skills: userSkills,
+        experience: user.resumeData?.experience || user.experience || [],
+        education: user.resumeData?.education || user.education || [],
+        description: user.resumeData?.description || user.bio || ""
+    })}
+
+Jobs:
+${JSON.stringify(cleanJobs)}
+
+Instructions:
+- Match based on skills + role relevance
+- Return top 5 jobs
+- Add matchScore (0-100)
+- Add short reason
+
+Return ONLY JSON:
+{
+  "recommendedJobs": [
+    {
+      "jobId": "id",
+      "title": "Job title",
+      "matchScore": 90,
+      "reason": "Short reason"
+    }
+  ]
+}
+`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+
+        const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+        const jsonString = cleaned.substring(
+            cleaned.indexOf("{"),
+            cleaned.lastIndexOf("}") + 1
+        );
+
+        const parsed = JSON.parse(jsonString);
+
+        res.status(200).json(parsed);
+    } catch (err) {
+        console.error("Gemini Error:", err);
+
+        // 🔥 Fallback (VERY IMPORTANT)
+        const fallback = jobs.map(job => {
+            const matchCount = userSkills.filter(skill =>
+                job.skillsRequired?.some(js => js.toLowerCase() === skill.toLowerCase())
+            ).length;
+
+            return {
+                jobId: job._id,
+                title: job.title,
+                matchScore: job.skillsRequired.length
+                    ? Math.round((matchCount / job.skillsRequired.length) * 100)
+                    : 30,
+                reason: "Based on skill matching"
+            };
+        });
+
+        res.status(200).json({ recommendedJobs: fallback.slice(0, 5) });
+    }
 });
