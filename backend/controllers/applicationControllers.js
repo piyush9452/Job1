@@ -66,7 +66,7 @@ export const createApplication = errorHandler(async (req, res) => {
 });
 
 export const allApplicationFromUser = errorHandler(async (req, res) => {
-     const userId = req.user._id;
+  const userId = req.user._id;
 
   // Find all applications by this user
   const applications = await Application.find({ appliedBy: userId })
@@ -80,39 +80,44 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
     })
     .populate("jobHost", "name email profileImage");
 
+  // FACT: Do not throw a 404 error if they have no applications. 
+  // Return an empty array cleanly so the frontend triggers the "No Applications Yet" UI instead of a network error.
   if (!applications || applications.length === 0) {
-    res.status(404);
-    throw new Error("No applications found for this user.");
+    return res.status(200).json({ success: true, count: 0, applications: [] });
   }
 
-  // Optionally transform for cleaner output
-  const formatted = applications.map((app) => ({
-    applicationId: app._id,
-    status: app.status,
-    employerMessage: app.employerMessage || "", 
-    meetingLink: app.meetingLink || "",
-    applicantHasSeen: app.applicantHasSeen,
-    appliedAt: app.appliedAt,
-    job: {
-      id: app.job_id._id,
-      title: app.job_id.title,
-      description: app.job_id.description,
-      mode: app.job_id.mode,                       
-      workDays: app.job_id.workDays,               
-      location: app.job_id.location,
-      salaryAmount: app.job_id.salaryAmount,       
-      salaryFrequency: app.job_id.salaryFrequency, 
-      isLongTerm: app.job_id.isLongTerm,           
-      noOfDays: app.job_id.noOfDays,               
-      skillsRequired: app.job_id.skillsRequired,
-      postedBy: {
-        id: app.job_id.postedBy?._id,
-        name: app.job_id.postedByName || app.job_id.postedBy?.name,
-        image: app.job_id.postedByImage || app.job_id.postedBy?.profileImage,
+  // FACT: The filter() method prevents the 500 crash by completely ignoring applications where the job was deleted by the employer.
+  const formatted = applications
+    .filter((app) => app.job_id != null) 
+    .map((app) => ({
+      applicationId: app._id,
+      status: app.status,
+      employerMessage: app.employerMessage || "", 
+      meetingLink: app.meetingLink || "", 
+      rescheduleRequest: app.rescheduleRequest || {}, // Sent to frontend so candidate knows if reschedule is pending
+      applicantMessage: app.applicantMessage || "",
+      applicantHasSeen: app.applicantHasSeen,
+      appliedAt: app.appliedAt,
+      job: {
+        id: app.job_id._id,
+        title: app.job_id.title,
+        description: app.job_id.description,
+        mode: app.job_id.mode,                       
+        workDays: app.job_id.workDays,               
+        location: app.job_id.location,
+        salaryAmount: app.job_id.salaryAmount,       
+        salaryFrequency: app.job_id.salaryFrequency, 
+        isLongTerm: app.job_id.isLongTerm,           
+        noOfDays: app.job_id.noOfDays,               
+        skillsRequired: app.job_id.skillsRequired,
+        postedBy: {
+          id: app.job_id.postedBy?._id,
+          name: app.job_id.postedByName || app.job_id.postedBy?.name,
+          image: app.job_id.postedByImage || app.job_id.postedBy?.profileImage,
+        },
+        status: app.job_id.status,
       },
-      status: app.job_id.status,
-    },
-  }));
+    }));
 
   res.status(200).json({
     success: true,

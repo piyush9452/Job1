@@ -194,47 +194,76 @@ export const loginEmployer = expressAsyncHandler(async (req, res) => {
 });
 
 
+export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const employer = await Employer.findById(id).select('-password');
+
+  if (!employer) {
+    res.status(404);
+    throw new Error('Employer not found');
+  }
+
+  res.status(200).json(employer);
+});
+
+
 export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
   const employer = await Employer.findById(req.employerId).select('-password');
 
-  if (employer) {
-    if (req.body.name !== undefined) employer.name = req.body.name;
-    if (req.body.phone !== undefined) employer.phone = req.body.phone;
+  if (!employer) {
+    res.status(404);
+    throw new Error('Employer not found');
+  }
+
+  // FACT: Strict 200-word description enforcement
+  if (req.body.description !== undefined) {
+    // Count words by splitting on spaces and filtering out empty strings
+    const wordCount = req.body.description.trim().split(/\s+/).filter(word => word.length > 0).length;
+    
+    if (wordCount < 200) {
+      res.status(400);
+      throw new Error(`Profile description must be at least 200 words. You currently have ${wordCount} words.`);
+    }
+    employer.description = req.body.description;
+  }
+
+  // Handle Employer Type switching
+  if (req.body.employerType !== undefined) {
+    employer.employerType = req.body.employerType;
+  }
+
+  // Standard Fields
+  if (req.body.name !== undefined) employer.name = req.body.name;
+  if (req.body.phone !== undefined) employer.phone = req.body.phone;
+  if (req.body.location !== undefined) employer.location = req.body.location; 
+  if (req.body.officeLocation !== undefined) employer.officeLocation = req.body.officeLocation;
+  if (req.body.industry !== undefined) employer.industry = req.body.industry;
+  if (req.body.profilePicture !== undefined) employer.profilePicture = req.body.profilePicture;
+  
+  // Conditional Company Fields
+  if (employer.employerType === "company") {
     if (req.body.companyName !== undefined) employer.companyName = req.body.companyName;
     if (req.body.companyWebsite !== undefined) employer.companyWebsite = req.body.companyWebsite;
-    if (req.body.location !== undefined) employer.location = req.body.location; // Legacy text field
-    
-    // FACT: Safely save the new GeoJSON office location map data
-    if (req.body.officeLocation !== undefined) {
-      employer.officeLocation = req.body.officeLocation;
-    }
-
-    if (req.body.industry !== undefined) employer.industry = req.body.industry;
-    if (req.body.description !== undefined) employer.description = req.body.description;
-    if (req.body.profilePicture !== undefined) employer.profilePicture = req.body.profilePicture;
-    
-    const updatedEmployer = await employer.save();
-    res.status(200).json(updatedEmployer);
+    if (req.body.natureOfBusiness !== undefined) employer.natureOfBusiness = req.body.natureOfBusiness;
   } else {
-    res.status(404);
-    throw new Error('Employer not found');
-  }
-});
-export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => {
- 
-  const { id } = req.params;
-
-  const employer = await Employer.findById(id).select('-password');
-  
-  if (employer) {
-    res.status(200).json(employer);
-  } else {
-    res.status(404);
-    throw new Error('Employer not found');
+    // FACT: If they are an individual, wipe the company-specific data to keep the database clean
+    employer.companyName = "";
+    employer.companyWebsite = "";
+    employer.natureOfBusiness = "";
   }
 
-});
+  // Document Fields (These expect AWS S3 Keys passed from your frontend)
+  if (req.body.aadharCard !== undefined) employer.aadharCard = req.body.aadharCard;
+  if (req.body.panCard !== undefined) employer.panCard = req.body.panCard;
+  if (req.body.gstForm !== undefined) employer.gstForm = req.body.gstForm;
+  if (req.body.otherBusinessCertificate !== undefined) employer.otherBusinessCertificate = req.body.otherBusinessCertificate;
+  if (req.body.tradeLicense !== undefined) employer.tradeLicense = req.body.tradeLicense;
+  if (req.body.educationDocuments !== undefined) employer.educationDocuments = req.body.educationDocuments;
 
+  const updatedEmployer = await employer.save();
+  res.status(200).json(updatedEmployer);
+});
 
 
 
@@ -306,70 +335,48 @@ export const saveDocumentKey = expressAsyncHandler(async (req, res) => {
 
 
 export const getViewableDocumentUrl = expressAsyncHandler(async (req, res) => {
-  const client = getS3Client(); // Use your lazy-loaded client
+  const client = getS3Client(); 
   const employer = await Employer.findById(req.employerId);
+  
+  // FACT: We now grab the specific field name from the query (e.g., ?field=aadharCard)
+  const { field } = req.query; 
 
   if (!employer) {
-    res.status(404);
-    throw new Error("Employer not found");
+    res.status(404); throw new Error("Employer not found");
+  }
+  if (!field || !employer[field]) {
+    res.status(404); throw new Error(`No document uploaded for ${field}`);
   }
 
-  if (!employer.verificationDocument) {
-    res.status(404);
-    throw new Error("No document has been uploaded");
-  }
-
-  // Get the key from the database
-  const key = employer.verificationDocument; 
-
-  const command = new GetObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-  });
-
-  // Create a temporary (5 minute) URL to view the file
+  const key = employer[field]; 
+  const command = new GetObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: key });
   const url = await getSignedUrl(client, command, { expiresIn: 300 });
 
   res.status(200).json({ viewableUrl: url });
 });
 
-
-
-
-
 export const getDownloadableDocumentUrl = expressAsyncHandler(async (req, res) => {
-  const client = getS3Client(); // Use your lazy-loaded client
+  const client = getS3Client(); 
   const employer = await Employer.findById(req.employerId);
+  const { field } = req.query;
 
   if (!employer) {
-    res.status(404);
-    throw new Error("Employer not found");
+    res.status(404); throw new Error("Employer not found");
+  }
+  if (!field || !employer[field]) {
+    res.status(404); throw new Error(`No document uploaded for ${field}`);
   }
 
-  if (!employer.verificationDocument) {
-    res.status(404);
-    throw new Error("No document has been uploaded");
-  }
-
-  // Get the key from the database
-  const key = employer.verificationDocument; 
-
+  const key = employer[field]; 
   const command = new GetObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: key,
-
-    // --- THIS IS THE MAGIC LINE ---
-    // It forces the browser to download the file instead of displaying it.
     ResponseContentDisposition: 'attachment',
   });
 
-  // Create a temporary (5 minute) URL to download the file
   const url = await getSignedUrl(client, command, { expiresIn: 300 });
-
   res.status(200).json({ downloadableUrl: url });
 });
-
-
 
 
 

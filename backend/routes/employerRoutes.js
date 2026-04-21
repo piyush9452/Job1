@@ -2,7 +2,7 @@ import express from "express";
 import { registerEmployer,loginEmployer,verifyOTP,getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl} from "../controllers/employerControllers.js";
 import { getEmployerCreatedJobs } from "../controllers/jobsControllers.js";
 import { body } from 'express-validator';
-import protect from "../middleware/authorization.js";
+import {protect} from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js";
 
 const router = express.Router();

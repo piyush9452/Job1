@@ -19,15 +19,44 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     throw new Error('Employer not found');
   }
 
-  // Strict Profile Check
-  const requiredFields = ['companyName', 'phone', 'location', 'industry', 'description', 'companyWebsite'];
-  const missingFields = requiredFields.filter(field => !employer[field] || employer[field].trim() === '');
-  if (missingFields.length > 0) {
+  // FACT: The Ultimate Backend Lock.
+  // Even if a user bypasses your React frontend using Postman, the server will instantly reject the job creation.
+  if (employer.isApproved !== "approved") {
     res.status(403);
-    throw new Error(`You must complete your profile before posting a job. Missing: ${missingFields.join(', ')}`);
+    throw new Error("Your account is currently pending admin approval. You cannot post jobs at this time.");
   }
 
-  // FACT: Extracting the massive new Phase 2 payload
+  // Strict Profile Check
+  // ==========================================
+  // FACT: Dynamic Profile & Document Check 
+  // ==========================================
+  let missingFields = [];
+  
+  // Universal required fields
+  const baseFields = ['phone', 'location', 'industry', 'description', 'aadharCard', 'panCard'];
+  baseFields.forEach(field => {
+    if (!employer[field] || employer[field].trim() === '') missingFields.push(field);
+  });
+
+  // Conditional required fields based on entity type
+  if (employer.employerType === "company") {
+    const companyFields = ['companyName', 'natureOfBusiness', 'gstForm'];
+    companyFields.forEach(field => {
+      if (!employer[field] || employer[field].trim() === '') missingFields.push(field);
+    });
+  } else {
+    // Individual
+    const individualFields = ['tradeLicense', 'educationDocuments'];
+    individualFields.forEach(field => {
+      if (!employer[field] || employer[field].trim() === '') missingFields.push(field);
+    });
+  }
+
+  if (missingFields.length > 0) {
+    res.status(403);
+    throw new Error(`You must complete your profile and upload required documents before posting a job. Missing: ${missingFields.join(', ')}`);
+  }
+
   const { 
     title, description, jobType, workDaysPattern, customWorkDaysDescription,
     skillsRequired, salaryAmount, salaryFrequency,salaryCurrency, incentives,
@@ -37,7 +66,6 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     pinCode, location, useOfficeLocation ,applicationDeadline,
   } = req.body;
 
-  // FACT: "Same as Office Location" Logic
   let locationData;
   if (useOfficeLocation) {
     if (!employer.officeLocation || !employer.officeLocation.coordinates) {
@@ -48,7 +76,6 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   } else if (location && location.type === 'Point') {
     locationData = location;
   } else {
-    // If they select Office or Field, they MUST provide a location
     if (mode && (mode.includes('Work from office') || mode.includes('Work from field'))) {
         res.status(400);
         throw new Error("Please pick a location on the map or select 'Same as office location'.");
@@ -56,7 +83,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     locationData = { type: 'Point', coordinates: [0, 0], address: "Remote" };
   }
 
-  const { jobFeatures}= req.body;
+  const { jobFeatures } = req.body;
 
   const newJob = new Job({
     title, 
@@ -75,7 +102,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     endDate,
       isFlexibleDuration,
     applicationDeadline,
-    shifts: isFlexibleShifts ? [] : shifts, // Clear shifts if flexible
+    shifts: isFlexibleShifts ? [] : shifts, 
     isFlexibleShifts,
     mode, 
     noOfDays, 
@@ -88,7 +115,10 @@ export const createJob = expressAsyncHandler(async (req, res) => {
       experience,
     pinCode,
     location: locationData,
-    status: "active", // Default status for new jobs
+    
+    // FACT: Jobs no longer go live automatically. They are forced into the pending state for Admin review.
+    status: "pending_approval", 
+    
     postedBy: req.employerId,
     postedByName: employer.name, 
     postedByImage: employer.profilePicture || '', 
@@ -101,8 +131,6 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   
   res.status(201).json(savedJob);
 });
-
-
 
 export const getJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -176,13 +204,17 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
   }
 
   // --- 4. EXECUTE QUERY ---
-  const jobs = await Job.find(filters)
+  // --- 4. EXECUTE QUERY ---
+  // FACT: Merge the user's search filters with the strict Admin security lock
+  const finalQuery = { ...filters, status: "active" };
+
+  const jobs = await Job.find(finalQuery)
     .sort(sortBy)
     .skip(skip)
     .limit(limit);
     
-  // Optional: Get total count for pagination metadata on the frontend
-  const totalJobs = await Job.countDocuments(filters);
+  // FACT: The total count must also respect the security lock so pagination doesn't break
+  const totalJobs = await Job.countDocuments(finalQuery);
 
   res.status(200).json({
     results: jobs.length,

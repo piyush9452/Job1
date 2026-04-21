@@ -1,5 +1,5 @@
 import express from "express";
-import protect from "../middleware/authorization.js";
+import {protect }from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js"; // Import this!
 
 import { 
