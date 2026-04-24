@@ -21,6 +21,28 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   isProfileComplete:{ type: Boolean,default:false},
+    resumeData: {
+        name: String,
+        phone: String,
+        description: String,
+        skills: [String],
+        experience: [
+            {
+                role: String,
+                company: String,
+                duration: String,
+                description: String
+            }
+        ],
+        education: [
+            {
+                degree: String,
+                university: String,
+                ended: String,
+                CGPA: String
+            }
+        ]
+    },
   resume: { type: String },
   education:[{
     degree: { type: String },

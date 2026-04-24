@@ -26,15 +26,16 @@ const JobSchema = new mongoose.Schema({
   },
   pinCode: { type: Number }, 
   
-  salaryAmount: { type: Number, required: true }, 
-  salaryFrequency: { type: String, enum: ["Hourly", "Daily", "Weekly", "Monthly", "Lump-Sum"], default: "Monthly" },
-  
-  incentives: { type: String, default: "" },
+  salaryAmount: { type: Number, required: true },
+    salaryCurrency: { type: String, default: "INR" },
+  salaryFrequency: { type: String, enum: ["Hour", "Day", "Week", "Month","Year", "Lump-Sum"], default: "Month" },
+
+    incentives: { type: [String], default: [] },
   
   durationType: { type: String, enum: ["Day", "Week", "Month"], required: false },
   startDate: { type: Date, default: null },
   endDate: { type: Date, required: false, default: null },
-  isLongTerm: { type: Boolean, default: false },
+    isFlexibleDuration: { type: Boolean, default: false },
   
   // FACT: New Application Deadline Field
   applicationDeadline: { type: Date, required: false },

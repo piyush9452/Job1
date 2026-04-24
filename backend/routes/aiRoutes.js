@@ -3,6 +3,8 @@ import multer from "multer";
 import { protectEmployer } from "../middleware/employercheck.js";
 import {protect} from "../middleware/authorization.js";
 import { generateJobDetails , parseResume} from "../controllers/aiControllers.js";
+import { recommendJobs } from "../controllers/aiControllers.js";
+
 
 const router = express.Router();
 
@@ -16,6 +18,8 @@ router.post("/parse-resume", protect, upload.single("resume"), parseResume);
 
 // Employer must be logged in to use AI (prevents public API abuse)
 router.post("/generate-job-details", protectEmployer, generateJobDetails);
+
+router.get("/recommend-jobs", protect, recommendJobs);
 
 
 export default router;

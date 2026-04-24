@@ -5,7 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="337125a7-a3d3-40d4-80ae-af0fda59f289" name="Changes" comment="changes made">
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/CourseSuggestionsDropdown.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/LanguageSuggestionsDropdown.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/RecommendedJobs.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/SkillSuggestionsDropdown.jsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/data/skillsByTitle.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/controllers/aiControllers.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/controllers/aiControllers.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/controllers/jobsControllers.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/controllers/jobsControllers.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/models/jobs.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/jobs.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/models/users.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/users.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routes/aiRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routes/aiRoutes.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ElasticTitleDropdown.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ElasticTitleDropdown.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/GlobalNotificationPopup.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/GlobalNotificationPopup.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Hero.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Hero.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/JobConfirmModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/JobConfirmModal.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NavBar.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/CreateJob.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/CreateJob.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -236,7 +252,44 @@
       <workItem from="1773130128374" duration="1134000" />
       <workItem from="1773139402017" duration="10558000" />
       <workItem from="1773214338832" duration="4345000" />
-      <workItem from="1773226434916" duration="984000" />
+      <workItem from="1773226434916" duration="5992000" />
+      <workItem from="1774449205520" duration="2077000" />
+      <workItem from="1774525655095" duration="2587000" />
+      <workItem from="1774698963000" duration="1864000" />
+      <workItem from="1774880879099" duration="3561000" />
+      <workItem from="1774956303298" duration="9154000" />
+      <workItem from="1775023160978" duration="880000" />
+      <workItem from="1775041748702" duration="6758000" />
+      <workItem from="1775108184972" duration="109000" />
+      <workItem from="1775140704664" duration="1972000" />
+      <workItem from="1775314120200" duration="502000" />
+      <workItem from="1775396606839" duration="198000" />
+      <workItem from="1775486103153" duration="1095000" />
+      <workItem from="1775488107735" duration="967000" />
+      <workItem from="1775547452927" duration="766000" />
+      <workItem from="1775567521192" duration="99000" />
+      <workItem from="1775571583639" duration="2495000" />
+      <workItem from="1775658916233" duration="3502000" />
+      <workItem from="1775743435431" duration="1837000" />
+      <workItem from="1775827070364" duration="4681000" />
+      <workItem from="1776087997096" duration="1226000" />
+      <workItem from="1776171132935" duration="588000" />
+      <workItem from="1776172271605" duration="6185000" />
+      <workItem from="1776239423665" duration="948000" />
+      <workItem from="1776261209412" duration="2790000" />
+      <workItem from="1776320165850" duration="75000" />
+      <workItem from="1776344921873" duration="5551000" />
+      <workItem from="1776403116288" duration="6263000" />
+      <workItem from="1776424433161" duration="8504000" />
+      <workItem from="1776489670979" duration="3771000" />
+      <workItem from="1776518415091" duration="3589000" />
+      <workItem from="1776578892730" duration="2588000" />
+      <workItem from="1776662209071" duration="1277000" />
+      <workItem from="1776664754839" duration="3899000" />
+      <workItem from="1776685974540" duration="7541000" />
+      <workItem from="1776735987694" duration="3897000" />
+      <workItem from="1776749776512" duration="5979000" />
+      <workItem from="1776767680235" duration="4981000" />
     </task>
     <task id="LOCAL-00001" summary="changes made">
       <option name="closed" value="true" />
@@ -606,7 +659,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773154790671</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="changes made">
+      <option name="closed" value="true" />
+      <created>1773227986148</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1773227986148</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

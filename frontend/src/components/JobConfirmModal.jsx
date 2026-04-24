@@ -30,7 +30,7 @@ export default function JobConfirmModal({
         <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50">
           <div>
             <h2 className="text-2xl font-extrabold text-slate-900">
-              Review & Publish
+              Confirm & Submit
             </h2>
             <p className="text-slate-500 text-sm mt-1 font-medium">
               Please review the details before making it live.
@@ -72,6 +72,10 @@ export default function JobConfirmModal({
                 label="Salary Amount"
                 value={`₹${job.salaryAmount?.toLocaleString() || 0}`}
               />
+                <Item
+                    label="Perks and Bonus"
+                    value={`₹${job.incentives?.join(", ")}`}
+                />
               <Item label="Frequency" value={job.salaryFrequency} />
               <Item
                 label="Start Date"

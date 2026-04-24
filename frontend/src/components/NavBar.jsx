@@ -178,6 +178,20 @@ export default function Navbar() {
                       >
                         My Applications
                       </Link>
+                        <Link
+                            to="/userdashboard"
+                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                            onClick={() => setUserMenuOpen(false)}
+                        >
+                            Dashboard
+                        </Link>
+                        <Link
+                            to="/recommended-jobs"
+                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                            onClick={() => setUserMenuOpen(false)}
+                        >
+                            Recommended Jobs
+                        </Link>
                     </>
                   )}
 
