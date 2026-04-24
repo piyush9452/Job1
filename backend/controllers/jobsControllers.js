@@ -4,6 +4,7 @@ import User from "../models/users.js";
 import mongoose from "mongoose";
 import { validationResult } from "express-validator";
 import Employer from "../models/employer.js"; // Adjust path as needed
+import jwt from "jsonwebtoken";
 
 
 export const createJob = expressAsyncHandler(async (req, res) => {
@@ -133,10 +134,35 @@ export const createJob = expressAsyncHandler(async (req, res) => {
 export const getJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
-  if (!job) return res.status(404).json({ message: "Job not found" });
-  res.status(200).json(job);
   
-})
+  if (!job) return res.status(404).json({ message: "Job not found" });
+
+  // FACT: If the job is active, anyone can view it.
+  if (job.status === "active") {
+    return res.status(200).json(job);
+  }
+
+  // FACT: If the job is NOT active, we manually check if the requester is the owning employer.
+  let isOwner = false;
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+    try {
+      const token = req.headers.authorization.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      if (decoded.employer && decoded.employer.id === job.postedBy.toString()) {
+        isOwner = true;
+      }
+    } catch (error) {
+      // Ignore token errors for public viewing attempts
+    }
+  }
+
+  if (!isOwner) {
+    return res.status(403).json({ message: "This job is currently under review or closed and cannot be viewed publicly." });
+  }
+
+  res.status(200).json(job);
+});
 
 
 

@@ -5,7 +5,7 @@ const employerSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   phone: { type: String, unique: true, sparse: true },
-  
+  gender: { type: String, enum: ["Male", "Female", "Other", "Prefer not to say"] }, // FACT: Added Gender Field
   // FACT: Added Employer Type to differentiate validation rules
   employerType: { 
     type: String, 

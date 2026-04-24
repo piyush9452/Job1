@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   phone: { type: String, unique: true, sparse: true},
   isVerified: { type: Boolean, default: false },
+  gender: { type: String, enum: ["Male", "Female", "Other", "Prefer not to say"] }, // FACT: Added Gender Field
   skills: [String],
   experience:[{
     jobId: { type: mongoose.Schema.Types.ObjectId, ref: "Job" },
