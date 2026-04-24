@@ -63,7 +63,7 @@ export default function JobPreviewCard({ job, onClose }) {
             <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-200">
               <IndianRupee size={14} className="text-green-500" />{" "}
               {job.salaryAmount
-                ? `${job.salaryAmount} / ${job.salaryFrequency || "Mo"}`
+                ? `${job.salaryAmount === 0 || !job.salaryAmount ? "Unpaid" : `₹${job.salaryAmount}`} / ${job.salaryFrequency || "Mo"}`
                 : "Salary TBD"}
             </span>
             <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-200 capitalize">
@@ -184,10 +184,13 @@ export default function JobPreviewCard({ job, onClose }) {
           <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
             Job Description
           </h3>
-          <div className="prose prose-sm max-w-none whitespace-pre-wrap font-medium text-slate-600">
-            {job.description ||
-              "Description will appear here based on your AI generation or manual input."}
-          </div>
+          <ul className="list-disc list-inside space-y-1 text-slate-600">
+            {job.description
+              .split("\n")
+              .map((line, index) =>
+                line.trim() ? <li key={index}>{line}</li> : null,
+              )}
+          </ul>
         </div>
       </div>
 

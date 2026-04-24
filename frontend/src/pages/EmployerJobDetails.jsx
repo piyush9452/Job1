@@ -316,9 +316,7 @@ export default function EmployerJobDetails() {
                     className="text-emerald-400"
                   />
                   <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                    {job.salaryAmount
-                      ? job.salaryAmount.toLocaleString()
-                      : "TBD"}
+                    {job.salaryAmount === 0 || !job.salaryAmount ? "Unpaid" : `₹${job.salaryAmount}`}
                   </span>
                 </div>
                 <div className="bg-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10 flex justify-between items-center text-xs sm:text-sm font-bold backdrop-blur-md">

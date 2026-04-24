@@ -29,6 +29,7 @@ import EditProfile2 from "./pages/EditProfile2";
 import MyApplications from "./pages/MyApplications";
 import UserOTP from "./pages/UserOTP";
 import ApplyPage from "./pages/ApplyPage";
+import EmployerAdminView from "./pages/EmployerAdminView";
 
 // --- EMPLOYER PAGES ---
 import EmployerDashboard from "./pages/EmployerDashboard";
@@ -45,6 +46,7 @@ import GlobalNotificationPopup from "./components/GlobalNotificationPopup";
 
 import AuthHome from "./routes/AuthHome";
 import TestLocation from "./pages/TestLocation";
+import JobAdminView from "./pages/JobAdminView";
 
 function App() {
   return (
@@ -62,6 +64,7 @@ function App() {
           path="/employerregisteroption"
           element={<EmployerRegisterOption />}
         />
+        <Route path="/admin/employer/:id" element={<EmployerAdminView />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/jobs" element={<Jobs />} />
@@ -102,6 +105,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/job/:id" element={<JobAdminView />} />
         <Route
           path="/myapplications"
           element={
