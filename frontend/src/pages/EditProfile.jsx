@@ -111,6 +111,7 @@ export default function EditProfile() {
           name: data.name || "",
           email: data.email || "",
           phone: data.phone || "",
+          gender: data.gender || "", // FACT: Added gender initialization
           description: data.description || "",
           profilePicture: data.profilePicture || "",
           resume: data.resume || "",
@@ -416,13 +417,34 @@ export default function EditProfile() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputGroup
-                label="Full Name"
-                icon={<User size={18} />}
-                name="name"
-                value={profile.name}
+                label="Phone Number"
+                icon={<Phone size={18} />}
+                name="phone"
+                value={profile.phone}
                 onChange={handleProfileChange}
-                placeholder="e.g. Aditi Sharma"
+                placeholder="e.g. 9876543210"
               />
+
+              {/* FACT: New Gender Dropdown */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Gender
+                </label>
+                <div className="relative group">
+                  <select
+                    name="gender"
+                    value={profile.gender || ""}
+                    onChange={handleProfileChange}
+                    className="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-slate-700"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+              </div>
               <InputGroup
                 label="Phone Number"
                 icon={<Phone size={18} />}

@@ -110,6 +110,26 @@ export default function PublicProfile() {
       setEmployerMessage("");
     }
   };
+  const applicantList = location.state?.applicantList || [];
+
+  // Find current index
+  const currentIndex = applicantList.indexOf(userId); // Assuming userId is the param from useParams()
+
+  const goToNext = () => {
+    if (currentIndex < applicantList.length - 1) {
+      navigate(`/profile/${applicantList[currentIndex + 1]}`, {
+        state: location.state,
+      });
+    }
+  };
+
+  const goToPrev = () => {
+    if (currentIndex > 0) {
+      navigate(`/profile/${applicantList[currentIndex - 1]}`, {
+        state: location.state,
+      });
+    }
+  };
 
   if (loading)
     return (
@@ -131,6 +151,27 @@ export default function PublicProfile() {
           >
             <ArrowLeft size={18} /> Back
           </button>
+          {applicantList.length > 1 && (
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={goToPrev}
+                disabled={currentIndex === 0}
+                className="px-4 py-2 bg-slate-800 text-white rounded-lg disabled:opacity-50 font-bold"
+              >
+                ← Previous Candidate
+              </button>
+              <span className="text-sm font-bold text-slate-500">
+                {currentIndex + 1} of {applicantList.length}
+              </span>
+              <button
+                onClick={goToNext}
+                disabled={currentIndex === applicantList.length - 1}
+                className="px-4 py-2 bg-slate-800 text-white rounded-lg disabled:opacity-50 font-bold"
+              >
+                Next Candidate →
+              </button>
+            </div>
+          )}
 
           {/* EMPLOYER ACTIONS (Mapped to new Phase 1 DB Schema) */}
           {applicationId && (
@@ -374,6 +415,7 @@ export default function PublicProfile() {
           </div>
         </div>
       </div>
+
       {/* Unified Action Modal with Messaging */}
       {actionModal.show && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">

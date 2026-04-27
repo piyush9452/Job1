@@ -41,6 +41,8 @@ import EmployerOTP from "./pages/EmployerOTP";
 import EditJob from "./pages/EditJob1";
 import JobApplicants from "./pages/JobApplicants";
 import GlobalNotificationPopup from "./components/GlobalNotificationPopup";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
 
 import AuthHome from "./routes/AuthHome";
 import TestLocation from "./pages/TestLocation";
@@ -62,13 +64,10 @@ function App() {
           path="/employerregisteroption"
           element={<EmployerRegisterOption />}
         />
-<<<<<<< HEAD
+
         <Route path="/admin/employer/:id" element={<EmployerAdminView />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-=======
->>>>>>> c3c2edfe91149879a071fcfbc9f2cf30a2e5e728
-        <Route path="/jobs" element={<Jobs />} />
 
         {/* FACT: This single route serves as both Public View and Applicant Review */}
         <Route path="/profile/:userId" element={<PublicProfile />} />
@@ -212,6 +211,32 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/services"
+          element={
+            <ProtectedRoute>
+              <Services />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/jobs"
+          element={
+            <ProtectedRoute>
+              <Jobs />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/job/JobsAroundMe" element={<TestLocation />} />
+        <Route
+          path="/services"
+          element={
+            <ProtectedRoute>
+              <Services />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/job/JobsAroundMe" element={<TestLocation />} />
         <Route
           path="/services"
           element={
