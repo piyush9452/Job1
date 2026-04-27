@@ -6,7 +6,6 @@ import {
   Briefcase,
   Clock,
   IndianRupee,
-  Building2,
   ArrowRight,
   Sparkles,
 } from "lucide-react";
@@ -21,11 +20,9 @@ export default function FeaturedJobs() {
     const fetchJobs = async () => {
       try {
         const { data } = await axios.get(
-          "https://jobone-mrpy.onrender.com/jobs"
+          "https://jobone-mrpy.onrender.com/jobs",
         );
         const jobArray = data?.data || data || [];
-
-        // Get 6 most recent jobs
         const latestJobs = Array.isArray(jobArray)
           ? jobArray.slice(-6).reverse()
           : [];
@@ -36,11 +33,9 @@ export default function FeaturedJobs() {
         setLoading(false);
       }
     };
-
     fetchJobs();
   }, []);
 
-  // --- HELPERS ---
   const formatTimeAgo = (dateString) => {
     if (!dateString) return "Recently";
     const diff = (Date.now() - new Date(dateString).getTime()) / 1000;
@@ -52,26 +47,22 @@ export default function FeaturedJobs() {
 
   const getLocation = (job) => {
     if (!job.location) return "Remote";
-    // Handle Object (New Schema) vs String (Old Schema)
-    if (typeof job.location === "object") {
+    if (typeof job.location === "object")
       return job.location.address || "Location not specified";
-    }
     return job.location;
   };
 
-  const getCompany = (job) => {
-    return job.postedByCompany || job.postedByName || "Company Confidential";
-  };
+  const getCompany = (job) =>
+    job.postedByCompany || job.postedByName || "Company Confidential";
 
-  // --- LOADING STATE ---
   if (loading) {
     return (
-      <section className="py-20 px-6 bg-slate-50">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section className="py-20 bg-[#F8FAFC]">
+        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-64 bg-white rounded-2xl shadow-sm border border-gray-100 animate-pulse"
+              className="h-64 bg-white rounded-3xl shadow-sm border border-slate-100 animate-pulse"
             ></div>
           ))}
         </div>
@@ -79,29 +70,39 @@ export default function FeaturedJobs() {
     );
   }
 
-  // --- EMPTY STATE ---
   if (jobs.length === 0) return null;
 
   return (
-    <section className="py-20 px-4 sm:px-6 bg-slate-50">
-      <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
+    <section className="py-20 bg-[#F8FAFC] font-sans">
+      {/* FACT: Injected custom animation for the transparent rotating gradient */}
+      <style>{`
+                @keyframes border-spin {
+                    100% { transform: rotate(360deg); }
+                }
+                .border-spin-bg {
+                    background: conic-gradient(from 90deg at 50% 50%, transparent 0%, transparent 75%, rgba(59, 130, 246, 0.9) 100%);
+                    animation: border-spin 3s linear infinite;
+                }
+            `}</style>
+
+      <div className="max-w-6xl mx-auto px-6">
+        {/* Premium Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div>
-            <span className="text-blue-600 font-bold text-xs uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full flex items-center w-fit gap-1 mb-3">
-              <Sparkles size={12} /> Recommended
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-[2px] bg-blue-600 rounded-full"></span>
+              <span className="text-blue-600 font-bold tracking-widest uppercase text-[10px] flex items-center gap-1">
+                <Sparkles size={10} /> Recommended
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
               Featured Opportunities
             </h2>
-            <p className="text-slate-500 mt-2 text-lg">
-              Hand-picked roles tailored for your next career move.
-            </p>
           </div>
         </div>
 
-        {/* Job Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* FACT: The grid uses "group/list" so we know when the user is hovering anywhere in the grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 group/list">
           {jobs.map((job) => {
             const companyName = getCompany(job);
             const locationStr = getLocation(job);
@@ -109,64 +110,68 @@ export default function FeaturedJobs() {
             return (
               <motion.div
                 key={job._id}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer group flex flex-col h-full"
                 onClick={() => setSelectedJob(job)}
+                // FACT: When grid is hovered, shrink & blur. When THIS card is hovered, override with !blur-none & !scale-105
+                className="relative p-[2px] rounded-3xl overflow-hidden cursor-pointer group/card transition-all duration-500 ease-out group-hover/list:blur-[4px] group-hover/list:scale-[0.96] group-hover/list:opacity-60 hover:!blur-none hover:!scale-[1.02] hover:!opacity-100 hover:shadow-[0_8px_30px_-4px_rgba(59,130,246,0.3)]"
               >
-                {/* Header: Logo & Title */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-100 flex items-center justify-center text-xl font-bold text-blue-600 shrink-0 shadow-sm">
-                    {job.postedByImage ? (
-                      <img
-                        src={job.postedByImage}
-                        alt="Logo"
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                    ) : (
-                      companyName.charAt(0)
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-slate-900 text-lg leading-tight truncate group-hover:text-blue-600 transition-colors">
-                      {job.title}
-                    </h3>
-                    <p className="text-sm text-slate-500 font-medium truncate mt-1 flex items-center gap-1">
-                      {companyName}
-                    </p>
-                  </div>
-                </div>
+                {/* FACT: The Rotating Transparent Gradient (Hidden by default, fades in on hover) */}
+                <div className="absolute inset-[-100%] z-0 opacity-0 group-hover/card:opacity-100 border-spin-bg transition-opacity duration-500" />
 
-                {/* Tags / Badges */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold flex items-center gap-1.5 border border-slate-200">
-                    <MapPin size={12} />
-                    <span className="truncate max-w-[100px]">
-                      {locationStr.split(",")[0]}
+                {/* FACT: The Inner White Card that masks the center, leaving only the 2px animated border */}
+                <div className="relative z-10 bg-white rounded-[calc(1.5rem-2px)] p-6 h-full flex flex-col border border-slate-200/80 group-hover/card:border-transparent transition-colors duration-300">
+                  <div className="flex items-start gap-4 mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-xl font-extrabold text-blue-600 shrink-0 overflow-hidden shadow-sm">
+                      {job.postedByImage ? (
+                        <img
+                          src={job.postedByImage}
+                          alt="Logo"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        companyName.charAt(0)
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-slate-900 text-lg leading-tight truncate group-hover/card:text-blue-600 transition-colors">
+                        {job.title}
+                      </h3>
+                      <p className="text-sm text-slate-500 font-medium truncate mt-0.5">
+                        {companyName}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    <span className="px-2.5 py-1 rounded-md bg-slate-50 text-slate-600 text-[11px] font-bold tracking-wide border border-slate-200/60 flex items-center gap-1.5">
+                      <MapPin size={12} className="text-slate-400" />
+                      <span className="truncate max-w-[90px]">
+                        {locationStr.split(",")[0]}
+                      </span>
                     </span>
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold flex items-center gap-1.5 border border-blue-100 capitalize">
-                    <Briefcase size={12} /> {job.jobType}
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-green-50 text-green-700 text-xs font-semibold flex items-center gap-1.5 border border-green-100">
-                    <IndianRupee size={12} />{" "}
-                    {job.salary ? (job.salary / 1000).toFixed(0) + "k" : "N/A"}
-                  </span>
-                </div>
+                    <span className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-bold tracking-wide border border-indigo-100/60 flex items-center gap-1.5 capitalize">
+                      <Briefcase size={12} className="text-indigo-400" />{" "}
+                      {job.jobType}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold tracking-wide border border-emerald-100/60 flex items-center gap-1.5">
+                      <IndianRupee size={12} className="text-emerald-400" />
+                      {job.salaryAmount === 0 || !job.salaryAmount
+                        ? "Unpaid"
+                        : (job.salaryAmount / 1000).toFixed(0) + "k"}
+                    </span>
+                  </div>
 
-                {/* Description Snippet */}
-                <p className="text-sm text-slate-600 mb-6 line-clamp-2 leading-relaxed">
-                  {job.description}
-                </p>
+                  <p className="text-sm text-slate-500 mb-6 line-clamp-2 leading-relaxed font-medium">
+                    {job.description}
+                  </p>
 
-                {/* Footer: Date & Button */}
-                <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-100">
-                  <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-                    <Clock size={14} /> {formatTimeAgo(job.createdAt)}
-                  </span>
-                  <span className="text-sm font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    View Details <ArrowRight size={16} />
-                  </span>
+                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-100">
+                    <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                      <Clock size={12} /> {formatTimeAgo(job.createdAt)}
+                    </span>
+                    <span className="text-xs font-bold text-blue-600 flex items-center gap-1 group-hover/card:translate-x-1 transition-transform">
+                      View Details <ArrowRight size={12} />
+                    </span>
+                  </div>
                 </div>
               </motion.div>
             );
@@ -174,7 +179,6 @@ export default function FeaturedJobs() {
         </div>
       </div>
 
-      {/* Modal Integration */}
       <AnimatePresence>
         {selectedJob && (
           <JobDetailsModal

@@ -1,115 +1,176 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { FaArrowRight, FaCheckCircle } from "react-icons/fa";
+import React, { useEffect } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { FaArrowRight, FaCheckCircle, FaStar } from "react-icons/fa";
 import demoIllustration from "../assets/skyscrapers.jpg";
 
-export default function CompanyPromoCard() {
-    return (
-        <section className="px-4 py-12">
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8 }}
-                className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-[#0F172A] shadow-2xl"
+export default function CompanyCard() {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  // Soft spring for cinematic global tracking
+  const mouseXSpring = useSpring(x, { stiffness: 100, damping: 30 });
+  const mouseYSpring = useSpring(y, { stiffness: 100, damping: 30 });
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["12deg", "-12deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-12deg", "12deg"]);
+
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      const xPct = e.clientX / window.innerWidth - 0.5;
+      const yPct = e.clientY / window.innerHeight - 0.5;
+      x.set(xPct);
+      y.set(yPct);
+    };
+
+    window.addEventListener("mousemove", handleGlobalMouseMove);
+    return () => window.removeEventListener("mousemove", handleGlobalMouseMove);
+  }, [x, y]);
+
+  return (
+    // FACT: Perspective is established here
+    <section
+      className="px-4 py-16 bg-[#F8FAFC] flex justify-center items-center font-sans overflow-hidden"
+      style={{ perspective: 2000 }}
+    >
+      {/* FACT: 3D Chain Link 1 - The fade-in wrapper MUST preserve 3D */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="w-full max-w-6xl"
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {/* FACT: 3D Chain Link 2 - The Rotating Card */}
+        <motion.div
+          style={{
+            rotateX,
+            rotateY,
+            transformStyle: "preserve-3d",
+          }}
+          className="relative w-full rounded-[2.5rem] bg-[#0B1120] shadow-2xl border border-slate-800"
+        >
+          {/* Ambient Glows pushed backwards */}
+          <div
+            className="absolute top-[-20%] left-[-10%] w-[50%] h-[70%] rounded-full bg-blue-600/10 blur-[100px] pointer-events-none"
+            style={{ transform: "translateZ(-50px)" }}
+          />
+          <div
+            className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[70%] rounded-full bg-indigo-600/10 blur-[100px] pointer-events-none"
+            style={{ transform: "translateZ(-50px)" }}
+          />
+
+          <div
+            className="relative flex flex-col items-center justify-between gap-12 p-8 md:flex-row md:p-16 lg:p-20"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            {/* Left Content Container */}
+            <div
+              className="z-10 text-left md:w-1/2"
+              style={{ transformStyle: "preserve-3d" }}
             >
-                {/* 1. Background Decor Elements */}
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] rounded-full bg-blue-600/20 blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] rounded-full bg-indigo-600/20 blur-[120px]" />
+              <div
+                className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-400 border border-blue-500/20 mb-6"
+                style={{ transform: "translateZ(40px)" }}
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                </span>
+                New Companies Joined
+              </div>
 
-                <div className="relative flex flex-col items-center justify-between gap-12 p-8 md:flex-row md:p-20">
+              <h2
+                className="text-4xl font-extrabold tracking-tight text-white md:text-5xl lg:text-6xl leading-[1.1] drop-shadow-2xl"
+                style={{ transform: "translateZ(80px)" }}
+              >
+                Find your next <br />
+                <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  dream workplace.
+                </span>
+              </h2>
 
-                    {/* LEFT SIDE: Content */}
-                    <div className="z-10 text-left md:w-3/5">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-400 ring-1 ring-inset ring-blue-500/20"
-                        >
-                            <span className="relative flex h-2 w-2">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
-                            </span>
-                            New Companies Joined
-                        </motion.div>
+              <p
+                className="mt-6 max-w-md text-base leading-relaxed text-slate-400 font-medium"
+                style={{ transform: "translateZ(50px)" }}
+              >
+                Skip the generic listings. We’ve curated 500+ top-rated
+                companies hiring this month based on culture, growth, and
+                benefits.
+              </p>
 
-                        <h2 className="mt-6 text-4xl font-bold tracking-tight text-white md:text-6xl leading-[1.1]">
-                            Find your next <br />
-                            <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                                dream workplace.
-                            </span>
-                        </h2>
+              <div
+                className="mt-10 flex flex-wrap items-center gap-6"
+                style={{ transform: "translateZ(60px)" }}
+              >
+                <button className="group flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+                  Explore Companies
+                  <FaArrowRight className="text-xs transition-transform group-hover:translate-x-1" />
+                </button>
 
-                        <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-400">
-                            Skip the generic listings. We’ve curated 500+ top-rated companies
-                            hiring this month based on culture, growth, and benefits.
-                        </p>
-
-                        <div className="mt-10 flex flex-wrap gap-4">
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-4 font-bold text-white transition-all hover:bg-blue-500 shadow-lg shadow-blue-600/25"
-                            >
-                                Explore Companies
-                                <FaArrowRight className="text-sm transition-transform group-hover:translate-x-1" />
-                            </motion.button>
-
-                            <div className="flex items-center gap-4 text-sm text-slate-400">
-                                <div className="flex -space-x-2">
-                                    {[1, 2, 3].map((i) => (
-                                        <div key={i} className="h-8 w-8 rounded-full border-2 border-[#0F172A] bg-slate-700" />
-                                    ))}
-                                </div>
-                                <span>Join 10k+ applicants</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RIGHT SIDE: Visual Mockup */}
-                    <div className="relative md:w-2/5">
-                        {/* Main Image with decorative border */}
-                        <motion.div
-                            animate={{ y: [0, -15, 0] }}
-                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                            className="relative z-10 overflow-hidden rounded-3xl border border-white/10 shadow-2xl"
-                        >
-                            <img
-                                src={demoIllustration}
-                                alt="Skyscrapers"
-                                className="h-[400px] w-full object-cover transition-transform duration-700 hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-transparent to-transparent" />
-                        </motion.div>
-
-                        {/* Floating Glass Cards */}
-                        <motion.div
-                            initial={{ x: 50 }}
-                            whileInView={{ x: 0 }}
-                            className="absolute -left-12 bottom-12 z-20 hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl md:block shadow-2xl"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/20 text-green-400">
-                                    <FaCheckCircle size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-400 font-medium">Verified Employer</p>
-                                    <p className="text-sm font-bold text-white">Google Cloud India</p>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ y: 20 }}
-                            whileInView={{ y: 0 }}
-                            className="absolute -right-6 top-10 z-20 hidden rounded-2xl border border-white/10 bg-blue-600/10 p-4 backdrop-blur-xl lg:block shadow-2xl"
-                        >
-                            <p className="text-2xl font-bold text-white leading-none">4.8★</p>
-                            <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Avg. Rating</p>
-                        </motion.div>
-                    </div>
-
+                <div className="flex items-center gap-3 text-sm text-slate-400 font-medium">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="h-8 w-8 rounded-full border-2 border-[#0B1120] bg-slate-800"
+                      />
+                    ))}
+                  </div>
+                  <span>Join 10k+ applicants</span>
                 </div>
-            </motion.div>
-        </section>
-    );
+              </div>
+            </div>
+
+            {/* Right Visuals Container */}
+            <div
+              className="relative md:w-1/2 w-full max-w-md mx-auto md:max-w-none mt-10 md:mt-0"
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              <div
+                className="overflow-hidden rounded-[2rem] border border-white/20 shadow-[0_30px_50px_rgba(0,0,0,0.5)] bg-slate-900 aspect-[4/3]"
+                style={{ transform: "translateZ(30px)" }}
+              >
+                <img
+                  src={demoIllustration}
+                  alt="Skyscrapers"
+                  className="w-full h-full object-cover opacity-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-transparent opacity-80" />
+              </div>
+
+              <div
+                className="absolute -left-4 md:-left-12 bottom-8 z-20 rounded-2xl border border-white/10 bg-[#0F172A]/90 p-3.5 backdrop-blur-md shadow-[0_30px_30px_-10px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-emerald-500/50 hover:scale-105 cursor-default"
+                style={{ transform: "translateZ(90px)" }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">
+                    <FaCheckCircle size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">
+                      Verified
+                    </p>
+                    <p className="text-sm font-bold text-white">Google Cloud</p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="absolute -right-4 md:-right-8 top-8 z-20 rounded-2xl border border-white/10 bg-blue-600/90 p-4 backdrop-blur-md shadow-[0_30px_30px_-10px_rgba(0,0,0,0.5)] flex flex-col items-center transition-all duration-300 hover:border-blue-400/50 hover:scale-105 cursor-default"
+                style={{ transform: "translateZ(120px)" }}
+              >
+                <p className="text-2xl font-extrabold text-white flex items-center gap-1">
+                  4.8 <FaStar size={16} className="text-amber-400 mb-1" />
+                </p>
+                <p className="text-[9px] uppercase tracking-widest text-blue-200 font-bold mt-1">
+                  Avg. Rating
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
 }
