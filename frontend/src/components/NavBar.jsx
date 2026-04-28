@@ -10,6 +10,7 @@ import {
   User,
   Briefcase,
   Sparkles,
+  Building,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -21,10 +22,12 @@ export default function Navbar() {
   const location = useLocation();
   const userMenuRef = useRef(null);
 
-  // --- 0. SCROLL EFFECT ---
+  // --- 0. SCROLL DYNAMIC EFFECT ---
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
+    // Trigger once on mount to check initial position
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -85,22 +88,31 @@ export default function Navbar() {
     setMenuOpen(false);
   };
 
-  // Premium Animated Nav Link Component
+  // --- DYNAMIC NAV LINK COMPONENT ---
   const NavLink = ({ to, children }) => (
     <Link
       to={to}
-      className="relative text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors group"
+      className={`relative font-semibold text-sm transition-colors duration-300 group ${
+        scrolled
+          ? "text-slate-600 hover:text-blue-600"
+          : "text-white/90 hover:text-white"
+      }`}
     >
       {children}
-      <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-blue-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
+      <span
+        className={`absolute -bottom-1 left-0 w-0 h-[2px] transition-all duration-300 group-hover:w-full rounded-full ${
+          scrolled ? "bg-blue-600" : "bg-white"
+        }`}
+      ></span>
     </Link>
   );
 
   return (
     <nav
-      className={`fixed w-full z-50 top-0 left-0 font-sans transition-all duration-300 ${
-        scrolled
-          ? "bg-white/70 backdrop-blur-xl border-b border-slate-200/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-3"
+      // FACT: True Glassmorphism uses extreme blur, boosted saturation, and translucent white edges.
+      className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-500 ${
+        scrolled || menuOpen
+          ? "bg-white/50 backdrop-blur-2xl backdrop-saturate-200 border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.08)] py-3"
           : "bg-transparent py-5"
       }`}
     >
@@ -108,11 +120,15 @@ export default function Navbar() {
         {/* Brand */}
         <Link
           to="/"
-          className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-1 group"
+          className={`text-2xl font-black tracking-tight flex items-center gap-1 group transition-colors duration-300 ${
+            scrolled ? "text-slate-900" : "text-white"
+          }`}
           onClick={() => setMenuOpen(false)}
         >
           Job
-          <span className="text-blue-600 group-hover:text-blue-500 transition-colors">
+          <span
+            className={`transition-colors duration-300 ${scrolled ? "text-blue-600 group-hover:text-blue-500" : "text-blue-400 group-hover:text-white"}`}
+          >
             One
           </span>
         </Link>
@@ -136,15 +152,19 @@ export default function Navbar() {
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 text-slate-700 hover:text-blue-600 focus:outline-none transition-all bg-slate-100 hover:bg-blue-50 px-3 py-1.5 rounded-full border border-slate-200 hover:border-blue-200"
+                className={`flex items-center gap-2 focus:outline-none transition-all px-3 py-1.5 rounded-full border ${
+                  scrolled
+                    ? "bg-white/50 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border-slate-200/50 hover:border-blue-200"
+                    : "bg-black/20 hover:bg-black/40 text-white border-white/20 hover:border-white/50 backdrop-blur-md"
+                }`}
               >
                 <UserCircle
                   size={22}
-                  className={userMenuOpen ? "text-blue-600" : ""}
+                  className={userMenuOpen && scrolled ? "text-blue-600" : ""}
                 />
                 <ChevronDown
                   size={14}
-                  className={`transition-transform duration-300 ${userMenuOpen ? "rotate-180 text-blue-600" : ""}`}
+                  className={`transition-transform duration-300 ${userMenuOpen && scrolled ? "rotate-180 text-blue-600" : userMenuOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -155,7 +175,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="absolute right-0 mt-3 w-56 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50 border border-white/40 origin-top-right"
+                    className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-3xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] py-2 z-50 border border-slate-100 origin-top-right"
                   >
                     {isEmployer && (
                       <div className="px-2 space-y-1">
@@ -227,13 +247,17 @@ export default function Navbar() {
             <div className="flex items-center gap-4">
               <Link
                 to="/login"
-                className="text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors"
+                className={`font-semibold text-sm transition-colors duration-300 ${scrolled ? "text-slate-600 hover:text-blue-600" : "text-white/90 hover:text-white"}`}
               >
                 Login
               </Link>
               <button
                 onClick={handleEmployerClick}
-                className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2"
+                className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm flex items-center gap-2 ${
+                  scrolled
+                    ? "bg-blue-600 text-white shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:-translate-y-0.5"
+                    : "bg-white text-blue-700 shadow-[0_4px_14px_rgba(255,255,255,0.2)] hover:bg-slate-50 hover:-translate-y-0.5"
+                }`}
               >
                 For Employers{" "}
                 <span className="text-lg leading-none mb-0.5">›</span>
@@ -246,7 +270,11 @@ export default function Navbar() {
         <div className="md:hidden flex items-center">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="focus:outline-none text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors"
+            className={`focus:outline-none p-2 rounded-full transition-colors duration-300 ${
+              scrolled || menuOpen
+                ? "text-slate-700 hover:bg-slate-100"
+                : "text-white hover:bg-white/20 backdrop-blur-sm"
+            }`}
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -261,8 +289,9 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="md:hidden absolute w-full left-0 top-[100%] bg-white/95 backdrop-blur-3xl border-b border-slate-200 shadow-2xl py-6 px-6 flex flex-col space-y-5"
+            className="md:hidden absolute w-full left-0 top-[100%] bg-white/90 backdrop-blur-3xl backdrop-saturate-200 border-b border-slate-200/50 shadow-2xl py-6 px-6 flex flex-col space-y-5"
           >
+            {/* Note: Mobile menu text is always dark since the dropdown background is white/glass */}
             <Link
               to="/"
               className="text-slate-700 font-bold text-lg hover:text-blue-600"
