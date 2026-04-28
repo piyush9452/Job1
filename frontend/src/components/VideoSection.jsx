@@ -2,17 +2,6 @@ import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FaArrowRight, FaBolt, FaUsers, FaClock } from "react-icons/fa";
 
-// ─────────────────────────────────────────────
-//  CINEMATIC VIDEO REVEAL  –  VideoSection.jsx
-//
-//  Fixed Scroll Timeline (600vh total):
-//  0 – 10%   → Static intro
-//  10 – 45%  → Cinematic zoom into the "O"
-//  45 – 55%  → Instant darkening + Text fades in (No dead zones!)
-//  55 – 85%  → Hold to read
-//  85 – 95%  → Fade out, reverse zoom
-// ─────────────────────────────────────────────
-
 export default function VideoSection() {
   const containerRef = useRef(null);
 
@@ -32,12 +21,10 @@ export default function VideoSection() {
     [0.07, 0.13],
     ["0px", "-28px"],
   );
-
   const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.04], [1, 0]);
   const progressScaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   // ── TEXT ZOOM ────────────────────────────────────────────
-  // Finishes zoom much earlier (at 45% instead of 55%)
   const textScale = useTransform(
     scrollYProgress,
     [0, 0.1, 0.45, 0.85, 0.95, 1.0],
@@ -45,7 +32,6 @@ export default function VideoSection() {
   );
 
   // ── VIDEO DARKENING ──────────────────────────────────────
-  // Starts darkening right as the zoom ends (43%) so it's ready for text
   const videoOverlay = useTransform(
     scrollYProgress,
     [0.43, 0.5, 0.8, 0.9],
@@ -58,7 +44,6 @@ export default function VideoSection() {
   );
 
   // ── FINAL CONTENT ────────────────────────────────────────
-  // Starts appearing immediately as the overlay darkens (48%)
   const finalOpacity = useTransform(
     scrollYProgress,
     [0.48, 0.55, 0.8, 0.88],
@@ -70,7 +55,6 @@ export default function VideoSection() {
     ["60px", "0px", "0px", "-40px"],
   );
 
-  // Staggered stats: Rapid fire directly after main title
   const stat1Op = useTransform(scrollYProgress, [0.5, 0.54], [0, 1]);
   const stat2Op = useTransform(scrollYProgress, [0.52, 0.56], [0, 1]);
   const stat3Op = useTransform(scrollYProgress, [0.54, 0.58], [0, 1]);
@@ -80,23 +64,23 @@ export default function VideoSection() {
   const stat3Y = useTransform(scrollYProgress, [0.54, 0.58], ["30px", "0px"]);
 
   return (
-    // Reduced to 600vh to remove exhausting scroll length
     <section
       ref={containerRef}
       className="relative h-[600vh] bg-white font-sans"
     >
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-white flex items-center justify-center">
-        {/* Subtle grain texture for depth */}
+      {/* FACT: Added 'isolate' here. This physically quarantines the CSS mix-blend mode so it cannot break z-indexes in production builds. */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-white flex items-center justify-center isolate">
+        {/* Subtle grain texture */}
         <div
-          className="absolute inset-0 z-[60] pointer-events-none opacity-[0.025] mix-blend-overlay"
+          className="absolute inset-0 z-0 pointer-events-none opacity-[0.025] mix-blend-overlay"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E")`,
             backgroundSize: "150px 150px",
           }}
         />
 
-        {/* ── LAYER 0: FULL-SCREEN VIDEO ──────────────────── */}
-        <div className="absolute inset-0 z-0">
+        {/* ── LAYER 0: FULL-SCREEN VIDEO (z-10) ──────────────────── */}
+        <div className="absolute inset-0 z-10">
           <video
             autoPlay
             loop
@@ -106,12 +90,11 @@ export default function VideoSection() {
           >
             <source src="/video.mp4" type="video/mp4" />
           </video>
-          {/* Permanent dark tint keeps letters crisp in mix-blend-screen */}
           <div className="absolute inset-0 bg-slate-950/50" />
         </div>
 
-        {/* ── LAYER 1: MIX-BLEND MASK ─────────────────────── */}
-        <div className="absolute inset-0 z-10 bg-white mix-blend-screen flex items-center justify-center pointer-events-none">
+        {/* ── LAYER 1: MIX-BLEND MASK (z-20) ─────────────────────── */}
+        <div className="absolute inset-0 z-20 bg-white mix-blend-screen flex items-center justify-center pointer-events-none">
           <motion.div style={{ scale: textScale, transformOrigin: "34% 50%" }}>
             <h1
               className="text-black font-black leading-[0.88] tracking-tight uppercase select-none"
@@ -125,20 +108,20 @@ export default function VideoSection() {
           </motion.div>
         </div>
 
-        {/* ── LAYER 2: INTRO SUBTITLE ─────────────────────── */}
+        {/* ── LAYER 2: INTRO SUBTITLE (z-30) ─────────────────────── */}
         <motion.div
           style={{ opacity: subtitleOpacity, y: subtitleY }}
-          className="absolute bottom-[22%] z-20 text-center pointer-events-none px-6"
+          className="absolute bottom-[22%] z-30 text-center pointer-events-none px-6"
         >
           <p className="text-slate-500 text-sm md:text-base font-medium tracking-[0.22em] uppercase">
             Discover your next opportunity
           </p>
         </motion.div>
 
-        {/* ── SCROLL MOUSE HINT ───────────────────────────── */}
+        {/* ── SCROLL MOUSE HINT (z-30) ───────────────────────────── */}
         <motion.div
           style={{ opacity: scrollHintOpacity }}
-          className="absolute bottom-8 z-20 flex flex-col items-center gap-2 pointer-events-none"
+          className="absolute bottom-8 z-30 flex flex-col items-center gap-2 pointer-events-none"
         >
           <div className="w-5 h-8 border-[1.5px] border-slate-400/60 rounded-full flex items-start justify-center pt-1.5">
             <motion.div
@@ -156,26 +139,27 @@ export default function VideoSection() {
           </span>
         </motion.div>
 
-        {/* ── SCROLL PROGRESS BAR ─────────────────────────── */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 h-24 w-[2px] bg-white/10 z-20 rounded-full overflow-hidden">
+        {/* ── SCROLL PROGRESS BAR (z-30) ─────────────────────────── */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 h-24 w-[2px] bg-white/10 z-30 rounded-full overflow-hidden">
           <motion.div
             style={{ scaleY: progressScaleY, originY: 0 }}
             className="w-full h-full bg-blue-500/60 rounded-full"
           />
         </div>
 
-        {/* ── LAYER 3: VIDEO DARKENING OVERLAY ───────────── */}
+        {/* ── LAYER 3: VIDEO DARKENING OVERLAY (z-40) ───────────── */}
         <motion.div
           style={{ backgroundColor: videoOverlay }}
-          className="absolute inset-0 z-20 pointer-events-none"
+          className="absolute inset-0 z-40 pointer-events-none"
         />
 
-        {/* ── LAYER 4: FINAL HEADLINE + STATS ────────────── */}
+        {/* ── LAYER 4: FINAL HEADLINE + STATS (z-50) ────────────── */}
+        {/* FACT: Added initial={{ opacity: 0 }} here to explicitly stop production hydration flashes */}
         <motion.div
+          initial={{ opacity: 0 }}
           style={{ opacity: finalOpacity, y: finalY }}
-          className="absolute inset-0 z-30 flex flex-col items-center justify-center text-center px-6"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center text-center px-6 pointer-events-none"
         >
-          {/* Eyebrow */}
           <div className="flex items-center gap-3 mb-5 justify-center">
             <span className="w-8 h-px bg-blue-400/70 rounded-full" />
             <span className="text-blue-400 font-semibold tracking-[0.28em] uppercase text-[10px]">
@@ -184,7 +168,6 @@ export default function VideoSection() {
             <span className="w-8 h-px bg-blue-400/70 rounded-full" />
           </div>
 
-          {/* Headline */}
           <h2 className="text-4xl md:text-6xl lg:text-[72px] font-extrabold text-white tracking-tight leading-[1.05] mb-5">
             How JOB1 helps you
             <br />
@@ -193,15 +176,14 @@ export default function VideoSection() {
             </span>
           </h2>
 
-          {/* Subheading */}
           <p className="text-slate-300/90 text-base md:text-lg max-w-lg mx-auto mb-10 leading-relaxed font-normal">
             Discover top talent or your next big opportunity — powered by AI
             that actually understands your career.
           </p>
 
-          {/* Staggered Stats Row */}
           <div className="flex items-center gap-8 md:gap-12 mb-10">
             <motion.div
+              initial={{ opacity: 0 }}
               style={{ opacity: stat1Op, y: stat1Y }}
               className="text-center"
             >
@@ -219,6 +201,7 @@ export default function VideoSection() {
             <div className="w-px h-10 bg-white/10" />
 
             <motion.div
+              initial={{ opacity: 0 }}
               style={{ opacity: stat2Op, y: stat2Y }}
               className="text-center"
             >
@@ -236,6 +219,7 @@ export default function VideoSection() {
             <div className="w-px h-10 bg-white/10" />
 
             <motion.div
+              initial={{ opacity: 0 }}
               style={{ opacity: stat3Op, y: stat3Y }}
               className="text-center"
             >
@@ -251,13 +235,10 @@ export default function VideoSection() {
             </motion.div>
           </div>
 
-          {/* CTA Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
-            className="bg-blue-600 text-white px-10 py-4 rounded-full font-bold text-sm md:text-base
-                                   shadow-[0_0_40px_rgba(99,102,241,0.45)] hover:bg-blue-500
-                                   transition-colors flex items-center gap-2.5 mx-auto pointer-events-auto"
+            className="bg-blue-600 text-white px-10 py-4 rounded-full font-bold text-sm md:text-base shadow-[0_0_40px_rgba(99,102,241,0.45)] hover:bg-blue-500 transition-colors flex items-center gap-2.5 mx-auto pointer-events-auto"
           >
             Get Started Free <FaArrowRight size={13} />
           </motion.button>
