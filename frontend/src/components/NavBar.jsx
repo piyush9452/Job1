@@ -1,26 +1,44 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { UserCircle, LogOut, Menu, X } from "lucide-react"; // Switched to Lucide icons
+import {
+  UserCircle,
+  LogOut,
+  Menu,
+  X,
+  ChevronDown,
+  LayoutDashboard,
+  User,
+  Briefcase,
+  Sparkles,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const userMenuRef = useRef(null);
 
-  // --- 1. DETERMINE ROLE (Fix for conflicting sessions) ---
+  // --- 0. SCROLL EFFECT ---
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // --- 1. DETERMINE ROLE ---
   const userInfo = localStorage.getItem("userInfo");
   const employerInfo = localStorage.getItem("employerInfo");
 
-  let activeRole = "guest"; // 'guest' | 'user' | 'employer'
+  let activeRole = "guest";
 
   if (userInfo && !employerInfo) {
     activeRole = "user";
   } else if (!userInfo && employerInfo) {
     activeRole = "employer";
   } else if (userInfo && employerInfo) {
-    // Both exist (dirty state). Decide based on URL context.
     if (location.pathname.startsWith("/employer")) {
       activeRole = "employer";
     } else {
@@ -31,7 +49,6 @@ export default function Navbar() {
   const isUser = activeRole === "user";
   const isEmployer = activeRole === "employer";
 
-  // Logout handler (Clear ALL sessions to be safe)
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("userInfo");
@@ -43,7 +60,6 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  // Close user dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -54,7 +70,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Hide navbar on auth pages
   if (
     ["/login", "/register", "/employerregister"].includes(location.pathname)
   ) {
@@ -70,165 +85,168 @@ export default function Navbar() {
     setMenuOpen(false);
   };
 
+  // Premium Animated Nav Link Component
+  const NavLink = ({ to, children }) => (
+    <Link
+      to={to}
+      className="relative text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors group"
+    >
+      {children}
+      <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-blue-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
+    </Link>
+  );
+
   return (
-    <nav className="bg-white shadow-md fixed w-full z-50 top-0 left-0 font-sans">
-      <div className="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+    <nav
+      className={`fixed w-full z-50 top-0 left-0 font-sans transition-all duration-300 ${
+        scrolled
+          ? "bg-white/70 backdrop-blur-xl border-b border-slate-200/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-3"
+          : "bg-transparent py-5"
+      }`}
+    >
+      <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
         {/* Brand */}
         <Link
           to="/"
-          className="text-2xl font-bold text-blue-700 hover:text-blue-800 transition-colors"
+          className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-1 group"
           onClick={() => setMenuOpen(false)}
         >
-          JobOne
+          Job
+          <span className="text-blue-600 group-hover:text-blue-500 transition-colors">
+            One
+          </span>
         </Link>
 
         {/* --- DESKTOP MENU --- */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link
-            to="/"
-            className="text-gray-700 hover:text-blue-700 font-medium"
-          >
-            Home
-          </Link>
+        <div className="hidden md:flex items-center space-x-8">
+          <NavLink to="/">Home</NavLink>
 
-          {/* Guest Links */}
           {activeRole === "guest" && (
             <>
-              <Link
-                to="/jobs"
-                className="text-gray-700 hover:text-blue-700 font-medium"
-              >
-                Find Part-time Jobs
-              </Link>
-              <Link
-                to="/employerregister"
-                className="text-gray-700 hover:text-blue-700 font-medium"
-              >
-                Post Part-time Jobs
-              </Link>
+              <NavLink to="/jobs">Find Jobs</NavLink>
+              <NavLink to="/employerregister">Post a Job</NavLink>
             </>
           )}
 
-          {/* User Links */}
-          {isUser && (
-            <Link
-              to="/jobs"
-              className="text-gray-700 hover:text-blue-700 font-medium"
-            >
-              Find Part-time Jobs
-            </Link>
-          )}
-
-          {/* Employer Links */}
-          {isEmployer && (
-            <Link
-              to="/createjob"
-              className="text-gray-700 hover:text-blue-700 font-medium"
-            >
-              Post a Part-time Job
-            </Link>
-          )}
+          {isUser && <NavLink to="/jobs">Find Jobs</NavLink>}
+          {isEmployer && <NavLink to="/createjob">Post a Job</NavLink>}
 
           {/* Profile Dropdown / Login Button */}
           {activeRole !== "guest" ? (
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-700 focus:outline-none transition-colors"
+                className="flex items-center gap-2 text-slate-700 hover:text-blue-600 focus:outline-none transition-all bg-slate-100 hover:bg-blue-50 px-3 py-1.5 rounded-full border border-slate-200 hover:border-blue-200"
               >
-                <UserCircle size={28} />
+                <UserCircle
+                  size={22}
+                  className={userMenuOpen ? "text-blue-600" : ""}
+                />
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-300 ${userMenuOpen ? "rotate-180 text-blue-600" : ""}`}
+                />
               </button>
 
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {/* Employer Dropdown Items */}
-                  {isEmployer && (
-                    <>
-                      <Link
-                        to="/employerprofile"
-                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        Company Profile
-                      </Link>
-                      <Link
-                        to="/employerdashboard"
-                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
-                    </>
-                  )}
-
-                  {/* User Dropdown Items */}
-                  {isUser && (
-                    <>
-                      <Link
-                        to="/profile"
-                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        My Profile
-                      </Link>
-                      <Link
-                        to="/myapplications"
-                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        My Applications
-                      </Link>
-                        <Link
-                            to="/userdashboard"
-                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                            onClick={() => setUserMenuOpen(false)}
-                        >
-                            Dashboard
-                        </Link>
-                        <Link
-                            to="/recommended-jobs"
-                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                            onClick={() => setUserMenuOpen(false)}
-                        >
-                            Recommended Jobs
-                        </Link>
-                    </>
-                  )}
-
-                  <div className="border-t my-1"></div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="absolute right-0 mt-3 w-56 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50 border border-white/40 origin-top-right"
                   >
-                    <LogOut size={16} /> Logout
-                  </button>
-                </div>
-              )}
+                    {isEmployer && (
+                      <div className="px-2 space-y-1">
+                        <Link
+                          to="/employerdashboard"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <LayoutDashboard size={16} /> Dashboard
+                        </Link>
+                        <Link
+                          to="/employerprofile"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Building size={16} /> Company Profile
+                        </Link>
+                      </div>
+                    )}
+
+                    {isUser && (
+                      <div className="px-2 space-y-1">
+                        <Link
+                          to="/userdashboard"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <LayoutDashboard size={16} /> Dashboard
+                        </Link>
+                        <Link
+                          to="/profile"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <User size={16} /> My Profile
+                        </Link>
+                        <Link
+                          to="/myapplications"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Briefcase size={16} /> My Applications
+                        </Link>
+                        <Link
+                          to="/recommended-jobs"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Sparkles size={16} className="text-amber-500" />{" "}
+                          Recommended Jobs
+                        </Link>
+                      </div>
+                    )}
+
+                    <div className="border-t border-slate-100 my-2 mx-3"></div>
+                    <div className="px-2">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                      >
+                        <LogOut size={16} /> Logout
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
-            // Not Logged In Buttons
             <div className="flex items-center gap-4">
               <Link
                 to="/login"
-                className="text-gray-700 hover:text-blue-700 font-medium"
+                className="text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors"
               >
                 Login
               </Link>
               <button
                 onClick={handleEmployerClick}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition shadow-sm text-sm"
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2"
               >
-                For Employers ➔
+                For Employers{" "}
+                <span className="text-lg leading-none mb-0.5">›</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* --- MOBILE HAMBURGER BUTTON --- */}
+        {/* --- MOBILE HAMBURGER --- */}
         <div className="md:hidden flex items-center">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="focus:outline-none text-gray-700 hover:text-blue-700 p-2"
+            className="focus:outline-none text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors"
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -236,115 +254,134 @@ export default function Navbar() {
       </div>
 
       {/* --- MOBILE MENU --- */}
-      {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 absolute w-full left-0 shadow-lg py-4 px-6 flex flex-col space-y-4 animate-in slide-in-from-top-5 duration-200">
-          <Link
-            to="/"
-            className="text-gray-700 hover:text-blue-600 font-medium"
-            onClick={() => setMenuOpen(false)}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="md:hidden absolute w-full left-0 top-[100%] bg-white/95 backdrop-blur-3xl border-b border-slate-200 shadow-2xl py-6 px-6 flex flex-col space-y-5"
           >
-            Home
-          </Link>
+            <Link
+              to="/"
+              className="text-slate-700 font-bold text-lg hover:text-blue-600"
+              onClick={() => setMenuOpen(false)}
+            >
+              Home
+            </Link>
 
-          {/* Guest Mobile Links */}
-          {activeRole === "guest" && (
-            <>
-              <Link
-                to="/jobs"
-                className="text-gray-700 hover:text-blue-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                Find Jobs
-              </Link>
-              <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
+            {activeRole === "guest" && (
+              <>
                 <Link
-                  to="/login"
-                  className="text-center w-full py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50"
+                  to="/jobs"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Login
+                  Find Jobs
                 </Link>
-                <button
-                  onClick={handleEmployerClick}
-                  className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-sm"
-                >
-                  For Employers
-                </button>
-              </div>
-            </>
-          )}
+                <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
+                  <Link
+                    to="/login"
+                    className="text-center w-full py-3 border-2 border-slate-200 rounded-2xl text-slate-700 font-bold hover:bg-slate-50 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <button
+                    onClick={handleEmployerClick}
+                    className="w-full py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition-colors"
+                  >
+                    For Employers
+                  </button>
+                </div>
+              </>
+            )}
 
-          {/* Employer Mobile Links */}
-          {isEmployer && (
-            <>
-              <Link
-                to="/createjob"
-                className="text-gray-700 hover:text-blue-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                Post a Part-time Job
-              </Link>
-              <Link
-                to="/employerdashboard"
-                className="text-gray-700 hover:text-blue-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/employerprofile"
-                className="text-gray-700 hover:text-blue-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                Company Profile
-              </Link>
-              <div className="pt-2 border-t border-gray-100">
-                <button
-                  onClick={handleLogout}
-                  className="text-red-600 font-medium flex items-center gap-2 py-2"
+            {isEmployer && (
+              <>
+                <Link
+                  to="/createjob"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
                 >
-                  <LogOut size={18} /> Logout
-                </button>
-              </div>
-            </>
-          )}
+                  Post a Job
+                </Link>
+                <Link
+                  to="/employerdashboard"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/employerprofile"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Company Profile
+                </Link>
+                <div className="pt-4 border-t border-slate-100">
+                  <button
+                    onClick={handleLogout}
+                    className="text-rose-600 font-bold text-lg flex items-center gap-2 py-2"
+                  >
+                    <LogOut size={20} /> Logout
+                  </button>
+                </div>
+              </>
+            )}
 
-          {/* User Mobile Links */}
-          {isUser && (
-            <>
-              <Link
-                to="/jobs"
-                className="text-gray-700 hover:text-blue-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                Find Part-time Jobs
-              </Link>
-              <Link
-                to="/profile"
-                className="text-gray-700 hover:text-blue-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                My Profile
-              </Link>
-              <Link
-                to="/myapplications"
-                className="text-gray-700 hover:text-blue-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                My Applications
-              </Link>
-              <div className="pt-2 border-t border-gray-100">
-                <button
-                  onClick={handleLogout}
-                  className="text-red-600 font-medium flex items-center gap-2 py-2"
+            {isUser && (
+              <>
+                <Link
+                  to="/jobs"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
                 >
-                  <LogOut size={18} /> Logout
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
+                  Find Jobs
+                </Link>
+                <Link
+                  to="/userdashboard"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/profile"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  My Profile
+                </Link>
+                <Link
+                  to="/myapplications"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  My Applications
+                </Link>
+                <Link
+                  to="/recommended-jobs"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Recommended Jobs
+                </Link>
+                <div className="pt-4 border-t border-slate-100">
+                  <button
+                    onClick={handleLogout}
+                    className="text-rose-600 font-bold text-lg flex items-center gap-2 py-2"
+                  >
+                    <LogOut size={20} /> Logout
+                  </button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
