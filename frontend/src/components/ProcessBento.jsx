@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FaUserPlus,
@@ -8,12 +8,12 @@ import {
 } from "react-icons/fa";
 
 export default function ProcessBento() {
-  // FACT: State to track dynamic lava lamp colors
   const [activeBlobs, setActiveBlobs] = useState({
     b1: "bg-blue-600",
     b2: "bg-indigo-500",
   });
 
+  // FACT: Added initX and initY so each card enters from a unique direction
   const steps = [
     {
       num: "01",
@@ -24,6 +24,8 @@ export default function ProcessBento() {
       iconColor: "text-blue-500",
       blob1: "bg-blue-500",
       blob2: "bg-cyan-400",
+      initX: -100,
+      initY: 0, // Comes from Left
     },
     {
       num: "02",
@@ -34,6 +36,8 @@ export default function ProcessBento() {
       iconColor: "text-indigo-500",
       blob1: "bg-indigo-500",
       blob2: "bg-purple-500",
+      initX: 0,
+      initY: -100, // Drops from Top
     },
     {
       num: "03",
@@ -44,6 +48,8 @@ export default function ProcessBento() {
       iconColor: "text-emerald-500",
       blob1: "bg-emerald-500",
       blob2: "bg-teal-400",
+      initX: 0,
+      initY: 100, // Rises from Bottom
     },
     {
       num: "04",
@@ -54,41 +60,65 @@ export default function ProcessBento() {
       iconColor: "text-amber-500",
       blob1: "bg-amber-500",
       blob2: "bg-orange-500",
+      initX: 100,
+      initY: 0, // Comes from Right
     },
   ];
 
+  // FACT: Random Twirl Engine implemented for the process icons
+  const [twirlingIndex, setTwirlingIndex] = useState(null);
+
+  useEffect(() => {
+    const triggerRandomTwirl = () => {
+      const randomIndex = Math.floor(Math.random() * steps.length);
+      setTwirlingIndex(randomIndex);
+
+      setTimeout(() => {
+        setTwirlingIndex(null);
+      }, 1500);
+
+      const nextInterval = Math.random() * 5000 + 100;
+      setTimeout(triggerRandomTwirl, nextInterval);
+    };
+
+    const initialTimer = setTimeout(triggerRandomTwirl, 5000);
+    return () => clearTimeout(initialTimer);
+  }, [steps.length]);
+
   return (
     <section className="relative py-24 bg-[#F8FAFC] font-sans overflow-hidden border-t border-slate-200/60">
-      {/* ========================================== */}
-      {/* AMBIENT LAVA LAMP BACKGROUNDS */}
-      {/* ========================================== */}
+      {/* FREEROAMING LAVA LAMP BACKGROUNDS */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Top Left Orb */}
         <motion.div
           animate={{
-            x: [0, 80, -40, 0],
-            y: [0, -60, 50, 0],
-            scale: [1, 1.1, 0.9, 1],
+            x: ["0vw", "40vw", "-20vw", "30vw", "0vw"],
+            y: ["0vh", "30vh", "10vh", "-20vh", "0vh"],
+            scale: [1, 1.2, 0.8, 1.1, 1],
           }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute -top-20 -left-20 w-96 h-96 rounded-full mix-blend-multiply blur-[100px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b1}`}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className={`absolute top-[10%] left-[10%] w-[25rem] h-[25rem] rounded-full mix-blend-multiply blur-[100px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b1}`}
         />
 
-        {/* Bottom Right Orb */}
         <motion.div
           animate={{
-            x: [0, -80, 40, 0],
-            y: [0, 60, -50, 0],
-            scale: [1, 0.9, 1.2, 1],
+            x: ["0vw", "-30vw", "20vw", "-40vw", "0vw"],
+            y: ["0vh", "-20vh", "40vh", "10vh", "0vh"],
+            scale: [1, 0.9, 1.3, 0.9, 1],
           }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
           className={`absolute bottom-0 right-0 w-[30rem] h-[30rem] rounded-full mix-blend-multiply blur-[120px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b2}`}
         />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-6">
-        {/* Header */}
-        <div className="text-center mb-16">
+        {/* Header - 2-Way Scroll Reveal */}
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <div className="flex items-center justify-center gap-2 mb-3">
             <span className="w-6 h-[2px] bg-blue-600 rounded-full"></span>
             <span className="text-blue-600 font-bold tracking-widest uppercase text-[10px]">
@@ -106,7 +136,7 @@ export default function ProcessBento() {
             Simplified, automated, and designed for maximum speed. Skip the long
             forms and get straight to the interviews.
           </p>
-        </div>
+        </motion.div>
 
         {/* Card Grid */}
         <div
@@ -118,12 +148,21 @@ export default function ProcessBento() {
           {steps.map((step, i) => (
             <motion.div
               key={i}
+              // FACT: Directional 2-Way Scroll Logic
+              initial={{ opacity: 0, x: step.initX, y: step.initY }}
+              whileInView={{ opacity: 1, x: 0, y: 0 }}
+              viewport={{ once: false, amount: 0.1 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 20,
+                delay: i * 0.1,
+              }}
               onMouseEnter={() =>
                 setActiveBlobs({ b1: step.blob1, b2: step.blob2 })
               }
               whileHover={{ y: -4, scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="relative bg-white/80 backdrop-blur-sm shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_-4px_rgba(0,0,0,0.08)] border border-slate-200/80 hover:border-slate-300 p-8 pt-10 rounded-[2rem] overflow-hidden group transition-colors duration-300 flex flex-col h-full cursor-default"
+              className="relative bg-white/80 backdrop-blur-sm shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.08)] border border-slate-200/80 hover:border-slate-300 p-8 pt-10 rounded-[2rem] overflow-hidden group transition-colors duration-300 flex flex-col h-full cursor-default"
             >
               {/* Top-Right Decorative Circle */}
               <div
@@ -136,11 +175,20 @@ export default function ProcessBento() {
 
               {/* Card Content */}
               <div className="relative z-10">
-                <div
-                  className={`mb-6 transition-transform duration-500 group-hover:-translate-y-1 ${step.iconColor}`}
+                {/* FACT: CSS Conflict Fix. Framer Motion controls JS Twirl, Tailwind controls Hover Scale */}
+                <motion.div
+                  animate={
+                    twirlingIndex === i
+                      ? { y: [0, -15, 0], rotate: [0, 720, 720] }
+                      : { y: 0, rotate: 0 }
+                  }
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  className={`mb-6 inline-block ${step.iconColor}`}
                 >
-                  {step.icon}
-                </div>
+                  <div className="transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110">
+                    {step.icon}
+                  </div>
+                </motion.div>
 
                 <h3 className="font-extrabold text-xl text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
                   {step.title}

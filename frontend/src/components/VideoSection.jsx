@@ -109,11 +109,11 @@ export default function VideoSection() {
             <h1
               className="text-black font-black leading-[0.88] tracking-tight uppercase select-none"
               style={{
-                fontSize: "clamp(100px, 28vw, 480px)",
+                fontSize: "clamp(100px, 28vw, 320px)",
                 letterSpacing: "-0.02em",
               }}
             >
-              JOB1
+              JOBONE
             </h1>
           </motion.div>
         </div>
