@@ -13,6 +13,7 @@ import {
   Building,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import LogoJobOne from "./LogoJobOne";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -116,21 +117,16 @@ export default function Navbar() {
           : "bg-transparent py-5"
       }`}
     >
-      <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
+      <div className="container mx-auto px-5 lg:px-10 flex justify-between items-center">
         {/* Brand */}
         <Link
           to="/"
-          className={`text-2xl font-black tracking-tight flex items-center gap-1 group transition-colors duration-300 ${
-            scrolled ? "text-slate-900" : "text-white"
-          }`}
+          className="flex items-center transition-opacity duration-300 hover:opacity-80"
           onClick={() => setMenuOpen(false)}
         >
-          Job
-          <span
-            className={`transition-colors duration-300 ${scrolled ? "text-blue-600 group-hover:text-blue-500" : "text-blue-400 group-hover:text-white"}`}
-          >
-            One
-          </span>
+          {/* FACT: The h-10 class strictly controls the logo size so it doesn't break your navbar layout. */}
+          {/* FACT: If you get a dark-text version of the logo later, you can swap the src dynamically using {scrolled ? '/logo-dark.png' : '/jobone-logo.png'} */}
+          <LogoJobOne scrolled={scrolled}/>
         </Link>
 
         {/* --- DESKTOP MENU --- */}

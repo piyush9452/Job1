@@ -7,6 +7,24 @@ import UserOTP from '../models/userVerification.js';
 import sendEmail from '../utils/emailVerification.js';
 import { validationResult } from 'express-validator';
 
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import crypto from 'crypto';
+
+let s3Client;
+const getS3Client = () => {
+  if (!s3Client) {
+    s3Client = new S3Client({
+      region: process.env.AWS_BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+  }
+  return s3Client;
+};
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const createUser = expressAsyncHandler(async (req, res) => {
@@ -235,4 +253,79 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
     res.status(500);
     throw new Error(`Google Login Failed: ${error.message}`);
   }
+});
+
+export const getResumeUploadUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client();
+  const userId = req.params.id;
+  const { fileType } = req.body; 
+  
+  if (!fileType) {
+    res.status(400); throw new Error("File type is required");
+  }
+
+  // Handle docx, doc, pdf extensions
+  let extension = "pdf";
+  if (fileType.includes("wordprocessingml")) extension = "docx";
+  else if (fileType.includes("msword")) extension = "doc";
+  
+  const randomBytes = crypto.randomBytes(8).toString('hex');
+  const key = `resumes/applicant-${userId}-${randomBytes}.${extension}`;
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    ContentType: fileType,
+  });
+
+  const url = await getSignedUrl(client, command, { expiresIn: 600 });
+  res.status(200).json({ uploadUrl: url, key: key });
+});
+
+export const saveResumeKey = expressAsyncHandler(async (req, res) => {
+  const userId = req.params.id;
+  const { key } = req.body;
+
+  if (!key) {
+    res.status(400); throw new Error("Document key is required");
+  }
+  
+  const user = await User.findByIdAndUpdate(userId, { resumeFileKey: key }, { new: true });
+  if (!user) {
+    res.status(404); throw new Error("User not found");
+  }
+
+  res.status(200).json({ message: "Resume saved successfully.", resumeFileKey: key });
+});
+
+export const getViewableResumeUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client(); 
+  const user = await User.findById(req.params.id);
+  
+  if (!user || !user.resumeFileKey) {
+    res.status(404); throw new Error("No resume file uploaded for this user");
+  }
+
+  const command = new GetObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: user.resumeFileKey });
+  const url = await getSignedUrl(client, command, { expiresIn: 3600 }); // 1 hour access for recruiters
+
+  res.status(200).json({ viewableUrl: url });
+});
+
+export const getDownloadableResumeUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client(); 
+  const user = await User.findById(req.params.id);
+
+  if (!user || !user.resumeFileKey) {
+    res.status(404); throw new Error("No resume file uploaded for this user");
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: user.resumeFileKey,
+    ResponseContentDisposition: `attachment; filename="${user.name.replace(/\s+/g, '_')}_Resume"`,
+  });
+
+  const url = await getSignedUrl(client, command, { expiresIn: 300 });
+  res.status(200).json({ downloadableUrl: url });
 });

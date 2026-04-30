@@ -5,15 +5,15 @@ const employerSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   phone: { type: String, unique: true, sparse: true },
-  gender: { type: String, enum: ["Male", "Female", "Other", "Prefer not to say"] }, // FACT: Added Gender Field
-  // FACT: Added Employer Type to differentiate validation rules
+  
+  // FACT: Removed the Gender field entirely as per instructions.
+  
   employerType: { 
     type: String, 
     enum: ["company", "individual"], 
     default: "company" 
   },
   
-  // FACT: Nature of Business dropdown for companies
   natureOfBusiness: { 
     type: String, 
     enum: ["Proprietorship", "Partnership", "Trust/NGO", "Public LTD", "Private LTD", "LLP", "ERP", ""],
@@ -45,18 +45,10 @@ const employerSchema = new mongoose.Schema({
     default: "pending" 
   },
   
-  // ==========================================
-  // FACT: Enterprise Document Verification Fields (Store AWS S3 Keys here)
-  // ==========================================
-  // Shared
   aadharCard: { type: String, default: "" },
   panCard: { type: String, default: "" },
-  
-  // Company Only
   gstForm: { type: String, default: "" },
   otherBusinessCertificate: { type: String, default: "" },
-  
-  // Individual Only
   tradeLicense: { type: String, default: "" },
   educationDocuments: { type: String, default: "" },
   

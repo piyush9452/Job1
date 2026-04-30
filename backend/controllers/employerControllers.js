@@ -216,24 +216,21 @@ export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
     throw new Error('Employer not found');
   }
 
-  // FACT: Strict 200-word description enforcement
+  // FACT: Reduced word count enforcement from 200 to 50 words
   if (req.body.description !== undefined) {
-    // Count words by splitting on spaces and filtering out empty strings
     const wordCount = req.body.description.trim().split(/\s+/).filter(word => word.length > 0).length;
     
-    if (wordCount < 200) {
+    if (wordCount < 50) {
       res.status(400);
-      throw new Error(`Profile description must be at least 200 words. You currently have ${wordCount} words.`);
+      throw new Error(`Profile description must be at least 50 words. You currently have ${wordCount} words.`);
     }
     employer.description = req.body.description;
   }
 
-  // Handle Employer Type switching
   if (req.body.employerType !== undefined) {
     employer.employerType = req.body.employerType;
   }
 
-  // Standard Fields
   if (req.body.name !== undefined) employer.name = req.body.name;
   if (req.body.phone !== undefined) employer.phone = req.body.phone;
   if (req.body.location !== undefined) employer.location = req.body.location; 
@@ -241,19 +238,16 @@ export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
   if (req.body.industry !== undefined) employer.industry = req.body.industry;
   if (req.body.profilePicture !== undefined) employer.profilePicture = req.body.profilePicture;
   
-  // Conditional Company Fields
   if (employer.employerType === "company") {
     if (req.body.companyName !== undefined) employer.companyName = req.body.companyName;
     if (req.body.companyWebsite !== undefined) employer.companyWebsite = req.body.companyWebsite;
     if (req.body.natureOfBusiness !== undefined) employer.natureOfBusiness = req.body.natureOfBusiness;
   } else {
-    // FACT: If they are an individual, wipe the company-specific data to keep the database clean
     employer.companyName = "";
     employer.companyWebsite = "";
     employer.natureOfBusiness = "";
   }
 
-  // Document Fields (These expect AWS S3 Keys passed from your frontend)
   if (req.body.aadharCard !== undefined) employer.aadharCard = req.body.aadharCard;
   if (req.body.panCard !== undefined) employer.panCard = req.body.panCard;
   if (req.body.gstForm !== undefined) employer.gstForm = req.body.gstForm;
@@ -264,7 +258,6 @@ export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
   const updatedEmployer = await employer.save();
   res.status(200).json(updatedEmployer);
 });
-
 
 
 export const getPresignedUploadUrl = expressAsyncHandler(async (req, res) => {

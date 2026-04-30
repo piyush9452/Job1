@@ -8,7 +8,8 @@ const JobSchema = new mongoose.Schema({
 
   jobType: [{
     type: String,
-    enum: ["permanent", "temporary", "internship", "part-time", "full-time", "contractual", "freelance"]
+    // FACT: Added "volunteer opportunity"
+    enum: ["permanent", "temporary", "internship", "part-time", "full-time", "contractual", "freelance", "volunteer opportunity"]
   }],
 
   workDaysPattern: {
@@ -26,18 +27,22 @@ const JobSchema = new mongoose.Schema({
   },
   pinCode: { type: Number }, 
   
-  salaryAmount: { type: Number, required: true },
-    salaryCurrency: { type: String, default: "INR" },
-  salaryFrequency: { type: String, enum: ["Hour", "Day", "Week", "Month","Year", "Lump-Sum"], default: "Month" },
+  // FACT: Swapped salaryAmount for Min/Max range
+  salaryMin: { type: Number, required: true },
+  salaryMax: { type: Number, required: true },
+  salaryCurrency: { type: String, default: "INR" },
+  salaryFrequency: { type: String, enum: ["Hour", "Day", "Week", "Month", "Year", "Lump-Sum"], default: "Month" },
 
-    incentives: { type: [String], default: [] },
+  incentives: { type: [String], default: [] },
+  
+  // FACT: Added Screening Questions Array
+  screeningQuestions: [{ type: String }],
   
   durationType: { type: String, enum: ["Day", "Week", "Month"], required: false },
   startDate: { type: Date, default: null },
   endDate: { type: Date, required: false, default: null },
-    isFlexibleDuration: { type: Boolean, default: false },
+  isFlexibleDuration: { type: Boolean, default: false },
   
-  // FACT: New Application Deadline Field
   applicationDeadline: { type: Date, required: false },
 
   shifts: [{
@@ -71,7 +76,6 @@ const JobSchema = new mongoose.Schema({
   postedByCompany: { type: String, default: "" },
   postedAt: { type: Date, default: Date.now },
   expiringAt: { type: Date }, 
-  // FACT: Status enum updated to prevent 500 crashes
   status: { 
     type: String, 
     enum: ["pending_approval", "active", "inactive", "closed", "deadline passed", "rejected"], 
