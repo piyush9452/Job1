@@ -1,8 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import axios from "axios";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css"; // FACT: Required for Rich Text Editor styling
+import Editor from "react-simple-wysiwyg";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 import LocationPicker from "../components/LocationPicker.jsx";
 import JobConfirmModal from "../components/JobConfirmModal.jsx";
@@ -24,6 +23,7 @@ import {
   Zap,
   Calendar,
   HelpCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 const getDefaultDeadline = () => {
@@ -44,16 +44,6 @@ const getMaxDeadline = () => {
   return date.toISOString().split("T")[0];
 };
 
-// FACT: Rich Text Editor modules configuration
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["clean"],
-  ],
-};
-
 export default function CreateJob() {
   const navigate = useNavigate();
   const locationState = useLocation().state;
@@ -67,12 +57,12 @@ export default function CreateJob() {
     workDaysPattern: "Mon to Fri",
     customWorkDaysDescription: "",
     mode: ["Work from office"],
-    salaryMin: "", // FACT: Changed to range
-    salaryMax: "", // FACT: Changed to range
+    salaryMin: "",
+    salaryMax: "",
     salaryFrequency: "Month",
     salaryCurrency: "INR",
     incentives: [],
-    screeningQuestions: [], // FACT: New screening questions array
+    screeningQuestions: [],
     startDate: "",
     endDate: "",
     applicationDeadline: getDefaultDeadline(),
@@ -99,7 +89,7 @@ export default function CreateJob() {
   const [jobSummary, setJobSummary] = useState("");
   const [keyResponsibilities, setKeyResponsibilities] = useState("");
   const [customPerkInput, setCustomPerkInput] = useState("");
-  const [newQuestion, setNewQuestion] = useState(""); // State for new screening question
+  const [newQuestion, setNewQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(false);
   const [step, setStep] = useState(1);
@@ -145,7 +135,6 @@ export default function CreateJob() {
   ];
   const CURRENCIES = [...TOP_CURRENCIES, ...REST_CURRENCIES];
 
-  // (Omitting eligibility check useEffect for brevity, it remains unchanged from your original)
   useEffect(() => {
     const handler = (e) => {
       if (currencyRef.current && !currencyRef.current.contains(e.target))
@@ -156,9 +145,152 @@ export default function CreateJob() {
   }, []);
 
   useEffect(() => {
-    // FACT: Mocking page access to 'granted' for this view. Replace with your actual auth logic.
-    setPageAccess("granted");
-  }, []);
+    const checkEligibility = async () => {
+      try {
+        const storedData = localStorage.getItem("employerInfo");
+        if (!storedData) {
+          navigate("/login");
+          return;
+        }
+
+        const { token, id, employerId } = JSON.parse(storedData);
+        const targetId = employerId || id;
+
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const { data } = await axios.get(
+          `https://jobone-mrpy.onrender.com/employer/profile/${targetId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+
+        if (data.isApproved === "pending") {
+          setBlockMessage(
+            "Your account is currently under review by the administration. You will be able to post jobs once you are approved.",
+          );
+          setPageAccess("blocked");
+          return;
+        }
+        if (data.isApproved === "rejected") {
+          setBlockMessage(
+            "Your account has been rejected by the administration. You do not have permission to post jobs.",
+          );
+          setPageAccess("blocked");
+          return;
+        }
+
+        let missing = [];
+        const baseFields = [
+          "phone",
+          "location",
+          "industry",
+          "description",
+          "aadharCard",
+          "panCard",
+        ];
+        baseFields.forEach((field) => {
+          if (!data[field] || String(data[field]).trim() === "")
+            missing.push(field);
+        });
+
+        if (data.employerType === "company") {
+          const companyFields = ["companyName", "natureOfBusiness", "gstForm"];
+          companyFields.forEach((field) => {
+            if (!data[field] || String(data[field]).trim() === "")
+              missing.push(field);
+          });
+        } else {
+          const individualFields = ["tradeLicense", "educationDocuments"];
+          individualFields.forEach((field) => {
+            if (!data[field] || String(data[field]).trim() === "")
+              missing.push(field);
+          });
+        }
+
+        if (missing.length > 0) {
+          setMissingItems(missing);
+          setBlockMessage(
+            "You must complete your profile and upload all required verification documents before you can post a job.",
+          );
+          setPageAccess("incomplete");
+          return;
+        }
+
+        setPageAccess("granted");
+      } catch (err) {
+        console.error("Eligibility check failed:", err);
+        alert("Session expired or invalid. Please log in again.");
+        localStorage.removeItem("employerInfo");
+        navigate("/login");
+      }
+    };
+
+    checkEligibility();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (locationState?.repostData) {
+      const d = locationState.repostData;
+      let parsedSummary = "";
+      let parsedResponsibilities = "";
+      if (d.description) {
+        const parts = d.description.split("<h3>Key Responsibilities</h3>");
+        parsedSummary = parts[0]
+          ? parts[0].replace("<h3>Job Summary</h3>", "").trim()
+          : "";
+        parsedResponsibilities = parts[1] ? parts[1].trim() : "";
+      }
+
+      setJob({
+        title: d.title || "",
+        description: "",
+        jobFeatures: d.jobFeatures?.length === 2 ? d.jobFeatures : ["", ""],
+        skillsRequired: d.skillsRequired || [],
+        jobType: d.jobType?.length ? d.jobType : ["full-time"],
+        workDaysPattern: d.workDaysPattern || "Mon to Fri",
+        customWorkDaysDescription: d.customWorkDaysDescription || "",
+        mode: d.mode?.length ? d.mode : ["Work from office"],
+        salaryMin: d.salaryMin || "",
+        salaryMax: d.salaryMax || "",
+        salaryFrequency: d.salaryFrequency || "Month",
+        incentives: Array.isArray(d.incentives) ? d.incentives : [],
+        screeningQuestions: d.screeningQuestions || [],
+        startDate: d.startDate
+          ? new Date(d.startDate).toISOString().split("T")[0]
+          : "",
+        endDate: d.endDate
+          ? new Date(d.endDate).toISOString().split("T")[0]
+          : "",
+        applicationDeadline: getDefaultDeadline(),
+        isFlexibleDuration: d.isFlexibleDuration || false,
+        shifts:
+          d.shifts?.length > 0
+            ? d.shifts
+            : [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
+        isFlexibleShifts: d.isFlexibleShifts || false,
+        noOfPeopleRequired: d.noOfPeopleRequired || "",
+        genderPreference: d.genderPreference || "No Preference",
+        qualifications: d.qualifications || [],
+        courses: d.courses || [],
+        ageLimit: d.ageLimit || { min: "15", max: "60", isAny: false },
+        languages: d.languages?.length ? d.languages : ["English"],
+        experience: d.experience || {
+          relevantExperience: { min: "", max: "", isAny: true },
+          totalExperience: { min: "", max: "", isAny: true },
+        },
+        useOfficeLocation: false,
+        location: d.location?.address || "",
+        latitude: d.location?.coordinates?.[1] || null,
+        longitude: d.location?.coordinates?.[0] || null,
+      });
+      setJobSummary(parsedSummary);
+      setKeyResponsibilities(parsedResponsibilities);
+    }
+  }, [locationState]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -173,7 +305,6 @@ export default function CreateJob() {
       ageLimit: { ...prev.ageLimit, [field]: value },
     }));
   };
-
   const handleExperienceChange = (type, field, value) => {
     setJob((prev) => ({
       ...prev,
@@ -210,7 +341,10 @@ export default function CreateJob() {
   };
 
   const handleAddQuestion = () => {
-    if (newQuestion.trim()) {
+    if (
+      newQuestion.trim() &&
+      !job.screeningQuestions.includes(newQuestion.trim())
+    ) {
       setJob((prev) => ({
         ...prev,
         screeningQuestions: [...prev.screeningQuestions, newQuestion.trim()],
@@ -275,6 +409,12 @@ export default function CreateJob() {
     if (name === "salaryMin" && !isUnpaid && !value)
       errorMsg = "Minimum salary is required";
     if (name === "noOfPeopleRequired" && !value) errorMsg = "Openings required";
+    if (
+      name === "workDaysPattern" &&
+      value === "Custom" &&
+      !job.customWorkDaysDescription
+    )
+      errorMsg = "Please describe the custom work days";
 
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
     return errorMsg;
@@ -289,6 +429,54 @@ export default function CreateJob() {
     }));
     setErrors((prev) => ({ ...prev, location: "" }));
   }, []);
+
+  const typeWriterEffect = async (text, setterState, speed = 10) => {
+    setterState("");
+    for (let i = 0; i < text.length; i++) {
+      setterState((prev) => prev + text.charAt(i));
+      await new Promise((resolve) => setTimeout(resolve, speed));
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    if (!job.title?.trim())
+      return alert("You must enter a Job Title in Step 1 first!");
+    setGeneratingAI(true);
+    setJobSummary("");
+    setKeyResponsibilities("");
+
+    try {
+      const storedData = localStorage.getItem("employerInfo");
+      const token = storedData ? JSON.parse(storedData).token : null;
+      if (!token) throw new Error("No token found");
+
+      const { data } = await axios.post(
+        "https://jobone-mrpy.onrender.com/ai/generate-job-details",
+        {
+          title: job.title,
+          jobType: job.jobType.join(", "),
+          mode: job.mode.join(", "),
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      // The AI endpoint might return markdown, but we want it inside our Rich Text editor.
+      // This simple mapping helps it render nicely.
+      let formattedRes = data.responsibilities
+        .split("\n")
+        .filter((l) => l.trim() !== "")
+        .map((l) => `<li>${l.replace(/[-*]\s*/, "")}</li>`)
+        .join("");
+
+      await typeWriterEffect(data.summary, setJobSummary, 10);
+      setKeyResponsibilities(`<ul>${formattedRes}</ul>`);
+    } catch (error) {
+      console.error("AI generation failed:", error);
+      alert("Failed to generate AI content.");
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
 
   const validateStep1 = () => {
     let isValid = true;
@@ -321,6 +509,10 @@ export default function CreateJob() {
       newErrors.noOfPeopleRequired = "Required";
       isValid = false;
     }
+    if (job.workDaysPattern === "Custom" && !job.customWorkDaysDescription) {
+      newErrors.workDaysPattern = "Required";
+      isValid = false;
+    }
 
     setTouched((prev) => ({ ...prev, ...newTouched }));
     setErrors((prev) => ({ ...prev, ...newErrors }));
@@ -336,9 +528,10 @@ export default function CreateJob() {
     if (!job.isFlexibleShifts) {
       for (const shift of job.shifts) {
         if (!shift.startTime || !shift.endTime) {
-          return alert(
+          alert(
             `Please complete Start and End times for ${shift.shiftName} under the Timings section.`,
           );
+          return;
         }
       }
     }
@@ -347,9 +540,10 @@ export default function CreateJob() {
       job.mode.includes("Work from office") ||
       job.mode.includes("Work from field");
     if (needsLocation && !job.useOfficeLocation && !job.location) {
-      return alert(
+      alert(
         "Please drop a pin on the map or select 'Same as Office Location'.",
       );
+      return;
     }
 
     if (!jobSummary.trim() || !keyResponsibilities.trim())
@@ -361,18 +555,36 @@ export default function CreateJob() {
       const token = storedData ? JSON.parse(storedData).token : null;
       if (!token) return alert("No token found. Please log in again.");
 
-      // FACT: Combine Rich Text HTML properly
       const combinedDescription = `<h3>Job Summary</h3>${jobSummary}<h3>Key Responsibilities</h3>${keyResponsibilities}`;
+
+      const parsedMin = isUnpaid
+        ? 0
+        : job.salaryMin === ""
+          ? 0
+          : Number(job.salaryMin);
+      const parsedMax = isUnpaid
+        ? 0
+        : job.salaryMax === ""
+          ? 0
+          : Number(job.salaryMax);
+
+      if (!isUnpaid && (parsedMin === 0 || parsedMax === 0)) {
+        alert("Please enter a valid minimum and maximum salary.");
+        setLoading(false);
+        return;
+      }
 
       const payload = {
         ...job,
         description: combinedDescription,
-        salaryMin: isUnpaid ? 0 : Number(job.salaryMin),
-        salaryMax: isUnpaid ? 0 : Number(job.salaryMax),
+        salaryMin: parsedMin,
+        salaryMax: parsedMax,
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
       };
 
-      if (!payload.applicationDeadline) delete payload.applicationDeadline;
+      if (!payload.applicationDeadline) {
+        delete payload.applicationDeadline;
+      }
 
       if (!job.useOfficeLocation && needsLocation) {
         payload.location = {
@@ -407,7 +619,96 @@ export default function CreateJob() {
     return `${base} ${touched[fieldName] && errors[fieldName] ? "border-red-500 focus:ring-red-200 bg-red-50" : "border-gray-200 focus:border-blue-500 focus:ring-blue-100 bg-gray-50 focus:bg-white"}`;
   };
 
-  if (pageAccess === "checking") return <div>Loading...</div>;
+  // --- SECURITY BARRIERS ---
+  if (pageAccess === "checking") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 flex-col gap-4">
+        <Loader2 className="animate-spin text-indigo-600" size={48} />
+        <p className="text-slate-500 font-bold animate-pulse">
+          Verifying account eligibility...
+        </p>
+      </div>
+    );
+  }
+
+  if (pageAccess === "blocked") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-8 text-center">
+          <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="text-rose-600" size={32} />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-3">
+            Access Denied
+          </h2>
+          <p className="text-slate-600 font-medium mb-8 leading-relaxed">
+            {blockMessage}
+          </p>
+          <button
+            onClick={() => navigate("/employerdashboard")}
+            className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageAccess === "incomplete") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-8">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+              <FileText className="text-amber-600" size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-900">
+                Profile Incomplete
+              </h2>
+              <p className="text-sm text-slate-500 font-medium mt-1">
+                Missing required data
+              </p>
+            </div>
+          </div>
+          <p className="text-slate-600 font-medium mb-6 leading-relaxed">
+            {blockMessage}
+          </p>
+          <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 mb-8 max-h-48 overflow-y-auto">
+            <ul className="space-y-2">
+              {missingItems.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-2 text-sm font-bold text-rose-600"
+                >
+                  <X size={16} />{" "}
+                  {item
+                    .replace(/([A-Z])/g, " $1")
+                    .trim()
+                    .toUpperCase()}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate("/employereditprofile")}
+              className="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg text-center"
+            >
+              Edit Profile
+            </button>
+            <button
+              onClick={() => navigate("/employerdocupload")}
+              className="flex-1 bg-blue-50 text-blue-700 border border-blue-200 py-3.5 rounded-xl font-bold hover:bg-blue-100 transition text-center"
+            >
+              Upload Docs
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col py-20 md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
@@ -421,6 +722,7 @@ export default function CreateJob() {
           </span>
         </div>
 
+        {/* --- STEP 1: CORE DETAILS --- */}
         {step === 1 && (
           <div className="space-y-8">
             <div>
@@ -435,6 +737,11 @@ export default function CreateJob() {
                 }}
                 hasError={touched.title && errors.title}
               />
+              {touched.title && errors.title && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {errors.title}
+                </p>
+              )}
             </div>
 
             <div>
@@ -463,10 +770,40 @@ export default function CreateJob() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Work Mode <span className="text-red-500">*</span>
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { val: "Work from home", icon: <Monitor size={16} /> },
+                  { val: "Work from office", icon: <Building size={16} /> },
+                  { val: "Work from field", icon: <Globe size={16} /> },
+                ].map((m) => {
+                  const isSelected = job.mode.includes(m.val);
+                  return (
+                    <label
+                      key={m.val}
+                      className={`flex-1 min-w-[120px] cursor-pointer border rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${isSelected ? "bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        onChange={() => toggleArrayItem("mode", m.val)}
+                      />
+                      {m.icon}{" "}
+                      <span className="text-xs text-center font-bold">
+                        {m.val}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Job Type <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
-                {/* FACT: Added Volunteer Opportunity */}
                 {[
                   "permanent",
                   "temporary",
@@ -493,6 +830,42 @@ export default function CreateJob() {
                   );
                 })}
               </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Work Days <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                {["Mon to Fri", "Mon to Sat", "Sat to Sun", "Custom"].map(
+                  (pattern) => (
+                    <label
+                      key={pattern}
+                      className={`cursor-pointer py-2 px-1 text-center text-[11px] font-extrabold uppercase tracking-wide rounded-lg border transition-all ${job.workDaysPattern === pattern ? "bg-slate-800 text-white border-slate-800 shadow-md" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="workDaysPattern"
+                        value={pattern}
+                        checked={job.workDaysPattern === pattern}
+                        onChange={handleChange}
+                        className="hidden"
+                      />
+                      {pattern}
+                    </label>
+                  ),
+                )}
+              </div>
+              {job.workDaysPattern === "Custom" && (
+                <input
+                  type="text"
+                  name="customWorkDaysDescription"
+                  value={job.customWorkDaysDescription}
+                  onChange={handleChange}
+                  placeholder="e.g. 3 days a week, flexible days..."
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                />
+              )}
             </div>
 
             <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl space-y-4">
@@ -525,7 +898,6 @@ export default function CreateJob() {
                 </div>
               </div>
 
-              {/* FACT: Salary Range Inputs */}
               <div className="flex gap-2 items-center">
                 <div className="relative" ref={currencyRef}>
                   <button
@@ -545,7 +917,87 @@ export default function CreateJob() {
                     />
                     <span>{job.salaryCurrency}</span>
                   </button>
-                  {/* Currency Dropdown Logic Remains Same */}
+                  {currencyOpen && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg w-56 max-h-64 overflow-y-auto">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={currencySearch}
+                        onChange={(e) => setCurrencySearch(e.target.value)}
+                        placeholder="Search..."
+                        className="w-full px-3 py-2 text-xs border-b border-gray-100 outline-none"
+                      />
+                      {TOP_CURRENCIES.filter(
+                        (c) =>
+                          c.code
+                            .toLowerCase()
+                            .includes(currencySearch.toLowerCase()) ||
+                          c.name
+                            .toLowerCase()
+                            .includes(currencySearch.toLowerCase()),
+                      ).map((c) => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => {
+                            setJob((p) => ({ ...p, salaryCurrency: c.code }));
+                            setCurrencyOpen(false);
+                            setCurrencySearch("");
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-gray-50 text-left"
+                        >
+                          <img
+                            src={flagUrl(c.iso)}
+                            width={20}
+                            height={15}
+                            style={{
+                              borderRadius: 2,
+                              objectFit: "cover",
+                              flexShrink: 0,
+                            }}
+                            alt={c.code}
+                          />
+                          <span className="font-bold w-8">{c.code}</span>
+                          <span className="text-gray-400">{c.name}</span>
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-100 my-1" />
+                      {REST_CURRENCIES.filter(
+                        (c) =>
+                          c.code
+                            .toLowerCase()
+                            .includes(currencySearch.toLowerCase()) ||
+                          c.name
+                            .toLowerCase()
+                            .includes(currencySearch.toLowerCase()),
+                      ).map((c) => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => {
+                            setJob((p) => ({ ...p, salaryCurrency: c.code }));
+                            setCurrencyOpen(false);
+                            setCurrencySearch("");
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-gray-50 text-left"
+                        >
+                          <img
+                            src={flagUrl(c.iso)}
+                            width={20}
+                            height={15}
+                            style={{
+                              borderRadius: 2,
+                              objectFit: "cover",
+                              flexShrink: 0,
+                            }}
+                            alt={c.code}
+                          />
+                          <span className="font-bold w-8">{c.code}</span>
+                          <span className="text-gray-400">{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1 flex items-center gap-2">
@@ -588,9 +1040,107 @@ export default function CreateJob() {
                   <option value="Lump-Sum">Lump-Sum</option>
                 </select>
               </div>
+
+              {/* Perks */}
+              <div>
+                <label className="block text-xs font-semibold text-green-800 mb-2">
+                  Perks & Benefits (Optional)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PERKS_OPTIONS.map((perk) => {
+                    const isSelected = job.incentives.includes(perk.value);
+                    return (
+                      <button
+                        key={perk.value}
+                        type="button"
+                        onClick={() =>
+                          setJob((prev) => ({
+                            ...prev,
+                            incentives: isSelected
+                              ? prev.incentives.filter((i) => i !== perk.value)
+                              : [...prev.incentives, perk.value],
+                          }))
+                        }
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${isSelected ? "bg-green-600 text-white border-green-600 shadow-sm" : "bg-white text-green-700 border-green-200 hover:bg-green-50"}`}
+                      >
+                        <span>{perk.icon}</span> {perk.value}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <input
+                    type="text"
+                    placeholder="Add custom perk..."
+                    value={customPerkInput}
+                    onChange={(e) => setCustomPerkInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const val = customPerkInput.trim();
+                        if (val && !job.incentives.includes(val)) {
+                          setJob((prev) => ({
+                            ...prev,
+                            incentives: [...prev.incentives, val],
+                          }));
+                        }
+                        setCustomPerkInput("");
+                      }
+                    }}
+                    className="flex-1 p-2 text-xs border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = customPerkInput.trim();
+                      if (val && !job.incentives.includes(val)) {
+                        setJob((prev) => ({
+                          ...prev,
+                          incentives: [...prev.incentives, val],
+                        }));
+                      }
+                      setCustomPerkInput("");
+                    }}
+                    className="px-3 py-1.5 bg-green-100 text-green-800 text-xs font-bold rounded-xl hover:bg-green-200"
+                  >
+                    Add
+                  </button>
+                </div>
+                {job.incentives.filter(
+                  (i) => !PERKS_OPTIONS.map((p) => p.value).includes(i),
+                ).length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {job.incentives
+                      .filter(
+                        (i) => !PERKS_OPTIONS.map((p) => p.value).includes(i),
+                      )
+                      .map((custom, idx) => (
+                        <span
+                          key={idx}
+                          className="flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full text-xs font-semibold"
+                        >
+                          {custom}{" "}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setJob((prev) => ({
+                                ...prev,
+                                incentives: prev.incentives.filter(
+                                  (i) => i !== custom,
+                                ),
+                              }))
+                            }
+                            className="ml-1 hover:text-red-500"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* FACT: New Screening Questions Section */}
             <div className="p-5 bg-purple-50 border border-purple-100 rounded-2xl space-y-4">
               <label className="block text-sm font-bold text-purple-900 flex items-center gap-2">
                 <HelpCircle size={18} /> Candidate Screening Questions
@@ -599,7 +1149,6 @@ export default function CreateJob() {
                 Add questions candidates must answer when applying (e.g., Notice
                 period? Willing to relocate?).
               </p>
-
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -622,7 +1171,6 @@ export default function CreateJob() {
                   Add
                 </button>
               </div>
-
               {job.screeningQuestions.length > 0 && (
                 <ul className="space-y-2 mt-4">
                   {job.screeningQuestions.map((q, idx) => (
@@ -669,55 +1217,575 @@ export default function CreateJob() {
           </div>
         )}
 
+        {/* --- STEP 2: DEMOGRAPHICS, DATES, AI, LOCATION --- */}
         {step === 2 && (
           <div className="space-y-8">
-            <div className="border border-indigo-100 rounded-2xl overflow-hidden">
-              <div className="flex items-center justify-between bg-indigo-50 p-4 border-b border-indigo-100">
+            <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-5">
+              <h3 className="font-bold text-indigo-900 border-b border-indigo-200 pb-2">
+                Candidate Requirements
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <h4 className="font-bold text-indigo-900 text-sm">
-                    Description & Responsibilities
-                  </h4>
-                  <p className="text-xs text-indigo-700">
-                    Format your post with bold text, lists, and headings.
-                  </p>
-                </div>
-              </div>
-              <div className="p-4 space-y-6 bg-white">
-                {/* FACT: ReactQuill used for Rich Text Formatting */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Job Summary <span className="text-red-500">*</span>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Qualifications
                   </label>
-                  <ReactQuill
-                    theme="snow"
-                    modules={quillModules}
-                    value={jobSummary}
-                    onChange={setJobSummary}
-                    className="h-40 mb-12"
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {[
+                      "10th Pass",
+                      "12th Pass",
+                      "Diploma",
+                      "Graduation",
+                      "Post-Graduation",
+                      "Any",
+                    ].map((q) => (
+                      <label
+                        key={q}
+                        className={`cursor-pointer px-2 py-1 text-[10px] font-bold rounded border transition-all ${job.qualifications.includes(q) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-100"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          onChange={() => toggleArrayItem("qualifications", q)}
+                        />{" "}
+                        {q}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Courses / Streams
+                  </label>
+                  <CourseSuggestionsDropdown
+                    courses={job.courses}
+                    onAdd={(course) =>
+                      setJob((prev) => ({
+                        ...prev,
+                        courses: [...prev.courses, course],
+                      }))
+                    }
+                    onRemove={(idx) =>
+                      setJob((prev) => ({
+                        ...prev,
+                        courses: prev.courses.filter((_, i) => i !== idx),
+                      }))
+                    }
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Key Responsibilities <span className="text-red-500">*</span>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Age Limit
                   </label>
-                  <ReactQuill
-                    theme="snow"
-                    modules={quillModules}
-                    value={keyResponsibilities}
-                    onChange={setKeyResponsibilities}
-                    className="h-40 mb-12"
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-0.5">
+                      <label className="text-[10px] text-gray-400 font-bold uppercase">
+                        Min
+                      </label>
+                      <input
+                        type="number"
+                        min={15}
+                        max={59}
+                        value={job.ageLimit.min}
+                        onChange={(e) => handleAgeChange("min", e.target.value)}
+                        onBlur={(e) => {
+                          const val = Math.max(
+                            15,
+                            Math.min(59, Number(e.target.value)),
+                          );
+                          handleAgeChange("min", val);
+                        }}
+                        className="w-16 p-1.5 border border-indigo-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-200 text-center"
+                      />
+                    </div>
+                    <span className="text-xs text-indigo-400 mt-4">—</span>
+                    <div className="flex flex-col gap-0.5">
+                      <label className="text-[10px] text-gray-400 font-bold uppercase">
+                        Max
+                      </label>
+                      <input
+                        type="number"
+                        min={16}
+                        max={60}
+                        value={job.ageLimit.max}
+                        onChange={(e) => handleAgeChange("max", e.target.value)}
+                        onBlur={(e) => {
+                          const val = Math.max(
+                            16,
+                            Math.min(60, Number(e.target.value)),
+                          );
+                          handleAgeChange("max", val);
+                        }}
+                        className="w-16 p-1.5 border border-indigo-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-200 text-center"
+                      />
+                    </div>
+                    <p className="text-[10px] text-indigo-400 mt-4">yrs</p>
+                  </div>
+                </div>
+
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-xs font-bold text-indigo-800 mb-3 uppercase">
+                    Experience Required
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 bg-white border border-indigo-100 rounded-xl space-y-2">
+                      <p className="text-xs font-bold text-indigo-700">
+                        Relevant Field Experience
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] text-gray-400 mb-0.5 block">
+                            Min (yrs)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={job.experience.relevantExperience.min}
+                            onChange={(e) =>
+                              handleExperienceChange(
+                                "relevantExperience",
+                                "min",
+                                e.target.value,
+                              )
+                            }
+                            disabled={job.experience.relevantExperience.isAny}
+                            className="w-full p-2 border border-indigo-200 rounded-lg text-xs outline-none disabled:bg-gray-50 disabled:text-gray-300 focus:ring-2 focus:ring-indigo-200"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] text-gray-400 mb-0.5 block">
+                            Max (yrs)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="10"
+                            value={job.experience.relevantExperience.max}
+                            onChange={(e) =>
+                              handleExperienceChange(
+                                "relevantExperience",
+                                "max",
+                                e.target.value,
+                              )
+                            }
+                            disabled={job.experience.relevantExperience.isAny}
+                            className="w-full p-2 border border-indigo-200 rounded-lg text-xs outline-none disabled:bg-gray-50 disabled:text-gray-300 focus:ring-2 focus:ring-indigo-200"
+                          />
+                        </div>
+                      </div>
+                      <label className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={job.experience.relevantExperience.isAny}
+                          onChange={(e) =>
+                            toggleExperienceAny(
+                              "relevantExperience",
+                              e.target.checked,
+                            )
+                          }
+                          className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        Any / Freshers welcome
+                      </label>
+                    </div>
+
+                    <div className="p-3 bg-white border border-indigo-100 rounded-xl space-y-2">
+                      <p className="text-xs font-bold text-indigo-700">
+                        Total Work Experience
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] text-gray-400 mb-0.5 block">
+                            Min (yrs)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={job.experience.totalExperience.min}
+                            onChange={(e) =>
+                              handleExperienceChange(
+                                "totalExperience",
+                                "min",
+                                e.target.value,
+                              )
+                            }
+                            disabled={job.experience.totalExperience.isAny}
+                            className="w-full p-2 border border-indigo-200 rounded-lg text-xs outline-none disabled:bg-gray-50 disabled:text-gray-300 focus:ring-2 focus:ring-indigo-200"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] text-gray-400 mb-0.5 block">
+                            Max (yrs)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="10"
+                            value={job.experience.totalExperience.max}
+                            onChange={(e) =>
+                              handleExperienceChange(
+                                "totalExperience",
+                                "max",
+                                e.target.value,
+                              )
+                            }
+                            disabled={job.experience.totalExperience.isAny}
+                            className="w-full p-2 border border-indigo-200 rounded-lg text-xs outline-none disabled:bg-gray-50 disabled:text-gray-300 focus:ring-2 focus:ring-indigo-200"
+                          />
+                        </div>
+                      </div>
+                      <label className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={job.experience.totalExperience.isAny}
+                          onChange={(e) =>
+                            toggleExperienceAny(
+                              "totalExperience",
+                              e.target.checked,
+                            )
+                          }
+                          className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        Any / Freshers welcome
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Preferred Gender
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: "No Preference", label: "No Preference" },
+                      { value: "Male", label: "Male" },
+                      { value: "Female", label: "Female" },
+                      { value: "Other", label: "Other" },
+                    ].map((option) => (
+                      <label
+                        key={option.value}
+                        className={`cursor-pointer px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${job.genderPreference === option.value ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="genderPreference"
+                          value={option.value}
+                          checked={job.genderPreference === option.value}
+                          onChange={handleChange}
+                          className="hidden"
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-indigo-800 mb-1.5 uppercase">
+                    Languages
+                  </label>
+                  <LanguageSuggestionsDropdown
+                    languages={job.languages}
+                    onAdd={(lang) =>
+                      setJob((prev) => ({
+                        ...prev,
+                        languages: [...prev.languages, lang],
+                      }))
+                    }
+                    onRemove={(idx) =>
+                      setJob((prev) => ({
+                        ...prev,
+                        languages: prev.languages.filter((_, i) => i !== idx),
+                      }))
+                    }
                   />
                 </div>
               </div>
             </div>
 
-            {/* Timings, Dates, and Submit buttons omitted for brevity in snippet, ensure they remain from the previous version */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Duration & Deadline
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isFlexibleDuration"
+                      checked={job.isFlexibleDuration}
+                      onChange={handleChange}
+                      className="rounded text-blue-600"
+                    />{" "}
+                    Flexible
+                  </label>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={job.isFlexibleDuration ? "" : job.startDate}
+                        onChange={handleChange}
+                        onKeyDown={blockManualInput}
+                        disabled={job.isFlexibleDuration}
+                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100"
+                        title="Start Date"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        name="endDate"
+                        value={job.isFlexibleDuration ? "" : job.endDate}
+                        onChange={handleChange}
+                        onKeyDown={blockManualInput}
+                        disabled={job.isFlexibleDuration}
+                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none disabled:bg-gray-100"
+                        title="End Date"
+                      />
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-gray-200">
+                    <label className="text-[10px] text-rose-500 font-bold uppercase mb-1 block flex items-center gap-1">
+                      <Calendar size={12} /> Application Deadline (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      name="applicationDeadline"
+                      value={job.applicationDeadline}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        const min = getMinDeadline();
+                        const max = getMaxDeadline();
+                        if (selected >= min && selected <= max) {
+                          handleChange(e);
+                        }
+                      }}
+                      onKeyDown={blockManualInput}
+                      min={getMinDeadline()}
+                      max={getMaxDeadline()}
+                      className="w-full p-2 border border-rose-200 rounded text-xs outline-none focus:ring-2 focus:ring-rose-200 bg-rose-50/50"
+                      title="Application Deadline"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Timings
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isFlexibleShifts"
+                      checked={job.isFlexibleShifts}
+                      onChange={handleChange}
+                      className="rounded text-blue-600"
+                    />{" "}
+                    Flexible
+                  </label>
+                </div>
+                {!job.isFlexibleShifts && (
+                  <div className="space-y-2">
+                    {job.shifts.map((shift, index) => (
+                      <div key={index} className="flex gap-1 items-center">
+                        <input
+                          type="time"
+                          value={shift.startTime}
+                          onChange={(e) =>
+                            updateShift(index, "startTime", e.target.value)
+                          }
+                          onKeyDown={blockManualInput}
+                          className="flex-1 p-1.5 border rounded text-xs outline-none"
+                        />
+                        <span className="text-gray-400 text-xs">to</span>
+                        <input
+                          type="time"
+                          value={shift.endTime}
+                          onChange={(e) =>
+                            updateShift(index, "endTime", e.target.value)
+                          }
+                          onKeyDown={blockManualInput}
+                          className="flex-1 p-1.5 border rounded text-xs outline-none"
+                        />
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => removeShift(index)}
+                            className="text-red-400 p-1"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addShift}
+                      className="text-xs text-blue-600 font-bold flex items-center gap-1 mt-1"
+                    >
+                      <Plus size={12} /> Add Shift
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+              <label className="block text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                <Zap size={16} className="text-amber-500" /> Job Highlights
+              </label>
+              <p className="text-xs text-amber-700">
+                Add two key selling points about this role.
+              </p>
+              <input
+                type="text"
+                value={job.jobFeatures[0]}
+                onChange={(e) =>
+                  setJob((p) => {
+                    const arr = [...p.jobFeatures];
+                    arr[0] = e.target.value;
+                    return { ...p, jobFeatures: arr };
+                  })
+                }
+                placeholder="Feature 1 (e.g., Fast-paced startup environment)"
+                className="w-full p-2.5 border border-amber-200 focus:border-amber-400 rounded-xl text-sm outline-none"
+              />
+              <input
+                type="text"
+                value={job.jobFeatures[1]}
+                onChange={(e) =>
+                  setJob((p) => {
+                    const arr = [...p.jobFeatures];
+                    arr[1] = e.target.value;
+                    return { ...p, jobFeatures: arr };
+                  })
+                }
+                placeholder="Feature 2 (e.g., Weekly team lunches)"
+                className="w-full p-2.5 border border-amber-200 focus:border-amber-400 rounded-xl text-sm outline-none"
+              />
+            </div>
+
+            <div className="border border-indigo-100 rounded-2xl overflow-hidden">
+              <div className="flex items-center justify-between bg-indigo-50 p-4 border-b border-indigo-100">
+                <div>
+                  <h4 className="font-bold text-indigo-900 text-sm">
+                    ✨ AI Auto-Writer
+                  </h4>
+                  <p className="text-xs text-indigo-700">
+                    Auto-generate the summary and responsibilities.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAIGenerate}
+                  disabled={generatingAI}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {generatingAI ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    "Generate"
+                  )}
+                </button>
+              </div>
+              <div className="p-4 space-y-4 bg-white">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Job Summary <span className="text-red-500">*</span>
+                  </label>
+                  <Editor
+                    value={jobSummary}
+                    onChange={(e) => setJobSummary(e.target.value)}
+                    containerProps={{ style: { minHeight: "150px" } }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Key Responsibilities <span className="text-red-500">*</span>
+                  </label>
+                  <Editor
+                    value={keyResponsibilities}
+                    onChange={(e) => setKeyResponsibilities(e.target.value)}
+                    containerProps={{ style: { minHeight: "150px" } }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {(job.mode.includes("Work from office") ||
+              job.mode.includes("Work from field")) && (
+              <div className="space-y-4">
+                <h3 className="font-bold text-gray-800 flex items-center justify-between text-lg">
+                  <span className="flex items-center gap-2">
+                    <MapPin className="text-blue-600" /> Job Location{" "}
+                    <span className="text-red-500 text-sm">*</span>
+                  </span>
+                  <label className="flex items-center gap-2 text-sm font-bold text-indigo-600 cursor-pointer bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                    <input
+                      type="checkbox"
+                      name="useOfficeLocation"
+                      checked={job.useOfficeLocation}
+                      onChange={handleChange}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />{" "}
+                    Same as Office Location
+                  </label>
+                </h3>
+                {!job.useOfficeLocation && (
+                  <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                    <p className="text-sm text-blue-800 mb-3 font-medium">
+                      Search & Drop a pin on the map
+                    </p>
+                    <div className="rounded-lg overflow-hidden border border-blue-200 mb-3">
+                      <LocationPicker onLocationSelect={handleLocationSelect} />
+                    </div>
+                    <input
+                      name="location"
+                      value={job.location}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="Refine Address (e.g. 303-B, Sweethomes Apt...)"
+                      className="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-200 text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-4 justify-end mt-8 pt-6 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  setJob({
+                    ...job,
+                    description: `<h3>Job Summary</h3>${jobSummary}<h3>Key Responsibilities</h3>${keyResponsibilities}`,
+                  });
+                  setPreview(true);
+                }}
+                className="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors"
+              >
+                Preview
+              </button>
               <button
                 onClick={() => setShowConfirm(true)}
                 disabled={loading}
-                className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-bold transition-all"
+                className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-blue-300 font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
               >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : null}{" "}
                 Post Job
               </button>
             </div>
@@ -728,7 +1796,7 @@ export default function CreateJob() {
           <button
             onClick={() => setStep(1)}
             disabled={step === 1}
-            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${step === 1 ? "text-gray-300" : "text-gray-600 hover:bg-gray-100"}`}
+            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${step === 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
           >
             Back
           </button>
@@ -742,6 +1810,40 @@ export default function CreateJob() {
           )}
         </div>
       </div>
+
+      <div className="hidden lg:block w-5/12 pl-8 sticky top-10 h-fit">
+        {preview ? (
+          <JobPreviewCard job={job} onClose={() => setPreview(false)} />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-[400px] text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+            <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+              <FileText size={32} className="text-gray-300" />
+            </div>
+            <p className="font-medium">Live Preview</p>
+          </div>
+        )}
+      </div>
+
+      {preview && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg">
+            <JobPreviewCard job={job} onClose={() => setPreview(false)} />
+          </div>
+        </div>
+      )}
+      {showConfirm && (
+        <JobConfirmModal
+          job={job}
+          summary={jobSummary}
+          responsibilities={keyResponsibilities}
+          loading={loading}
+          onClose={() => setShowConfirm(false)}
+          onConfirm={() => {
+            setShowConfirm(false);
+            handleSubmit();
+          }}
+        />
+      )}
     </div>
   );
 }

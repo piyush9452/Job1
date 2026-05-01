@@ -184,13 +184,10 @@ export default function JobPreviewCard({ job, onClose }) {
           <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
             Job Description
           </h3>
-          <ul className="list-disc list-inside space-y-1 text-slate-600">
-            {job.description
-              .split("\n")
-              .map((line, index) =>
-                line.trim() ? <li key={index}>{line}</li> : null,
-              )}
-          </ul>
+          <div
+            className="prose prose-sm max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-bold prose-ul:list-disc prose-ul:pl-4 prose-li:my-1"
+            dangerouslySetInnerHTML={{ __html: job.description }}
+          />
         </div>
       </div>
 

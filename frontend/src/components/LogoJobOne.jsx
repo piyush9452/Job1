@@ -1,8 +1,8 @@
 import React from "react";
 
 export default function JobOneLogo({
-  width = 300,
-  height = 250,
+  width = 400,
+  height = 300,
   primaryDotColor = "#00E5FF", // Glowing Cyan
   secondaryDotColor = "#0088CC", // Mid Blue
   tertiaryDotColor = "#004488", // Dark Blue
@@ -101,11 +101,11 @@ export default function JobOneLogo({
       <g id="text-elements" fill={textColor}>
         {/* Main Brand Name */}
         <text
-          x="110"
+          x="130"
           y="150"
           fontFamily="system-ui, -apple-system, sans-serif"
-          fontSize="70"
-          fontWeight="300"
+          fontSize="100"
+          fontWeight="400"
           letterSpacing="2"
         >
           Jobone
@@ -116,77 +116,12 @@ export default function JobOneLogo({
           x="200"
           y="185"
           fontFamily="system-ui, -apple-system, sans-serif"
-          fontSize="18"
+          fontSize="21"
           fontWeight="400"
           letterSpacing="5"
         >
           For Everyone
         </text>
-      </g>
-
-      ==========================================
-      {/* 3. PRECISION VECTOR AVATARS                  */}
-      {/* ========================================== */}
-      <g
-        id="faces"
-        stroke={textColor}
-        strokeWidth="2.5"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {/* Male Avatar (Floating above 'on') */}
-        <g transform="translate(405, 45) scale(1.2)">
-          {/* Jawline */}
-          <path d="M 10 19 C 10 33, 14 39, 20 39 C 26 39, 30 33, 30 19" />
-
-          {/* Ears */}
-          <path d="M 10 21 C 6 21, 6 28, 10 28" />
-          <path d="M 30 21 C 34 21, 34 28, 30 28" />
-
-          {/* Outer Hair Outline */}
-          <path d="M 10 19 C 8 9, 14 3, 21 4 C 28 5, 32 10, 30 19" />
-
-          {/* Inner Hairline with Parting */}
-          <path d="M 10 19 C 12 13, 15 12, 17 16 C 20 11, 26 12, 30 17" />
-
-          {/* Thick Eyebrows */}
-          <path d="M 13 20 Q 15.5 18.5 18 20" />
-          <path d="M 22 20 Q 24.5 18.5 27 20" />
-
-          {/* Eyes */}
-          <circle cx="15.5" cy="23.5" r="1.5" fill={textColor} stroke="none" />
-          <circle cx="24.5" cy="23.5" r="1.5" fill={textColor} stroke="none" />
-
-          {/* L-Shaped Nose */}
-          <path d="M 20 21 L 20 28 L 22.5 28" />
-
-          {/* Mouth (Upper smile & lower lip crease) */}
-          <path d="M 16 32 Q 20 33.5 24 32" />
-          <path d="M 18 35 Q 20 36 22 35" />
-        </g>
-
-        {/* Female Avatar (Floating right next to male) */}
-        <g transform="translate(465, 45) scale(1.2)">
-          {/* Jawline */}
-          <path d="M 12 18 C 12 26, 16 32, 20 32 C 24 32, 28 26, 28 18" />
-          {/* Bob Haircut */}
-          <path
-            d="M 20 4 C 8 4, 6 18, 8 26 L 12 26 C 12 15, 16 10, 20 10 C 24 10, 28 15, 28 26 L 32 26 C 34 18, 32 4, 20 4 Z"
-            fill={textColor}
-            stroke="none"
-          />
-          {/* Eyes */}
-          <line x1="15" y1="22" x2="17" y2="22" />
-          <line x1="23" y1="22" x2="25" y2="22" />
-          {/* Eyelashes */}
-          <path d="M 14 20 L 16 22" />
-          <path d="M 26 20 L 24 22" />
-          {/* Nose */}
-          <path d="M 20 24 L 20 28" />
-          {/* Mouth */}
-          <path d="M 17 30 C 19 31.5, 21 31.5, 23 30" />
-        </g>
       </g>
     </svg>
   );

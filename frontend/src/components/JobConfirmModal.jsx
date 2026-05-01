@@ -69,8 +69,8 @@ export default function JobConfirmModal({
               icon={<IndianRupee className="text-emerald-500" size={18} />}
             >
               <Item
-                label="Salary Amount"
-                value={`₹${job.salaryAmount?.toLocaleString() || 0}`}
+                label="Salary Range"
+                value={job.salaryMin === 0 && job.salaryMax === 0 ? "Unpaid/Volunteer" : `₹${job.salaryMin?.toLocaleString() || 0} - ₹${job.salaryMax?.toLocaleString() || 0}`}
               />
                 <Item
                     label="Perks and Bonus"

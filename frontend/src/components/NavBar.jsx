@@ -113,8 +113,8 @@ export default function Navbar() {
       // FACT: True Glassmorphism uses extreme blur, boosted saturation, and translucent white edges.
       className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-500 ${
         scrolled || menuOpen
-          ? "bg-white/50 backdrop-blur-2xl backdrop-saturate-200 border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.08)] py-3"
-          : "bg-transparent py-5"
+          ? "bg-white/50 backdrop-blur-2xl backdrop-saturate-200 border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.08)] py-1"
+          : "bg-transparent py-1"
       }`}
     >
       <div className="container mx-auto px-5 lg:px-10 flex justify-between items-center">
@@ -124,9 +124,12 @@ export default function Navbar() {
           className="flex items-center transition-opacity duration-300 hover:opacity-80"
           onClick={() => setMenuOpen(false)}
         >
-          {/* FACT: The h-10 class strictly controls the logo size so it doesn't break your navbar layout. */}
-          {/* FACT: If you get a dark-text version of the logo later, you can swap the src dynamically using {scrolled ? '/logo-dark.png' : '/jobone-logo.png'} */}
-          <LogoJobOne scrolled={scrolled}/>
+          <LogoJobOne
+            width={350}
+            height={200}
+            textColor={scrolled ? "#0F172A" : "#FFFFFF"}
+            className="h-15 md:h-25 w-auto"
+          />
         </Link>
 
         {/* --- DESKTOP MENU --- */}
