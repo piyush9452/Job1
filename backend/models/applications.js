@@ -12,11 +12,15 @@ const applicationSchema = new mongoose.Schema({
   },
   applicantHasSeen: { type: Boolean, default: true },
   employerMessage: { type: String, default: "" },
-  
-  // FACT: Dedicated Meeting Link Field
   meetingLink: { type: String, default: "" },
   
   applicantMessage: { type: String, default: "" }, 
+  
+  // FACT: Added the screening answers array
+  screeningAnswers: [{
+    question: { type: String, required: true },
+    answer: { type: String, required: true }
+  }],
   
   rescheduleRequest: {
     isRequested: { type: Boolean, default: false },

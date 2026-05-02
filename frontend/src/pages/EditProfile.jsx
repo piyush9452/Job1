@@ -19,6 +19,7 @@ import {
   Sparkles,
   Code,
   Award,
+  Globe,
   HeartHandshake,
 } from "lucide-react";
 
@@ -43,8 +44,6 @@ export default function EditProfile() {
   const [skills, setSkills] = useState([]);
   const [experience, setExperience] = useState([]);
   const [education, setEducation] = useState([]);
-
-  // FACT: New arrays for extended sections
   const [projects, setProjects] = useState([]);
   const [certifications, setCertifications] = useState([]);
   const [portfolioLinks, setPortfolioLinks] = useState([]);
@@ -71,7 +70,12 @@ export default function EditProfile() {
     link: "",
     description: "",
   });
-  const [certForm, setCertForm] = useState({ name: "", issuer: "", date: "" });
+  const [certForm, setCertForm] = useState({
+    name: "",
+    issuer: "",
+    year: "",
+    link: "",
+  });
   const [linkForm, setLinkForm] = useState({ platform: "", url: "" });
   const [volForm, setVolForm] = useState({
     organization: "",
@@ -94,9 +98,7 @@ export default function EditProfile() {
 
         const { data } = await axios.get(
           `https://jobone-mrpy.onrender.com/user/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${storedUser.token}` },
-          },
+          { headers: { Authorization: `Bearer ${storedUser.token}` } },
         );
 
         const safeList = (val) => (Array.isArray(val) ? val : []);
@@ -144,25 +146,21 @@ export default function EditProfile() {
     const userId = storedData.id || storedData.userId;
 
     try {
-      // 1. Upload to AWS S3 First
       const { data: s3Data } = await axios.post(
         `https://jobone-mrpy.onrender.com/user/${userId}/resume/upload-url`,
         { fileType: file.type },
       );
-
       await fetch(s3Data.uploadUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
       });
-
       await axios.post(
         `https://jobone-mrpy.onrender.com/user/${userId}/resume/save-key`,
         { key: s3Data.key },
       );
       setProfile((prev) => ({ ...prev, resumeFileKey: s3Data.key }));
 
-      // 2. Send to AI Parser
       const formData = new FormData();
       formData.append("resume", file);
 
@@ -177,7 +175,6 @@ export default function EditProfile() {
         },
       );
 
-      // 3. Map Parsed Data to Editable State
       if (parsedData.name) setProfile((p) => ({ ...p, name: parsedData.name }));
       if (parsedData.phone)
         setProfile((p) => ({ ...p, phone: parsedData.phone }));
@@ -203,7 +200,6 @@ export default function EditProfile() {
   const handleProfileChange = (e) =>
     setProfile({ ...profile, [e.target.name]: e.target.value });
 
-  // Array Handlers
   const handleAddSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
       setSkills([...skills, newSkill.trim()]);
@@ -237,7 +233,7 @@ export default function EditProfile() {
   const handleAddCert = () => {
     if (certForm.name) {
       setCertifications([...certifications, certForm]);
-      setCertForm({ name: "", issuer: "", date: "" });
+      setCertForm({ name: "", issuer: "", year: "", link: "" });
     } else alert("Certification name required.");
   };
   const handleAddLink = () => {
@@ -255,6 +251,14 @@ export default function EditProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!profile.gender || profile.gender.trim() === "") {
+      alert(
+        "Gender is a strictly required field. Employers use this to filter candidates based on specific job requirements. Please select a gender before saving.",
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       const storedUser = JSON.parse(localStorage.getItem("userInfo"));
@@ -274,9 +278,7 @@ export default function EditProfile() {
       const { data } = await axios.patch(
         `https://jobone-mrpy.onrender.com/user/${userId}`,
         payload,
-        {
-          headers: { Authorization: `Bearer ${storedUser.token}` },
-        },
+        { headers: { Authorization: `Bearer ${storedUser.token}` } },
       );
 
       localStorage.setItem(
@@ -295,23 +297,53 @@ export default function EditProfile() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <Loader2 className="animate-spin text-blue-600" size={48} />
+      <div className="min-h-screen bg-white flex justify-center items-center">
+        <Loader2 className="animate-spin text-orange-500" size={48} />
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 font-sans text-slate-900">
-      <div className="max-w-4xl mx-auto mt-10">
+    <div className="min-h-screen bg-white text-slate-900 font-sans relative overflow-hidden selection:bg-orange-500/30">
+      {/* Custom CSS for Massive Thermal Lava Lamp Animations */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes lava-rise {
+          0% { transform: translateY(10vh) scaleX(1) scaleY(1); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+          50% { transform: translateY(-30vh) scaleX(1.1) scaleY(0.9); border-radius: 60% 40% 30% 70% / 50% 60% 40% 50%; }
+          100% { transform: translateY(10vh) scaleX(1) scaleY(1); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+        }
+        @keyframes lava-fall {
+          0% { transform: translateY(-20vh) scaleX(1) scaleY(1); border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%; }
+          50% { transform: translateY(40vh) scaleX(0.9) scaleY(1.2); border-radius: 40% 60% 60% 40% / 50% 50% 60% 40%; }
+          100% { transform: translateY(-20vh) scaleX(1) scaleY(1); border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%; }
+        }
+        .animate-lava-rise { animation: lava-rise 15s infinite ease-in-out; }
+        .animate-lava-fall { animation: lava-fall 18s infinite ease-in-out; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-5000 { animation-delay: 5s; }
+      `,
+        }}
+      />
+
+      {/* Giant Lava Blobs - Kept the exact same colors and sizes, but removed mix-blend-screen for white BG compatibility */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-white">
+        {/* Deep Red Base Blob */}
+        <div className="absolute -bottom-[20%] left-[-10%] w-[90vw] h-[90vw] bg-blue-500/60 filter blur-[100px] animate-lava-rise"></div>
+        {/* Bright Orange Morphing Blob */}
+        <div className="absolute -top-[10%] right-[-20%] w-[85vw] h-[85vw] bg-indigo-500/50 filter blur-[160px] animate-lava-fall animation-delay-2000"></div>
+        {/* Neon Pink/Yellow Center Blob */}
+        <div className="absolute top-[20%] left-[10%] w-[80vw] h-[80vw] bg-cyan-700/40 filter blur-[125px] animate-lava-rise animation-delay-5000"></div>
+      </div>
+
+      <div className="max-w-4xl mx-auto py-12 px-4 relative z-10">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-extrabold text-slate-900">
-              Edit Profile
-            </h1>
-          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight drop-shadow-sm">
+            Edit Profile
+          </h1>
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-slate-200"
+            className="flex items-center gap-2 bg-white/50 hover:bg-white/80 backdrop-blur-xl border border-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-all shadow-sm"
           >
             <ArrowLeft size={16} /> Cancel
           </button>
@@ -319,19 +351,19 @@ export default function EditProfile() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* AI MAGIC BANNER */}
-          <div className="p-6 rounded-2xl border border-indigo-200 bg-indigo-50/30">
+          <GlassCard className="border-orange-200 bg-orange-50/40 shadow-[0_0_40px_rgba(249,115,22,0.08)]">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-indigo-900 flex items-center gap-2">
-                  <Sparkles className="text-indigo-500" size={20} /> AI Resume
+                <h3 className="text-lg font-bold text-orange-600 flex items-center gap-2">
+                  <Sparkles className="text-orange-500" size={20} /> AI Resume
                   Auto-Fill
                 </h3>
-                <p className="text-sm text-slate-600">
-                  Upload PDF/DOCX to securely save the file for recruiters and
-                  auto-fill your profile details.
+                <p className="text-sm text-orange-900/70 mt-1">
+                  Upload PDF/DOCX to securely save the file and auto-fill your
+                  details.
                 </p>
               </div>
-              <div className="relative group">
+              <div className="relative group shrink-0">
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"
@@ -342,12 +374,11 @@ export default function EditProfile() {
                 <button
                   type="button"
                   disabled={isParsing}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold"
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white px-6 py-3 rounded-xl font-bold shadow-md transition-all w-full"
                 >
                   {isParsing ? (
                     <>
-                      <Loader2 className="animate-spin" size={18} />{" "}
-                      Processing...
+                      <Loader2 className="animate-spin" size={18} /> Parsing...
                     </>
                   ) : (
                     <>
@@ -358,16 +389,16 @@ export default function EditProfile() {
               </div>
             </div>
             {profile.resumeFileKey && (
-              <p className="mt-3 text-xs font-bold text-green-600 bg-green-100 px-3 py-1.5 rounded-full inline-block">
-                ✓ Resume securely attached to profile
+              <p className="mt-4 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-full inline-block backdrop-blur-sm">
+                ✓ Resume securely attached
               </p>
             )}
-          </div>
+          </GlassCard>
 
           {/* 1. PERSONAL DETAILS */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b">
-              <User className="text-blue-600" size={20} /> Personal Details
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <User className="text-red-500" size={22} /> Personal Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputGroup
@@ -382,15 +413,15 @@ export default function EditProfile() {
                 value={profile.phone}
                 onChange={handleProfileChange}
               />
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase">
-                  Gender
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Gender <span className="text-rose-500">*</span>
                 </label>
                 <select
                   name="gender"
                   value={profile.gender || ""}
                   onChange={handleProfileChange}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none"
+                  className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 transition-all appearance-none shadow-sm backdrop-blur-sm"
                 >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
@@ -405,12 +436,12 @@ export default function EditProfile() {
                 disabled={true}
               />
             </div>
-          </div>
+          </GlassCard>
 
           {/* 2. SUMMARY */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b">
-              <FileText className="text-purple-600" size={20} /> Professional
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <FileText className="text-orange-500" size={22} /> Professional
               Summary
             </h2>
             <textarea
@@ -418,24 +449,22 @@ export default function EditProfile() {
               value={profile.description}
               onChange={handleProfileChange}
               rows={4}
-              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm"
+              className="w-full p-4 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm backdrop-blur-sm"
+              placeholder="Tell employers about yourself..."
             />
-          </div>
+          </GlassCard>
 
           {/* 3. SKILLS */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b">
-              <span className="p-1 bg-orange-100 rounded-md text-orange-600">
-                <Code size={16} />
-              </span>{" "}
-              Skills
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <Code className="text-rose-500" size={22} /> Skills
             </h2>
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-3 mb-6">
               <input
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Add a skill"
-                className="flex-1 p-3 bg-gray-50 border rounded-xl outline-none text-sm"
+                placeholder="Type a skill..."
+                className="flex-1 p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/50 text-slate-900 placeholder-slate-400 transition-all shadow-sm backdrop-blur-sm"
                 onKeyDown={(e) =>
                   e.key === "Enter" && (e.preventDefault(), handleAddSkill())
                 }
@@ -443,7 +472,7 @@ export default function EditProfile() {
               <button
                 type="button"
                 onClick={handleAddSkill}
-                className="bg-orange-600 text-white px-6 rounded-xl font-medium"
+                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white px-6 rounded-xl font-bold shadow-md transition-all"
               >
                 Add
               </button>
@@ -452,201 +481,521 @@ export default function EditProfile() {
               {skills.map((skill, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg shadow-sm"
                 >
-                  <span className="text-sm">{skill}</span>
+                  <span className="text-sm font-medium text-white">
+                    {skill}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setSkills(skills.filter((s) => s !== skill))}
-                    className="text-red-400 hover:text-red-600"
+                    className="text-white/50 hover:text-rose-400 transition-colors"
                   >
                     <X size={14} />
                   </button>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
 
           {/* 4. WORK EXPERIENCE */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b">
-              <span className="p-1 bg-blue-100 rounded-md text-blue-600">
-                <Briefcase size={16} />
-              </span>{" "}
-              Work Experience
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <Briefcase className="text-red-500" size={22} /> Work Experience
             </h2>
-            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6">
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <input
-                  name="role"
+            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <GlassInput
                   value={expForm.role}
                   onChange={(e) =>
                     setExpForm({ ...expForm, role: e.target.value })
                   }
                   placeholder="Job Title"
-                  className="p-3 border rounded-xl text-sm"
                 />
-                <input
-                  name="company"
+                <GlassInput
                   value={expForm.company}
                   onChange={(e) =>
                     setExpForm({ ...expForm, company: e.target.value })
                   }
                   placeholder="Company"
-                  className="p-3 border rounded-xl text-sm"
                 />
-                <input
-                  name="duration"
+                <GlassInput
                   value={expForm.duration}
                   onChange={(e) =>
                     setExpForm({ ...expForm, duration: e.target.value })
                   }
-                  placeholder="Duration"
-                  className="p-3 border rounded-xl text-sm"
+                  placeholder="Duration (e.g. 2020 - Present)"
                 />
-                <input
-                  name="description"
+                <GlassInput
                   value={expForm.description}
                   onChange={(e) =>
                     setExpForm({ ...expForm, description: e.target.value })
                   }
                   placeholder="Description"
-                  className="p-3 border rounded-xl text-sm"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleAddExperience}
-                className="w-full py-2.5 bg-white border border-gray-300 font-semibold rounded-xl flex justify-center items-center gap-2"
+                className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 font-bold text-slate-700 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm"
               >
-                <Plus size={16} /> Add Position
+                <Plus size={18} /> Add Position
               </button>
             </div>
-            {/* List mapped items below... */}
             <div className="space-y-4">
               {experience.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-4 bg-white border rounded-xl flex justify-between"
+                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
                 >
                   <div>
-                    <h4 className="font-bold">{item.role}</h4>
-                    <p className="text-sm text-blue-600">
-                      {item.company} • {item.duration}
+                    <h4 className="font-bold text-lg text-slate-900">
+                      {item.role}
+                    </h4>
+                    <p className="text-sm text-red-600 font-medium mb-2">
+                      {item.company}{" "}
+                      <span className="text-slate-300 px-2">•</span>{" "}
+                      {item.duration}
                     </p>
+                    {item.description && (
+                      <p className="text-sm text-slate-600 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"
                     onClick={() =>
                       setExperience(experience.filter((_, i) => i !== idx))
                     }
-                    className="text-red-400"
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
                   >
-                    <X size={18} />
+                    <X size={20} />
                   </button>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
 
-          {/* 5. PROJECTS (NEW) */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b">
-              <span className="p-1 bg-purple-100 rounded-md text-purple-600">
-                <Code size={16} />
-              </span>{" "}
-              Projects
+          {/* 5. EDUCATION */}
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <GraduationCap className="text-orange-500" size={22} /> Education
             </h2>
-            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6">
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <input
+            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="md:col-span-2">
+                  <GlassInput
+                    value={eduForm.degree}
+                    onChange={(e) =>
+                      setEduForm({ ...eduForm, degree: e.target.value })
+                    }
+                    placeholder="Degree (e.g. B.Tech Computer Science)"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <GlassInput
+                    value={eduForm.university}
+                    onChange={(e) =>
+                      setEduForm({ ...eduForm, university: e.target.value })
+                    }
+                    placeholder="University / College"
+                  />
+                </div>
+                <GlassInput
+                  value={eduForm.started}
+                  onChange={(e) =>
+                    setEduForm({ ...eduForm, started: e.target.value })
+                  }
+                  placeholder="Start Year"
+                />
+                <GlassInput
+                  value={eduForm.ended}
+                  onChange={(e) =>
+                    setEduForm({ ...eduForm, ended: e.target.value })
+                  }
+                  placeholder="End Year (or Expected)"
+                />
+                <div className="md:col-span-2">
+                  <GlassInput
+                    value={eduForm.CGPA}
+                    onChange={(e) =>
+                      setEduForm({ ...eduForm, CGPA: e.target.value })
+                    }
+                    placeholder="CGPA / Percentage"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddEducation}
+                className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 font-bold text-slate-700 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm"
+              >
+                <Plus size={18} /> Add Education
+              </button>
+            </div>
+            <div className="space-y-4">
+              {education.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                >
+                  <div>
+                    <h4 className="font-bold text-lg text-slate-900">
+                      {item.degree}
+                    </h4>
+                    <p className="text-sm text-orange-600 font-medium mb-1">
+                      {item.university}
+                    </p>
+                    <p className="text-xs text-slate-500 font-mono">
+                      {item.started} - {item.ended}{" "}
+                      {item.CGPA && (
+                        <span className="ml-2 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-600">
+                          CGPA: {item.CGPA}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEducation(education.filter((_, i) => i !== idx))
+                    }
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* 6. PROJECTS */}
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <FileText className="text-rose-500" size={22} /> Projects
+            </h2>
+            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <GlassInput
                   value={projForm.title}
                   onChange={(e) =>
                     setProjForm({ ...projForm, title: e.target.value })
                   }
                   placeholder="Project Title"
-                  className="p-3 border rounded-xl text-sm"
                 />
-                <input
+                <GlassInput
                   value={projForm.link}
                   onChange={(e) =>
                     setProjForm({ ...projForm, link: e.target.value })
                   }
-                  placeholder="Project URL (GitHub, Live)"
-                  className="p-3 border rounded-xl text-sm"
+                  placeholder="Project URL"
                 />
-                <input
-                  value={projForm.technologies}
-                  onChange={(e) =>
-                    setProjForm({ ...projForm, technologies: e.target.value })
-                  }
-                  placeholder="Technologies Used"
-                  className="p-3 border rounded-xl text-sm col-span-2"
-                />
-                <textarea
-                  value={projForm.description}
-                  onChange={(e) =>
-                    setProjForm({ ...projForm, description: e.target.value })
-                  }
-                  placeholder="Description"
-                  className="p-3 border rounded-xl text-sm col-span-2"
-                />
+                <div className="md:col-span-2">
+                  <GlassInput
+                    value={projForm.technologies}
+                    onChange={(e) =>
+                      setProjForm({ ...projForm, technologies: e.target.value })
+                    }
+                    placeholder="Technologies Used"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <textarea
+                    value={projForm.description}
+                    onChange={(e) =>
+                      setProjForm({ ...projForm, description: e.target.value })
+                    }
+                    placeholder="Description"
+                    rows={3}
+                    className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm backdrop-blur-sm"
+                  />
+                </div>
               </div>
               <button
                 type="button"
                 onClick={handleAddProject}
-                className="w-full py-2.5 bg-white border border-gray-300 font-semibold rounded-xl flex justify-center items-center gap-2"
+                className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 font-bold text-slate-700 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm"
               >
-                <Plus size={16} /> Add Project
+                <Plus size={18} /> Add Project
               </button>
             </div>
             <div className="space-y-4">
               {projects.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-4 bg-white border rounded-xl flex justify-between"
+                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
                 >
                   <div>
-                    <h4 className="font-bold">{item.title}</h4>
-                    <p className="text-sm text-purple-600">
+                    <h4 className="font-bold text-lg text-slate-900">
+                      {item.title}
+                    </h4>
+                    <p className="text-sm text-rose-600 font-medium my-1">
                       {item.technologies}
                     </p>
+                    {item.description && (
+                      <p className="text-sm text-slate-600 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"
                     onClick={() =>
                       setProjects(projects.filter((_, i) => i !== idx))
                     }
-                    className="text-red-400"
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
                   >
-                    <X size={18} />
+                    <X size={20} />
                   </button>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
 
-          {/* OTHER SECTIONS (Education, Certifications, Links) implementation collapsed for brevity, but they follow exact same pattern as Projects above */}
+          {/* 7. CERTIFICATIONS */}
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <Award className="text-red-500" size={22} /> Certifications
+            </h2>
+            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="md:col-span-2">
+                  <GlassInput
+                    value={certForm.name}
+                    onChange={(e) =>
+                      setCertForm({ ...certForm, name: e.target.value })
+                    }
+                    placeholder="Certification Name"
+                  />
+                </div>
+                <GlassInput
+                  value={certForm.issuer}
+                  onChange={(e) =>
+                    setCertForm({ ...certForm, issuer: e.target.value })
+                  }
+                  placeholder="Issuer"
+                />
+                <GlassInput
+                  value={certForm.year}
+                  onChange={(e) =>
+                    setCertForm({ ...certForm, year: e.target.value })
+                  }
+                  placeholder="Year"
+                />
+                <div className="md:col-span-2">
+                  <GlassInput
+                    value={certForm.link}
+                    onChange={(e) =>
+                      setCertForm({ ...certForm, link: e.target.value })
+                    }
+                    placeholder="Credential URL"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddCert}
+                className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 font-bold text-slate-700 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm"
+              >
+                <Plus size={18} /> Add Certification
+              </button>
+            </div>
+            <div className="space-y-4">
+              {certifications.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                >
+                  <div>
+                    <h4 className="font-bold text-lg text-slate-900">
+                      {item.name}
+                    </h4>
+                    <p className="text-sm text-red-600 font-medium mb-1">
+                      {item.issuer}{" "}
+                      <span className="text-slate-300 px-1">•</span> {item.year}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCertifications(
+                        certifications.filter((_, i) => i !== idx),
+                      )
+                    }
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
 
-          <div className="flex gap-4 pt-4 border-t border-slate-200">
+          {/* 8. ONLINE PRESENCE */}
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <Globe className="text-orange-500" size={22} /> Online Presence
+            </h2>
+            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <GlassInput
+                  value={linkForm.platform}
+                  onChange={(e) =>
+                    setLinkForm({ ...linkForm, platform: e.target.value })
+                  }
+                  placeholder="Platform (e.g. GitHub)"
+                />
+                <GlassInput
+                  value={linkForm.url}
+                  onChange={(e) =>
+                    setLinkForm({ ...linkForm, url: e.target.value })
+                  }
+                  placeholder="URL"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddLink}
+                className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 font-bold text-slate-700 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm"
+              >
+                <Plus size={18} /> Add Link
+              </button>
+            </div>
+            <div className="space-y-4">
+              {portfolioLinks.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 bg-white/60 border border-slate-200 rounded-xl flex justify-between items-center backdrop-blur-md shadow-sm"
+                >
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-slate-900">
+                      {item.platform}
+                    </h4>
+                    <p className="text-sm text-orange-600 truncate mt-0.5">
+                      {item.url}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPortfolioLinks(
+                        portfolioLinks.filter((_, i) => i !== idx),
+                      )
+                    }
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-2 shrink-0"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* 9. VOLUNTEERING */}
+          <GlassCard>
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
+              <HeartHandshake className="text-rose-500" size={22} />{" "}
+              Volunteering
+            </h2>
+            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="md:col-span-2">
+                  <GlassInput
+                    value={volForm.organization}
+                    onChange={(e) =>
+                      setVolForm({ ...volForm, organization: e.target.value })
+                    }
+                    placeholder="Organization"
+                  />
+                </div>
+                <GlassInput
+                  value={volForm.role}
+                  onChange={(e) =>
+                    setVolForm({ ...volForm, role: e.target.value })
+                  }
+                  placeholder="Role"
+                />
+                <GlassInput
+                  value={volForm.duration}
+                  onChange={(e) =>
+                    setVolForm({ ...volForm, duration: e.target.value })
+                  }
+                  placeholder="Duration"
+                />
+                <div className="md:col-span-2">
+                  <textarea
+                    value={volForm.description}
+                    onChange={(e) =>
+                      setVolForm({ ...volForm, description: e.target.value })
+                    }
+                    placeholder="Description"
+                    rows={3}
+                    className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm backdrop-blur-sm"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddVol}
+                className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 font-bold text-slate-700 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm"
+              >
+                <Plus size={18} /> Add Volunteering
+              </button>
+            </div>
+            <div className="space-y-4">
+              {volunteering.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                >
+                  <div>
+                    <h4 className="font-bold text-lg text-slate-900">
+                      {item.organization}
+                    </h4>
+                    <p className="text-sm text-rose-600 font-medium my-1">
+                      {item.role} <span className="text-slate-300 px-1">•</span>{" "}
+                      {item.duration}
+                    </p>
+                    {item.description && (
+                      <p className="text-sm text-slate-600 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVolunteering(volunteering.filter((_, i) => i !== idx))
+                    }
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+
+          <div className="flex flex-col sm:flex-row gap-4 pt-6 pb-20">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex-1 py-3.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl"
+              className="flex-1 py-4 bg-white/80 hover:bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl backdrop-blur-lg transition-all shadow-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || isParsing}
-              className="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl flex justify-center items-center gap-2"
+              className="flex-1 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 border border-transparent text-white font-bold rounded-2xl flex justify-center items-center gap-2 transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)] disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
             >
               {saving ? (
                 <Loader2 className="animate-spin" />
               ) : (
                 <Save size={20} />
               )}{" "}
-              {saving ? "Saving..." : "Save Profile"}
+              {saving ? "Saving..." : "Save & Update Profile"}
             </button>
           </div>
         </form>
@@ -655,15 +1004,35 @@ export default function EditProfile() {
   );
 }
 
+// FACT: Reusable Smart Glass Components for White Mode
+const GlassCard = ({ children, className = "" }) => (
+  <div
+    className={`bg-white/40 backdrop-blur-3xl border border-white/60 rounded-3xl p-6 md:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] ${className}`}
+  >
+    {children}
+  </div>
+);
+
 const InputGroup = ({ label, name, value, onChange, disabled = false }) => (
-  <div className="space-y-1.5">
-    <label className="text-xs font-bold text-gray-500 uppercase">{label}</label>
+  <div className="space-y-2">
+    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+      {label}
+    </label>
     <input
       name={name}
       value={value}
       onChange={onChange}
       disabled={disabled}
-      className={`w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none ${disabled && "opacity-60"}`}
+      className={`w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all shadow-sm backdrop-blur-sm ${disabled && "opacity-60 bg-slate-100 cursor-not-allowed"}`}
     />
   </div>
+);
+
+const GlassInput = ({ value, onChange, placeholder }) => (
+  <input
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all shadow-sm backdrop-blur-sm"
+  />
 );

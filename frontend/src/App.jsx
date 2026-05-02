@@ -53,6 +53,7 @@ function App() {
     <Router>
       <Navbar />
       <GlobalNotificationPopup />
+      <div className="w-[100vw] h-[50px]"></div>
       <Routes>
         {/* ================= PUBLIC ROUTES ================= */}
         <Route path="/" element={<Home />} />

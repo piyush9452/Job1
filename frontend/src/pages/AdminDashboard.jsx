@@ -89,8 +89,6 @@ export default function AdminDashboard() {
     }
   };
 
-  
-
   const handleReviewEmployer = async (id, status) => {
     try {
       const token = JSON.parse(localStorage.getItem("adminInfo")).token;
@@ -191,7 +189,8 @@ export default function AdminDashboard() {
                       {job.postedBy?.companyName || "Unknown Company"}
                     </p>
                     <p className="text-sm text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      {job.description}
+                      {/* FACT: Strips out all HTML tags for a clean plain-text preview */}
+                      {job.description?.replace(/<[^>]+>/g, " ")}
                     </p>
                   </div>
                   <div className="flex gap-3 shrink-0 flex-wrap justify-end">

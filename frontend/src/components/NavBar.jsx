@@ -95,7 +95,7 @@ export default function Navbar() {
       to={to}
       className={`relative font-semibold text-sm transition-colors duration-300 group ${
         scrolled
-          ? "text-slate-600 hover:text-blue-600"
+          ? "text-white/90 hover:text-white"
           : "text-white/90 hover:text-white"
       }`}
     >
@@ -113,8 +113,8 @@ export default function Navbar() {
       // FACT: True Glassmorphism uses extreme blur, boosted saturation, and translucent white edges.
       className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-500 ${
         scrolled || menuOpen
-          ? "bg-white/50 backdrop-blur-2xl backdrop-saturate-200 border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.08)] py-1"
-          : "bg-transparent py-1"
+          ? "bg-black/40 backdrop-blur-sm backdrop-saturate-200  "
+          : "bg-black/40 backdrop-blur-sm backdrop-saturate-200 "
       }`}
     >
       <div className="container mx-auto px-5 lg:px-10 flex justify-between items-center">
@@ -127,7 +127,7 @@ export default function Navbar() {
           <LogoJobOne
             width={350}
             height={200}
-            textColor={scrolled ? "#0F172A" : "#FFFFFF"}
+            textColor={scrolled ? "#FFFFFF" : "#FFFFFF"}
             className="h-15 md:h-25 w-auto"
           />
         </Link>
@@ -154,7 +154,7 @@ export default function Navbar() {
                 className={`flex items-center gap-2 focus:outline-none transition-all px-3 py-1.5 rounded-full border ${
                   scrolled
                     ? "bg-white/50 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border-slate-200/50 hover:border-blue-200"
-                    : "bg-black/20 hover:bg-black/40 text-white border-white/20 hover:border-white/50 backdrop-blur-md"
+                    : "bg-white/50 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border-slate-200/50 hover:border-blue-200"
                 }`}
               >
                 <UserCircle

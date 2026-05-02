@@ -107,20 +107,25 @@ export default function FeaturedJobs() {
             const companyName = getCompany(job);
             const locationStr = getLocation(job);
 
+            // FACT: Safely extract the first job type since it is now an array in the new schema
+            const jobTypeDisplay =
+              Array.isArray(job.jobType) && job.jobType.length > 0
+                ? job.jobType[0]
+                : "Job";
+
             return (
               <motion.div
                 key={job._id}
                 onClick={() => setSelectedJob(job)}
-                // FACT: When grid is hovered, shrink & blur. When THIS card is hovered, override with !blur-none & !scale-105
                 className="relative p-[2px] rounded-3xl overflow-hidden cursor-pointer group/card transition-all duration-500 ease-out group-hover/list:blur-[4px] group-hover/list:scale-[0.96] group-hover/list:opacity-60 hover:!blur-none hover:!scale-[1.02] hover:!opacity-100 hover:shadow-[0_8px_30px_-4px_rgba(59,130,246,0.3)]"
               >
-                {/* FACT: The Rotating Transparent Gradient (Hidden by default, fades in on hover) */}
+                {/* The Rotating Transparent Gradient */}
                 <div className="absolute inset-[-100%] z-0 opacity-0 group-hover/card:opacity-100 border-spin-bg transition-opacity duration-500" />
 
-                {/* FACT: The Inner White Card that masks the center, leaving only the 2px animated border */}
+                {/* Inner White Card */}
                 <div className="relative z-10 bg-white rounded-[calc(1.5rem-2px)] p-6 h-full flex flex-col border border-slate-200/80 group-hover/card:border-transparent transition-colors duration-300">
                   <div className="flex items-start gap-4 mb-5">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-xl font-extrabold text-blue-600 shrink-0 overflow-hidden shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
                       {job.postedByImage ? (
                         <img
                           src={job.postedByImage}
@@ -128,7 +133,8 @@ export default function FeaturedJobs() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        companyName.charAt(0)
+                        // FACT: Replaced the single character fallback with a professional building icon
+                        <Building2 size={24} className="text-blue-400" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -150,23 +156,27 @@ export default function FeaturedJobs() {
                     </span>
                     <span className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-bold tracking-wide border border-indigo-100/60 flex items-center gap-1.5 capitalize">
                       <Briefcase size={12} className="text-indigo-400" />{" "}
-                      {job.jobType}
+                      {jobTypeDisplay}
                     </span>
                     <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold tracking-wide border border-emerald-100/60 flex items-center gap-1.5">
                       <IndianRupee size={12} className="text-emerald-400" />
-                      {job.salaryAmount === 0 || !job.salaryAmount
+                      {/* FACT: Upgraded to use the new salaryMin and salaryMax range */}
+                      {job.salaryMin === 0 && job.salaryMax === 0
                         ? "Unpaid"
-                        : (job.salaryAmount / 1000).toFixed(0) + "k"}
+                        : `${(job.salaryMin / 1000).toFixed(0)}k - ${(job.salaryMax / 1000).toFixed(0)}k`}
                     </span>
                   </div>
 
+                  {/* FACT: Strip HTML tags to prevent <h3> and <ul> from rendering raw text in the preview */}
                   <p className="text-sm text-slate-500 mb-6 line-clamp-2 leading-relaxed font-medium">
-                    {job.description}
+                    {job.description?.replace(/<[^>]+>/g, " ")}
                   </p>
 
                   <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-100">
                     <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-                      <Clock size={12} /> {formatTimeAgo(job.createdAt)}
+                      {/* Fallback to postedAt if createdAt is missing based on schema */}
+                      <Clock size={12} />{" "}
+                      {formatTimeAgo(job.createdAt || job.postedAt)}
                     </span>
                     <span className="text-xs font-bold text-blue-600 flex items-center gap-1 group-hover/card:translate-x-1 transition-transform">
                       View Details <ArrowRight size={12} />

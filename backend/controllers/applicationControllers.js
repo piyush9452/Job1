@@ -6,9 +6,9 @@ import User from "../models/users.js";
 import sendEmail from "../utils/sendEmail.js";
 
 export const createApplication = errorHandler(async (req, res) => {
-  // FACT: Extract 'message' from the frontend payload
-  const { jobId, message } = req.body;
-  const userId = req.user?._id; // from protect middleware
+  // FACT: Extract the new screeningAnswers array
+  const { jobId, message, screeningAnswers } = req.body;
+  const userId = req.user?._id; 
 
   if (!userId) {
     res.status(401);
@@ -41,12 +41,20 @@ export const createApplication = errorHandler(async (req, res) => {
     throw new Error("You have already applied for this job");
   }
 
-  // FACT: Save the candidate's pitch to the database
+  // FACT: Verify that if the job has questions, the candidate answered them
+  if (job.screeningQuestions && job.screeningQuestions.length > 0) {
+    if (!screeningAnswers || screeningAnswers.length !== job.screeningQuestions.length) {
+      res.status(400);
+      throw new Error("Please answer all the required screening questions.");
+    }
+  }
+
   const application = await Application.create({
     job_id: jobId,
     jobHost: job.postedBy,
     appliedBy: userId,
-    applicantMessage: message || "", // <-- SAVED HERE
+    applicantMessage: message || "", 
+    screeningAnswers: screeningAnswers || [], // <-- SAVED HERE
   });
 
   job.applicants.push(userId);
@@ -64,7 +72,6 @@ export const createApplication = errorHandler(async (req, res) => {
     application,
   });
 });
-
 export const allApplicationFromUser = errorHandler(async (req, res) => {
   const userId = req.user._id;
 

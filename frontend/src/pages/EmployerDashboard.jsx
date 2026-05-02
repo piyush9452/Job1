@@ -114,7 +114,9 @@ export default function EmployerDashboard() {
   return (
     <div className="min-h-screen py-20 bg-slate-50 p-10 font-sans">
       {/* Sidebar */}
+
       <aside className="fixed left-0 top-15 hidden h-full w-64 border-r border-slate-200 bg-white p-6 md:block z-20">
+        <div className="h-[50px] w-[100%]"></div>
         <div className="mb-10 flex items-center gap-2 px-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-200">
             <Briefcase size={22} />
