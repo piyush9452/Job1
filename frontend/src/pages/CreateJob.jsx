@@ -145,93 +145,56 @@ export default function CreateJob() {
   }, []);
 
   useEffect(() => {
+    let heartbeatInterval; // We will use this to keep the token alive/checked
+
     const checkEligibility = async () => {
       try {
         const storedData = localStorage.getItem("employerInfo");
-        if (!storedData) {
-          navigate("/login");
-          return;
-        }
+        if (!storedData) return navigate("/login");
+        const { token } = JSON.parse(storedData);
+        if (!token) return navigate("/login");
 
-        const { token, id, employerId } = JSON.parse(storedData);
-        const targetId = employerId || id;
-
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-
+        // FACT: Hit the new Light API instead of the full profile
         const { data } = await axios.get(
-          `https://jobone-mrpy.onrender.com/employer/profile/${targetId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          `https://jobone-mrpy.onrender.com/employer/check-eligibility`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        if (data.isApproved === "pending") {
-          setBlockMessage(
-            "Your account is currently under review by the administration. You will be able to post jobs once you are approved.",
-          );
+        if (data.access === "blocked") {
+          setBlockMessage(data.message);
           setPageAccess("blocked");
-          return;
-        }
-        if (data.isApproved === "rejected") {
-          setBlockMessage(
-            "Your account has been rejected by the administration. You do not have permission to post jobs.",
-          );
-          setPageAccess("blocked");
-          return;
-        }
-
-        let missing = [];
-        const baseFields = [
-          "phone",
-          "location",
-          "industry",
-          "description",
-          "aadharCard",
-          "panCard",
-        ];
-        baseFields.forEach((field) => {
-          if (!data[field] || String(data[field]).trim() === "")
-            missing.push(field);
-        });
-
-        if (data.employerType === "company") {
-          const companyFields = ["companyName", "natureOfBusiness", "gstForm"];
-          companyFields.forEach((field) => {
-            if (!data[field] || String(data[field]).trim() === "")
-              missing.push(field);
-          });
-        } else {
-          const individualFields = ["tradeLicense", "educationDocuments"];
-          individualFields.forEach((field) => {
-            if (!data[field] || String(data[field]).trim() === "")
-              missing.push(field);
-          });
-        }
-
-        if (missing.length > 0) {
-          setMissingItems(missing);
-          setBlockMessage(
-            "You must complete your profile and upload all required verification documents before you can post a job.",
-          );
+        } else if (data.access === "incomplete") {
+          setMissingItems(data.missingItems);
+          setBlockMessage(data.message);
           setPageAccess("incomplete");
-          return;
+        } else {
+          setPageAccess("granted");
         }
-
-        setPageAccess("granted");
       } catch (err) {
         console.error("Eligibility check failed:", err);
-        alert("Session expired or invalid. Please log in again.");
-        localStorage.removeItem("employerInfo");
-        navigate("/login");
+        // If it's a 401 Unauthorized, the token is dead
+        if (err.response && err.response.status === 401) {
+            alert("Your session has expired. Please log in again.");
+            localStorage.removeItem("employerInfo");
+            navigate("/login");
+        }
       }
     };
 
+    // 1. Check immediately on page load
     checkEligibility();
+
+    // 2. THE HEARTBEAT: Check silently every 5 minutes (300000 ms)
+    // If their token dies while they are typing, this will kick them out BEFORE they hit submit and get confused.
+    heartbeatInterval = setInterval(() => {
+        checkEligibility();
+    }, 300000); 
+
+    // Cleanup interval when they leave the page
+    return () => clearInterval(heartbeatInterval);
   }, [navigate]);
 
+  
   useEffect(() => {
     if (locationState?.repostData) {
       const d = locationState.repostData;

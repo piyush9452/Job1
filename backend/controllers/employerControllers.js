@@ -102,6 +102,72 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
 
 
 
+// ==========================================
+// FACT: Lightweight Eligibility Check API
+// ==========================================
+export const checkEmployerEligibility = expressAsyncHandler(async (req, res) => {
+  // 1. Only select the exact fields needed for verification. Ignore massive arrays.
+  const employer = await Employer.findById(req.employerId).select(
+    'isApproved phone location officeLocation industry description aadharCard panCard employerType companyName natureOfBusiness gstForm tradeLicense educationDocuments'
+  );
+
+  if (!employer) {
+    res.status(404);
+    throw new Error("Employer not found");
+  }
+
+  // 2. Admin Approval Check
+  if (employer.isApproved === "pending") {
+    return res.status(200).json({ 
+      access: "blocked", 
+      message: "Your account is currently under review by the administration. You will be able to post jobs once approved." 
+    });
+  }
+  
+  if (employer.isApproved === "rejected") {
+    return res.status(200).json({ 
+      access: "blocked", 
+      message: "Your account has been rejected by the administration. You do not have permission to post jobs." 
+    });
+  }
+
+  // 3. Document & Profile Check
+  let missing = [];
+  const baseFields = ["phone", "industry", "description", "aadharCard", "panCard"];
+  baseFields.forEach((field) => {
+    if (!employer[field] || String(employer[field]).trim() === "") missing.push(field);
+  });
+
+  // Check location (either string location or officeLocation object)
+  if (!employer.location && (!employer.officeLocation || !employer.officeLocation.coordinates)) {
+    missing.push("location");
+  }
+
+  if (employer.employerType === "company") {
+    const companyFields = ["companyName", "natureOfBusiness", "gstForm"];
+    companyFields.forEach((field) => {
+      if (!employer[field] || String(employer[field]).trim() === "") missing.push(field);
+    });
+  } else {
+    const individualFields = ["tradeLicense", "educationDocuments"];
+    individualFields.forEach((field) => {
+      if (!employer[field] || String(employer[field]).trim() === "") missing.push(field);
+    });
+  }
+
+  if (missing.length > 0) {
+    return res.status(200).json({ 
+      access: "incomplete", 
+      missingItems: missing,
+      message: "You must complete your profile and upload all required verification documents before you can post a job."
+    });
+  }
+
+  // 4. All Clear
+  res.status(200).json({ access: "granted" });
+});
+
+
 
 export const verifyOTP = expressAsyncHandler(async (req, res) => {
   const { email, otp } = req.body;
