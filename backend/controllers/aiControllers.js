@@ -1,8 +1,3 @@
-import expressAsyncHandler from "express-async-handler";
-import mammoth from "mammoth";
-import Job from "../models/jobs.js";
-import User from "../models/users.js";
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import expressAsyncHandler from "express-async-handler";
 import mammoth from "mammoth";
