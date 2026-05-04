@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 
 const JobSchema = new mongoose.Schema({
   title: { type: String, required: true }, 
-  description: { type: String, required: true }, 
+  // FACT: Split description into two specific fields
+  jobSummary: { type: String, required: true },
+  keyResponsibilities: { type: String, required: true }, 
   
   jobFeatures: { type: [String], default: ["", ""] },
 
@@ -16,6 +18,7 @@ const JobSchema = new mongoose.Schema({
     type: String,
     enum: ["Mon to Fri", "Mon to Sat", "Sat to Sun", "Custom"]
   },
+
   customWorkDaysDescription: { type: String },
 
   skillsRequired: { type: [String], default: [] },
@@ -68,6 +71,7 @@ const JobSchema = new mongoose.Schema({
     max: { type: Number },
     isAny: { type: Boolean, default: false }
   },
+
   languages: [{ type: String }], 
 
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Employer", required: true },

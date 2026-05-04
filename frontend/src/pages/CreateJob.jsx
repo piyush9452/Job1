@@ -157,7 +157,7 @@ export default function CreateJob() {
         // FACT: Hit the new Light API instead of the full profile
         const { data } = await axios.get(
           `https://jobone-mrpy.onrender.com/employer/check-eligibility`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
 
         if (data.access === "blocked") {
@@ -174,9 +174,9 @@ export default function CreateJob() {
         console.error("Eligibility check failed:", err);
         // If it's a 401 Unauthorized, the token is dead
         if (err.response && err.response.status === 401) {
-            alert("Your session has expired. Please log in again.");
-            localStorage.removeItem("employerInfo");
-            navigate("/login");
+          alert("Your session has expired. Please log in again.");
+          localStorage.removeItem("employerInfo");
+          navigate("/login");
         }
       }
     };
@@ -187,14 +187,13 @@ export default function CreateJob() {
     // 2. THE HEARTBEAT: Check silently every 5 minutes (300000 ms)
     // If their token dies while they are typing, this will kick them out BEFORE they hit submit and get confused.
     heartbeatInterval = setInterval(() => {
-        checkEligibility();
-    }, 300000); 
+      checkEligibility();
+    }, 300000);
 
     // Cleanup interval when they leave the page
     return () => clearInterval(heartbeatInterval);
   }, [navigate]);
 
-  
   useEffect(() => {
     if (locationState?.repostData) {
       const d = locationState.repostData;
@@ -483,8 +482,12 @@ export default function CreateJob() {
   };
 
   const handleNextStep = () => {
-    if (validateStep1()) setStep(2);
-    else alert("Please fill in all required fields highlighted in red.");
+    if (validateStep1()) {
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" }); // FACT: Forces page to top
+    } else {
+      alert("Please fill in all required fields highlighted in red.");
+    }
   };
 
   const handleSubmit = async () => {
@@ -539,7 +542,8 @@ export default function CreateJob() {
 
       const payload = {
         ...job,
-        description: combinedDescription,
+        jobSummary: jobSummary,
+        keyResponsibilities: keyResponsibilities,
         salaryMin: parsedMin,
         salaryMax: parsedMax,
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
@@ -1757,7 +1761,10 @@ export default function CreateJob() {
 
         <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
           <button
-            onClick={() => setStep(1)}
+            onClick={() => {
+              setStep(1);
+              window.scrollTo({ top: 0, behavior: "smooth" }); // FACT: Scroll up on back too
+            }}
             disabled={step === 1}
             className={`px-6 py-2.5 rounded-xl font-bold transition-all ${step === 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}
           >

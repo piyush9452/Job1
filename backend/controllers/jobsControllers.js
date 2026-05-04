@@ -59,7 +59,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   }
 
   const { 
-    title, description, jobType, workDaysPattern, customWorkDaysDescription,
+    title, jobSummary, keyResponsibilities, jobType, workDaysPattern, customWorkDaysDescription,
     skillsRequired, salaryMin, salaryMax, salaryFrequency, salaryCurrency, incentives, // <-- THESE MUST BE HERE
     screeningQuestions, durationType, startDate, endDate, isFlexibleDuration,
     shifts, isFlexibleShifts, mode, noOfDays, noOfPeopleRequired, 
@@ -88,7 +88,8 @@ export const createJob = expressAsyncHandler(async (req, res) => {
 
   const newJob = new Job({
     title, 
-    description, 
+    jobSummary, 
+    keyResponsibilities,
     jobType,
     workDaysPattern,
     jobFeatures,

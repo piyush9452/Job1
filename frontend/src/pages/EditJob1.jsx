@@ -105,10 +105,23 @@ export default function EditJob() {
           return Array.isArray(val) ? val : [val];
         };
 
+        setJobSummary(
+          jobData.jobSummary ||
+            (parts[0] ? parts[0].replace("Job Summary:", "").trim() : rawDesc),
+        );
+        setKeyResponsibilities(
+          jobData.keyResponsibilities || (parts[1] ? parts[1].trim() : ""),
+        );
+
+        // FACT: Calculate Unpaid based on new min/max logic
+        const isCurrentlyUnpaid =
+          jobData.salaryMin === 0 && jobData.salaryMax === 0;
+
         setJob({
           title: jobData.title || "",
-          status: jobData.status || "active", // FACT: Set status from DB
-          description: "",
+          status: jobData.status || "active",
+          jobSummary: "", // Handled by separate state
+          keyResponsibilities: "", // Handled by separate state
           jobFeatures:
             jobData.jobFeatures?.length >= 2
               ? jobData.jobFeatures
@@ -121,7 +134,16 @@ export default function EditJob() {
           workDaysPattern: jobData.workDaysPattern || "Mon to Fri",
           customWorkDaysDescription: jobData.customWorkDaysDescription || "",
           mode: safeArray(jobData.mode, "Work from office"),
-          salaryAmount: jobData.salaryAmount || "",
+
+          // FACT: Upgraded Salary Variables
+          salaryMin: isCurrentlyUnpaid
+            ? ""
+            : jobData.salaryMin || jobData.salaryAmount || "",
+          salaryMax: isCurrentlyUnpaid
+            ? ""
+            : jobData.salaryMax || jobData.salaryAmount || "",
+          isUnpaid: isCurrentlyUnpaid,
+
           salaryFrequency: jobData.salaryFrequency || "Monthly",
           incentives: jobData.incentives || "",
           startDate: formatDate(jobData.startDate),
@@ -267,16 +289,17 @@ export default function EditJob() {
       const stored = localStorage.getItem("employerInfo");
       const token = JSON.parse(stored).token;
 
-      const combinedDescription =
-        `Job Summary:\n${jobSummary}\n\nKey Responsibilities:\n${keyResponsibilities}`.trim();
-
       const payload = {
         ...job,
-        description: combinedDescription,
-        salaryAmount: Number(job.salaryAmount),
+        jobSummary: jobSummary,
+        keyResponsibilities: keyResponsibilities,
+        salaryMin: job.isUnpaid ? 0 : Number(job.salaryMin),
+        salaryMax: job.isUnpaid ? 0 : Number(job.salaryMax),
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
       };
-
+      if (job.isLongTerm) {
+        payload.endDate = null; // FACT: Force end date to null if long term is checked
+      }
       if (!payload.applicationDeadline) delete payload.applicationDeadline;
       if (!payload.startDate) delete payload.startDate;
       if (!payload.endDate) delete payload.endDate;

@@ -19,11 +19,11 @@ import {
   Send,
 } from "lucide-react";
 // FACT: Import the newly created ApplyModal
-import ApplyModal from "./ApplyModal"; 
+import ApplyModal from "./ApplyModal";
 
 export default function JobDetailsModal({ job, onClose }) {
   const navigate = useNavigate();
-  
+
   // FACT: Added state to handle the Apply Modal visibility
   const [showApplyModal, setShowApplyModal] = useState(false);
 
@@ -59,13 +59,13 @@ export default function JobDetailsModal({ job, onClose }) {
     <>
       <div
         className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 sm:p-6"
-        onClick={onClose} 
+        onClick={onClose}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          onClick={(e) => e.stopPropagation()} 
+          onClick={(e) => e.stopPropagation()}
           className="bg-[#F8FAFC] w-full max-w-6xl max-h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl relative"
         >
           {/* --- PREMIUM HEADER --- */}
@@ -97,7 +97,7 @@ export default function JobDetailsModal({ job, onClose }) {
                 <div className="flex flex-wrap items-center text-slate-500 text-xs sm:text-sm font-bold gap-3 mt-2">
                   <span
                     onClick={(e) => {
-                      e.stopPropagation(); 
+                      e.stopPropagation();
                       if (job.postedBy) navigate(`/company/${job.postedBy}`);
                     }}
                     className="text-slate-700 hover:text-indigo-600 hover:underline cursor-pointer"
@@ -192,7 +192,8 @@ export default function JobDetailsModal({ job, onClose }) {
 
                     <div className="flex flex-col">
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
-                        <Users size={12} className="text-indigo-400" /> Age Limit
+                        <Users size={12} className="text-indigo-400" /> Age
+                        Limit
                       </p>
                       <p className="text-sm font-bold text-slate-800">
                         {job.ageLimit?.isAny
@@ -239,15 +240,39 @@ export default function JobDetailsModal({ job, onClose }) {
                   </section>
                 )}
 
-                {/* Description */}
-                <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-                  <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-5 sm:mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
-                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                      <Briefcase size={18} />
-                    </div>{" "}
-                    Job Description
-                  </h2>
-                  <div className="prose prose-sm max-w-none text-slate-600 whitespace-pre-wrap leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: job.description }} />
+                {/* Description Split */}
+                <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-3 flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <Briefcase size={18} />
+                      </div>
+                      Job Summary
+                    </h2>
+                    <div
+                      className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium"
+                      dangerouslySetInnerHTML={{
+                        __html: job.jobSummary || job.description,
+                      }}
+                    />
+                  </div>
+
+                  {job.keyResponsibilities && (
+                    <div className="pt-6 border-t border-slate-100">
+                      <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-3 flex items-center gap-3">
+                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
+                          <ListChecks size={18} />
+                        </div>
+                        Key Responsibilities
+                      </h2>
+                      <div
+                        className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium prose-ul:list-disc prose-ul:pl-4"
+                        dangerouslySetInnerHTML={{
+                          __html: job.keyResponsibilities,
+                        }}
+                      />
+                    </div>
+                  )}
                 </section>
               </div>
 
@@ -352,7 +377,9 @@ export default function JobDetailsModal({ job, onClose }) {
                   </h3>
                   <div className="space-y-4 sm:space-y-5">
                     <DetailRow
-                      icon={<CalendarDays size={16} className="text-blue-500" />}
+                      icon={
+                        <CalendarDays size={16} className="text-blue-500" />
+                      }
                       label="Start Date"
                       value={
                         job.startDate
@@ -416,15 +443,15 @@ export default function JobDetailsModal({ job, onClose }) {
 
       {/* FACT: Conditionally render the Apply Modal over top of everything */}
       {showApplyModal && (
-        <ApplyModal 
-          job={job} 
-          onClose={() => setShowApplyModal(false)} 
+        <ApplyModal
+          job={job}
+          onClose={() => setShowApplyModal(false)}
           onSuccess={() => {
             setShowApplyModal(false);
             onClose(); // Close the job details modal too
             alert("Application submitted successfully!");
-            navigate('/myapplications'); // Send them to track their app
-          }} 
+            navigate("/myapplications"); // Send them to track their app
+          }}
         />
       )}
     </>

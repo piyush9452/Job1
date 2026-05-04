@@ -180,14 +180,29 @@ export default function JobPreviewCard({ job, onClose }) {
           </div>
         )}
 
-        <div className="space-y-3 pb-6">
-          <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
-            Job Description
-          </h3>
-          <div
-            className="prose prose-sm max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-bold prose-ul:list-disc prose-ul:pl-4 prose-li:my-1"
-            dangerouslySetInnerHTML={{ __html: job.description }}
-          />
+        <div className="space-y-6 pb-6">
+          <div>
+            <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">
+              Job Summary
+            </h3>
+            <div
+              className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium"
+              dangerouslySetInnerHTML={{
+                __html: job.jobSummary || job.description,
+              }}
+            />
+          </div>
+          {job.keyResponsibilities && (
+            <div>
+              <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">
+                Key Responsibilities
+              </h3>
+              <div
+                className="prose prose-sm max-w-none text-slate-600 prose-ul:list-disc prose-ul:pl-4 prose-li:my-1"
+                dangerouslySetInnerHTML={{ __html: job.keyResponsibilities }}
+              />
+            </div>
+          )}
         </div>
       </div>
 

@@ -70,12 +70,16 @@ export default function JobConfirmModal({
             >
               <Item
                 label="Salary Range"
-                value={job.salaryMin === 0 && job.salaryMax === 0 ? "Unpaid/Volunteer" : `₹${job.salaryMin?.toLocaleString() || 0} - ₹${job.salaryMax?.toLocaleString() || 0}`}
+                value={
+                  job.salaryMin === 0 && job.salaryMax === 0
+                    ? "Unpaid/Volunteer"
+                    : `₹${job.salaryMin?.toLocaleString() || 0} - ₹${job.salaryMax?.toLocaleString() || 0}`
+                }
               />
-                <Item
-                    label="Perks and Bonus"
-                    value={`₹${job.incentives?.join(", ")}`}
-                />
+              <Item
+                label="Perks and Bonus"
+                value={`₹${job.incentives?.join(", ")}`}
+              />
               <Item label="Frequency" value={job.salaryFrequency} />
               <Item
                 label="Start Date"
@@ -159,21 +163,23 @@ export default function JobConfirmModal({
           )}
 
           <Section
-            title="Description Preview"
+            title="Content Preview"
             icon={<CheckCircle2 className="text-indigo-500" size={18} />}
           >
             <div className="prose prose-sm max-w-none text-slate-600">
               <p className="font-bold text-slate-800 mb-2">Summary:</p>
-              <p className="whitespace-pre-wrap mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                {summary}
-              </p>
+              <div
+                className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100"
+                dangerouslySetInnerHTML={{ __html: summary }}
+              />
 
               <p className="font-bold text-slate-800 mb-2">
                 Key Responsibilities:
               </p>
-              <p className="whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-100">
-                {responsibilities}
-              </p>
+              <div
+                className="bg-slate-50 p-4 rounded-xl border border-slate-100"
+                dangerouslySetInnerHTML={{ __html: responsibilities }}
+              />
             </div>
           </Section>
         </div>
