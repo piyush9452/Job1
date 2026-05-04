@@ -418,6 +418,9 @@ export default function CreateJob() {
           title: job.title,
           jobType: job.jobType.join(", "),
           mode: job.mode.join(", "),
+          // FACT: Sending the full experience object and skills to the AI
+          experience: job.experience,
+          skills: job.skillsRequired.join(", "),
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );

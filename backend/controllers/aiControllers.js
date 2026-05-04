@@ -4,8 +4,15 @@ import mammoth from "mammoth";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import expressAsyncHandler from "express-async-handler";
+import mammoth from "mammoth";
+import Job from "../models/jobs.js";
+import User from "../models/users.js";
+
+// FACT: Massively upgraded AI prompt to include Experience, Age, and Skills
 export const generateJobDetails = expressAsyncHandler(async (req, res) => {
-  const { title, jobType, mode } = req.body;
+  const { title, jobType, mode, experience, ageLimit, skills } = req.body;
 
   if (!title) {
     res.status(400);
@@ -15,21 +22,46 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+  // Dynamically build the experience string based on what was passed from the frontend
+  let expString = "Experience flexible based on candidate.";
+  if (experience) {
+      const relExp = experience.relevantExperience;
+      if (relExp && !relExp.isAny) {
+          expString = `Requires ${relExp.min} to ${relExp.max} years of specific relevant/on-field experience.`;
+      } else if (experience.totalExperience && !experience.totalExperience.isAny) {
+          expString = `Requires ${experience.totalExperience.min} to ${experience.totalExperience.max} years of overall professional experience.`;
+      } else {
+          expString = "Freshers welcome. No strict experience required.";
+      }
+  }
+
+  // Construct a hyper-specific prompt
   const prompt = `
-    You are an expert HR recruiter. Write a highly professional job description for a "${title}" position.
-    Job Type: ${jobType || 'Full-time'}
-    Work Mode: ${mode || 'On-site'}
+    You are an expert HR recruiter writing a highly professional job description.
+    
+    Job Details:
+    - Title: "${title}"
+    - Job Type: ${jobType || 'Full-time'}
+    - Work Mode: ${mode || 'On-site'}
+    - Required Skills: ${skills || 'General professional skills'}
+    - Experience Needed: ${expString}
+    
+    Instructions:
+    1. Write a "summary" (4-5 sentences). This must be a compelling pitch for the role. YOU MUST explicitly mention the exact experience requirements (${expString}) and the required skills in a natural, flowing way within this summary.
+    2. Write "responsibilities" (6-7 bullet points). These must be specific to the title and mode. 
     
     Return EXACTLY a JSON object with this format, and nothing else. Do not use markdown code blocks like \`\`\`json. Just the raw JSON.
     {
-      "summary": "Write a compelling 4-5 sentence summary about this role with clearly mentioning the experience range needed for this role...",
-      "responsibilities": "Write 6 to 7 bullet points of key responsibilities. Do not use markdown, just standard text with newlines (\\n) for bullets like:\\n- Task 1\\n- Task 2"
+      "summary": "Write the compelling summary here...",
+      "responsibilities": "- Responsibility 1\\n- Responsibility 2\\n- Responsibility 3"
     }
   `;
 
   try {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
+    
+    // Cleanup the Gemini response to guarantee JSON safety
     const cleanedText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
     const startIndex = cleanedText.indexOf('{');
     const endIndex = cleanedText.lastIndexOf('}');
@@ -49,15 +81,15 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   }
 });
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import expressAsyncHandler from "express-async-handler";
+import mammoth from "mammoth";
+import User from "../models/users.js";
 
 export const parseResume = expressAsyncHandler(async (req, res) => {
-    const userId = req.user._id;
+  const userId = req.user._id;
 
-    await User.findByIdAndUpdate(userId, {
-        resumeData: parsedData
-    });
-
-    if (!req.file) {
+  if (!req.file) {
     res.status(400);
     throw new Error("No document uploaded.");
   }
@@ -146,6 +178,11 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
     const jsonString = cleanedText.substring(startIndex, endIndex + 1);
     const parsedData = JSON.parse(jsonString);
 
+    // FACT: The database update correctly happens HERE, after parsedData actually exists.
+    await User.findByIdAndUpdate(userId, {
+        resumeData: parsedData
+    });
+
     res.status(200).json(parsedData);
   } catch (error) {
     console.error("Gemini Parsing Error:", error);
@@ -153,6 +190,7 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
     throw new Error("AI failed to process and structure the resume data.");
   }
 });
+
 
 export const recommendJobs = expressAsyncHandler(async (req, res) => {
     const userId = req.user._id;
