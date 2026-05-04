@@ -75,10 +75,6 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   }
 });
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import expressAsyncHandler from "express-async-handler";
-import mammoth from "mammoth";
-import User from "../models/users.js";
 
 export const parseResume = expressAsyncHandler(async (req, res) => {
   const userId = req.user._id;
