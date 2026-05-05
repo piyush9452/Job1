@@ -1,7 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import axios from "axios";
-import Editor from "react-simple-wysiwyg";
 import JobPreviewCard from "../components/JobPreviewCard.jsx";
 import LocationPicker from "../components/LocationPicker.jsx";
 import JobConfirmModal from "../components/JobConfirmModal.jsx";
@@ -418,23 +417,21 @@ export default function CreateJob() {
           title: job.title,
           jobType: job.jobType.join(", "),
           mode: job.mode.join(", "),
-          // FACT: Sending the full experience object and skills to the AI
           experience: job.experience,
           skills: job.skillsRequired.join(", "),
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-
-      // The AI endpoint might return markdown, but we want it inside our Rich Text editor.
-      // This simple mapping helps it render nicely.
-      let formattedRes = data.responsibilities
+      // FACT: Format for a standard textarea (Plain text with bullet points and line breaks)
+      const lines = data.responsibilities
         .split("\n")
-        .filter((l) => l.trim() !== "")
-        .map((l) => `<li>${l.replace(/[-*]\s*/, "")}</li>`)
-        .join("");
+        .map((line) => line.replace(/^[-*•]\s*/, "").trim())
+        .filter((line) => line.length > 5);
 
+      const plainTextList = lines.map((line) => `• ${line}`).join("\n");
+
+      setKeyResponsibilities(plainTextList);
       await typeWriterEffect(data.summary, setJobSummary, 10);
-      setKeyResponsibilities(`<ul>${formattedRes}</ul>`);
     } catch (error) {
       console.error("AI generation failed:", error);
       alert("Failed to generate AI content.");
@@ -1671,25 +1668,29 @@ export default function CreateJob() {
                   )}
                 </button>
               </div>
-              <div className="p-4 space-y-4 bg-white">
+              <div className="p-4 space-y-6 bg-white">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="inline-block text-sm font-extrabold text-blue-900 bg-blue-100 px-3 py-1.5 rounded-lg mb-2 shadow-sm border border-blue-200">
                     Job Summary <span className="text-red-500">*</span>
                   </label>
-                  <Editor
+                  {/* FACT: Replaced WYSIWYG with a clean Textarea */}
+                  <textarea
                     value={jobSummary}
                     onChange={(e) => setJobSummary(e.target.value)}
-                    containerProps={{ style: { minHeight: "150px" } }}
+                    placeholder="Enter a professional summary for this role..."
+                    className="w-full p-4 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium min-h-[150px] resize-y bg-slate-50 focus:bg-white transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="inline-block text-sm font-extrabold text-purple-900 bg-purple-100 px-3 py-1.5 rounded-lg mb-2 shadow-sm border border-purple-200">
                     Key Responsibilities <span className="text-red-500">*</span>
                   </label>
-                  <Editor
+                  {/* FACT: Replaced WYSIWYG with a clean Textarea */}
+                  <textarea
                     value={keyResponsibilities}
                     onChange={(e) => setKeyResponsibilities(e.target.value)}
-                    containerProps={{ style: { minHeight: "150px" } }}
+                    placeholder="• Enter key responsibilities here&#10;• Hit enter for a new line"
+                    className="w-full p-4 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500 font-medium min-h-[150px] resize-y bg-slate-50 focus:bg-white transition-colors leading-relaxed"
                   />
                 </div>
               </div>
@@ -1737,11 +1738,16 @@ export default function CreateJob() {
 
             <div className="flex gap-4 justify-end mt-8 pt-6 border-t border-gray-100">
               <button
-                onClick={() => {
-                  setJob({
-                    ...job,
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // FACT: This guarantees the separate fields are injected BEFORE the preview opens
+                  setJob((prev) => ({
+                    ...prev,
+                    jobSummary: jobSummary,
+                    keyResponsibilities: keyResponsibilities,
                     description: `<h3>Job Summary</h3>${jobSummary}<h3>Key Responsibilities</h3>${keyResponsibilities}`,
-                  });
+                  }));
                   setPreview(true);
                 }}
                 className="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors"

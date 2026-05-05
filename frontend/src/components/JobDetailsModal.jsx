@@ -17,17 +17,18 @@ import {
   X,
   Building2,
   Send,
+  ListChecks,
+  HelpCircle,
+  Timer,
+  Hash,
+  Activity,
 } from "lucide-react";
-// FACT: Import the newly created ApplyModal
 import ApplyModal from "./ApplyModal";
 
 export default function JobDetailsModal({ job, onClose }) {
   const navigate = useNavigate();
-
-  // FACT: Added state to handle the Apply Modal visibility
   const [showApplyModal, setShowApplyModal] = useState(false);
 
-  // Prevent scrolling on the background body when modal is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -47,11 +48,12 @@ export default function JobDetailsModal({ job, onClose }) {
   const isRemote =
     renderArray(job.mode).toLowerCase().includes("home") ||
     job.mode === "Online";
+
+  // FACT: Added pinCode to the location render
   const displayLocation = isRemote
     ? "Remote"
-    : typeof job.location === "object"
-      ? job.location?.address
-      : job.location || "Location not specified";
+    : `${typeof job.location === "object" ? job.location?.address : job.location || "Location not specified"}${job.pinCode ? ` - ${job.pinCode}` : ""}`;
+
   const validFeatures =
     job.jobFeatures?.filter((f) => f && f.trim() !== "") || [];
 
@@ -74,7 +76,13 @@ export default function JobDetailsModal({ job, onClose }) {
 
             <div className="relative z-10 flex gap-4 sm:gap-6 items-center w-full">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 flex items-center justify-center text-3xl shrink-0 text-indigo-600 font-extrabold shadow-sm">
-                {job.postedByCompany ? (
+                {job.postedByImage ? (
+                  <img
+                    src={job.postedByImage}
+                    alt="Company"
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                ) : job.postedByCompany ? (
                   job.postedByCompany.charAt(0)
                 ) : job.postedByName ? (
                   job.postedByName.charAt(0)
@@ -84,6 +92,12 @@ export default function JobDetailsModal({ job, onClose }) {
               </div>
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {/* FACT: Added Status and Posting Date to the UI */}
+                  <span
+                    className={`px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border ${job.status === "active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-600 border-slate-200"}`}
+                  >
+                    {job.status?.replace("_", " ") || "Active"}
+                  </span>
                   <span className="px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">
                     {renderArray(job.mode)}
                   </span>
@@ -111,6 +125,11 @@ export default function JobDetailsModal({ job, onClose }) {
                     <MapPin size={14} className="text-slate-400" />{" "}
                     {displayLocation}
                   </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={14} className="text-slate-400" /> Posted{" "}
+                    {new Date(job.postedAt || Date.now()).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -126,9 +145,9 @@ export default function JobDetailsModal({ job, onClose }) {
           {/* --- SCROLLABLE BODY --- */}
           <div className="overflow-y-auto custom-scrollbar p-4 sm:p-8 flex-1">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* MAIN CONTENT (LEFT) */}
+              {/* --- MAIN CONTENT (LEFT) --- */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Job Highlights / Features */}
+                {/* Job Highlights */}
                 {validFeatures.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {validFeatures.map((feature, i) => (
@@ -137,11 +156,7 @@ export default function JobDetailsModal({ job, onClose }) {
                         className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 p-4 sm:p-5 rounded-2xl flex items-start gap-3 sm:gap-4 shadow-sm"
                       >
                         <div className="p-2 bg-amber-100/50 rounded-lg shrink-0">
-                          <Zap
-                            className="text-amber-500"
-                            size={18}
-                            sm:size={20}
-                          />
+                          <Zap className="text-amber-500" size={18} />
                         </div>
                         <p className="text-xs sm:text-sm font-bold text-amber-900 mt-0.5 sm:mt-1 leading-snug">
                           {feature}
@@ -151,7 +166,7 @@ export default function JobDetailsModal({ job, onClose }) {
                   </div>
                 )}
 
-                {/* Candidate Requirements - COMPACT INLINE ROW */}
+                {/* Candidate Requirements */}
                 <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
                   <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
                     <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
@@ -159,7 +174,6 @@ export default function JobDetailsModal({ job, onClose }) {
                     </div>{" "}
                     Candidate Profile
                   </h2>
-
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
                     <div className="flex flex-col">
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
@@ -175,9 +189,7 @@ export default function JobDetailsModal({ job, onClose }) {
                         )}
                       </p>
                     </div>
-
                     <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
-
                     <div className="flex flex-col">
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
                         <Languages size={12} className="text-indigo-400" />{" "}
@@ -187,9 +199,7 @@ export default function JobDetailsModal({ job, onClose }) {
                         {renderArray(job.languages)}
                       </p>
                     </div>
-
                     <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
-
                     <div className="flex flex-col">
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
                         <Users size={12} className="text-indigo-400" /> Age
@@ -203,9 +213,7 @@ export default function JobDetailsModal({ job, onClose }) {
                             : "Not Specified"}
                       </p>
                     </div>
-
                     <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
-
                     <div className="flex flex-col">
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
                         <UserCircle2 size={12} className="text-indigo-400" />{" "}
@@ -241,39 +249,97 @@ export default function JobDetailsModal({ job, onClose }) {
                 )}
 
                 {/* Description Split */}
-                <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-                  <div>
-                    <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-3 flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                        <Briefcase size={18} />
-                      </div>
-                      Job Summary
-                    </h2>
-                    <div
-                      className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium"
-                      dangerouslySetInnerHTML={{
-                        __html: job.jobSummary || job.description,
-                      }}
-                    />
-                  </div>
+              <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
+                
+                {/* Job Summary */}
+                <div>
+                  <h2 className="text-sm sm:text-base font-extrabold text-blue-900 bg-blue-100 inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-4 shadow-sm border border-blue-200">
+                    <Briefcase size={18} className="text-blue-700" />
+                    Job Summary
+                  </h2>
+                  <div
+                    className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium"
+                    dangerouslySetInnerHTML={{
+                      // FACT: Safely displays new jobSummary, OR cleanly slices the top half of an old legacy description
+                      __html: job.jobSummary || (job.description ? job.description.split(/(?:Key Responsibilities:?|Key Responsibilities\n)/i)[0].replace(/(?:Job Summary:?|Job Summary\n)/i, "").trim() : ""),
+                    }}
+                  />
+                </div>
 
-                  {job.keyResponsibilities && (
-                    <div className="pt-6 border-t border-slate-100">
-                      <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-3 flex items-center gap-3">
-                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
-                          <ListChecks size={18} />
-                        </div>
-                        Key Responsibilities
-                      </h2>
-                      <div
-                        className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium prose-ul:list-disc prose-ul:pl-4"
-                        dangerouslySetInnerHTML={{
-                          __html: job.keyResponsibilities,
-                        }}
-                      />
+                {/* Key Responsibilities */}
+                {(job.keyResponsibilities || job.description?.includes("Key Responsibilities")) && (
+                  <div className="pt-6 border-t border-slate-100">
+                    <h2 className="text-sm sm:text-base font-extrabold text-purple-900 bg-purple-100 inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-4 shadow-sm border border-purple-200">
+                      <ListChecks size={18} className="text-purple-700" /> Key Responsibilities
+                    </h2>
+                    
+                    <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium prose-ul:list-disc prose-ul:pl-5 prose-li:marker:text-purple-500">
+                      {(() => {
+                        let respHtml = job.keyResponsibilities;
+                        
+                        // Fallback for legacy database entries
+                        if (!respHtml && job.description) {
+                            const parts = job.description.split(/(?:Key Responsibilities:?|Key Responsibilities\n)/i);
+                            respHtml = parts[1] || "";
+                        }
+
+                        if (!respHtml) return null;
+
+                        // If it ALREADY has legitimate HTML bullet points from the editor, render normally.
+                        if (respHtml.includes('<li') || respHtml.includes('<ul')) {
+                          return <div dangerouslySetInnerHTML={{ __html: respHtml }} />;
+                        }
+
+                        // FACT: The Aggressive HTML Stripper
+                        // This hunts down <p>, <br>, and <div> tags, turns them into \n, and forces a bullet list.
+                        const forcedBullets = respHtml
+                          .replace(/<\/?(?:p|br|div)[^>]*>/gi, '\n') // Force breaks/paragraphs into \n
+                          .replace(/<[^>]+>/g, '') // Strip any remaining formatting tags
+                          .split('\n')
+                          .map(line => line.replace(/^[-*•]\s*/, '').trim()) // Remove manual hyphens
+                          .filter(line => line.length > 5); // Ignore empty blank lines
+
+                        return (
+                          <ul className="list-disc pl-5 space-y-2">
+                            {forcedBullets.map((line, i) => (
+                              <li key={i}>{line}</li>
+                            ))}
+                          </ul>
+                        );
+                      })()}
                     </div>
-                  )}
-                </section>
+                  </div>
+                )}
+              </section>
+
+                {/* FACT: New Assessment / Screening Questions Section */}
+                {job.screeningQuestions?.length > 0 && (
+                  <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+                    <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-4 border-b border-slate-100 pb-4 flex items-center gap-3">
+                      <div className="p-2 bg-rose-50 rounded-lg text-rose-600">
+                        <HelpCircle size={18} />
+                      </div>{" "}
+                      Application Assessment
+                    </h2>
+                    <p className="text-xs font-bold text-slate-500 mb-4">
+                      You will be required to answer the following questions
+                      during the application process:
+                    </p>
+                    <ul className="space-y-3">
+                      {job.screeningQuestions.map((q, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm font-medium text-slate-700"
+                        >
+                          <span className="font-extrabold text-rose-500">
+                            Q{i + 1}.
+                          </span>{" "}
+                          {q}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
               </div>
 
               {/* --- SIDEBAR DETAILS (RIGHT) --- */}
@@ -286,19 +352,15 @@ export default function JobDetailsModal({ job, onClose }) {
                     Compensation
                   </h3>
                   <div className="relative z-10">
-                    <p className="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-wide">
-                      Total Salary
+                    <p className="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-wide flex items-center gap-1.5">
+                      <IndianRupee size={12} /> Total Salary
                     </p>
                     <div className="flex items-baseline gap-1.5 sm:gap-2 mb-5 sm:mb-6">
-                      <IndianRupee
-                        size={24}
-                        sm:size={28}
-                        className="text-emerald-400"
-                      />
+                      {/* FACT: Render the dynamic currency symbol and range properly */}
                       <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
                         {job.salaryMin === 0 && job.salaryMax === 0
                           ? "Unpaid"
-                          : `${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
+                          : `${job.salaryCurrency || "₹"} ${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
                       </span>
                     </div>
                     <div className="bg-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10 flex justify-between items-center text-xs sm:text-sm font-bold backdrop-blur-md">
@@ -307,14 +369,21 @@ export default function JobDetailsModal({ job, onClose }) {
                         {job.salaryFrequency || "Monthly"}
                       </span>
                     </div>
-                    {job.incentives && (
+                    {job.incentives?.length > 0 && (
                       <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-white/10">
-                        <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                        <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
                           <Zap size={12} /> Perks & Benefits
                         </p>
-                        <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed">
-                          {job.incentives}
-                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {job.incentives.map((inc, i) => (
+                            <span
+                              key={i}
+                              className="bg-white/10 border border-white/5 px-2 py-1 rounded text-xs text-slate-200"
+                            >
+                              {inc}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -341,11 +410,9 @@ export default function JobDetailsModal({ job, onClose }) {
                       Working Days
                     </p>
                     <div className="inline-block px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700">
-                      {job.workDaysPattern
-                        ? job.workDaysPattern === "Custom"
-                          ? job.customWorkDaysDescription
-                          : job.workDaysPattern
-                        : renderArray(job.workDays)}
+                      {job.workDaysPattern === "Custom"
+                        ? job.customWorkDaysDescription
+                        : job.workDaysPattern || renderArray(job.workDays)}
                     </div>
                   </div>
 
@@ -370,12 +437,19 @@ export default function JobDetailsModal({ job, onClose }) {
                   </div>
                 </section>
 
-                {/* Overview Card */}
+                {/* FACT: Comprehensive Job Overview mapping ALL timeline variables */}
                 <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-5 sm:mb-6 border-b border-slate-100 pb-3">
-                    Job Overview
-                  </h3>
-                  <div className="space-y-4 sm:space-y-5">
+                  <div className="flex items-center justify-between mb-5 sm:mb-6 border-b border-slate-100 pb-3">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Job Overview
+                    </h3>
+                    {job.isFlexibleDuration && (
+                      <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded">
+                        Flexible Dates
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-4">
                     <DetailRow
                       icon={
                         <CalendarDays size={16} className="text-blue-500" />
@@ -398,6 +472,16 @@ export default function JobDetailsModal({ job, onClose }) {
                             : "TBD"
                       }
                     />
+
+                    {/* Render specific duration details if provided */}
+                    {(job.durationType || job.noOfDays) && (
+                      <DetailRow
+                        icon={<Timer size={16} className="text-orange-500" />}
+                        label="Duration"
+                        value={`${job.noOfDays || ""} ${job.durationType || "Days"}`}
+                      />
+                    )}
+
                     {job.applicationDeadline && (
                       <>
                         <div className="h-px bg-slate-100 my-2"></div>
@@ -410,11 +494,18 @@ export default function JobDetailsModal({ job, onClose }) {
                         />
                       </>
                     )}
+                    {job.expiringAt && (
+                      <DetailRow
+                        icon={<Activity size={16} className="text-rose-500" />}
+                        label="Listing Expires"
+                        value={new Date(job.expiringAt).toLocaleDateString()}
+                      />
+                    )}
                     <div className="h-px bg-slate-100 my-2"></div>
                     <DetailRow
                       icon={<Users size={16} className="text-purple-500" />}
                       label="Openings"
-                      value={`${job.noOfPeopleRequired} Spots`}
+                      value={`${job.noOfPeopleRequired} Position(s)`}
                     />
                   </div>
                 </section>
@@ -431,7 +522,6 @@ export default function JobDetailsModal({ job, onClose }) {
               Cancel
             </button>
             <button
-              // FACT: Replaced navigation with opening the Apply Modal
               onClick={() => setShowApplyModal(true)}
               className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
             >
@@ -441,16 +531,15 @@ export default function JobDetailsModal({ job, onClose }) {
         </motion.div>
       </div>
 
-      {/* FACT: Conditionally render the Apply Modal over top of everything */}
       {showApplyModal && (
         <ApplyModal
           job={job}
           onClose={() => setShowApplyModal(false)}
           onSuccess={() => {
             setShowApplyModal(false);
-            onClose(); // Close the job details modal too
+            onClose();
             alert("Application submitted successfully!");
-            navigate("/myapplications"); // Send them to track their app
+            navigate("/myapplications");
           }}
         />
       )}
@@ -458,7 +547,7 @@ export default function JobDetailsModal({ job, onClose }) {
   );
 }
 
-// Minimal Detail Row Component for the Sidebar
+// Minimal Detail Row Component
 function DetailRow({ icon, label, value }) {
   return (
     <div className="flex items-center justify-between">

@@ -11,6 +11,7 @@ import {
   Filter,
   X,
   Building2,
+  ListChecks,
 } from "lucide-react";
 import JobDetailsModal from "../components/JobDetailsModal";
 
