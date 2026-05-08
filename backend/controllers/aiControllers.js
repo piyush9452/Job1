@@ -43,11 +43,13 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
     Instructions:
     1. Write a "summary" (4-5 sentences). This must be a compelling pitch for the role. YOU MUST explicitly mention the exact experience requirements (${expString}) and the required skills in a natural, flowing way within this summary.
     2. Write "responsibilities" (6-7 bullet points). These must be specific to the title and mode. 
+    3. Write "screeningQuestions". Generate EXACTLY 5 short, highly relevant screening questions to ask candidates during the application process (e.g., "How many years of React experience do you have?").
     
     Return EXACTLY a JSON object with this format, and nothing else. Do not use markdown code blocks like \`\`\`json. Just the raw JSON.
     {
       "summary": "Write the compelling summary here...",
-      "responsibilities": "- Responsibility 1\\n- Responsibility 2\\n- Responsibility 3"
+      "responsibilities": "- Responsibility 1\\n- Responsibility 2\\n- Responsibility 3",
+      "screeningQuestions": ["Question 1", "Question 2", "Question 3", "Question 4", "Question 5"]
     }
   `;
 
