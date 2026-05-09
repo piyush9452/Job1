@@ -83,6 +83,17 @@ export default function EmployerDashboard() {
 
   const toggleJobStatus = async (jobId, currentStatus) => {
     try {
+      // FACT: Security Guard - Prevents bypassing admin approval
+      if (
+        currentStatus === "pending_approval" ||
+        currentStatus === "rejected"
+      ) {
+        alert(
+          "Action Denied: You cannot manually activate a job that is pending admin approval or has been rejected.",
+        );
+        return;
+      }
+
       const newStatus = currentStatus === "active" ? "closed" : "active";
       const stored = localStorage.getItem("employerInfo");
       const token = JSON.parse(stored).token;
@@ -430,12 +441,31 @@ export default function EmployerDashboard() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleRepost(job);
+                                  toggleJobStatus(job._id, job.status);
                                 }}
-                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                title="Repost Job"
+                                disabled={
+                                  job.status === "pending_approval" ||
+                                  job.status === "rejected"
+                                }
+                                className={`p-2 rounded-lg transition-colors ${
+                                  job.status === "pending_approval" ||
+                                  job.status === "rejected"
+                                    ? "text-slate-300 cursor-not-allowed bg-slate-50"
+                                    : job.status === "active"
+                                      ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                      : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+                                }`}
+                                title={
+                                  job.status === "pending_approval"
+                                    ? "Pending Admin Approval"
+                                    : job.status === "rejected"
+                                      ? "Job Rejected"
+                                      : job.status === "active"
+                                        ? "Close Job"
+                                        : "Reactivate Job"
+                                }
                               >
-                                <RefreshCw size={18} />
+                                <Power size={18} />
                               </button>
                               <button
                                 onClick={(e) => {

@@ -249,68 +249,87 @@ export default function JobDetailsModal({ job, onClose }) {
                 )}
 
                 {/* Description Split */}
-              <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
-                
-                {/* Job Summary */}
-                <div>
-                  <h2 className="text-sm sm:text-base font-extrabold text-blue-900 bg-blue-100 inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-4 shadow-sm border border-blue-200">
-                    <Briefcase size={18} className="text-blue-700" />
-                    Job Summary
-                  </h2>
-                  <div
-                    className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium"
-                    dangerouslySetInnerHTML={{
-                      // FACT: Safely displays new jobSummary, OR cleanly slices the top half of an old legacy description
-                      __html: job.jobSummary || (job.description ? job.description.split(/(?:Key Responsibilities:?|Key Responsibilities\n)/i)[0].replace(/(?:Job Summary:?|Job Summary\n)/i, "").trim() : ""),
-                    }}
-                  />
-                </div>
-
-                {/* Key Responsibilities */}
-                {(job.keyResponsibilities || job.description?.includes("Key Responsibilities")) && (
-                  <div className="pt-6 border-t border-slate-100">
-                    <h2 className="text-sm sm:text-base font-extrabold text-purple-900 bg-purple-100 inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-4 shadow-sm border border-purple-200">
-                      <ListChecks size={18} className="text-purple-700" /> Key Responsibilities
+                <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
+                  {/* Job Summary */}
+                  <div>
+                    <h2 className="text-sm sm:text-base font-extrabold text-blue-900 bg-blue-100 inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-4 shadow-sm border border-blue-200">
+                      <Briefcase size={18} className="text-blue-700" />
+                      Job Summary
                     </h2>
-                    
-                    <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium prose-ul:list-disc prose-ul:pl-5 prose-li:marker:text-purple-500">
-                      {(() => {
-                        let respHtml = job.keyResponsibilities;
-                        
-                        // Fallback for legacy database entries
-                        if (!respHtml && job.description) {
-                            const parts = job.description.split(/(?:Key Responsibilities:?|Key Responsibilities\n)/i);
-                            respHtml = parts[1] || "";
-                        }
-
-                        if (!respHtml) return null;
-
-                        // If it ALREADY has legitimate HTML bullet points from the editor, render normally.
-                        if (respHtml.includes('<li') || respHtml.includes('<ul')) {
-                          return <div dangerouslySetInnerHTML={{ __html: respHtml }} />;
-                        }
-
-                        // FACT: The Aggressive HTML Stripper
-                        // This hunts down <p>, <br>, and <div> tags, turns them into \n, and forces a bullet list.
-                        const forcedBullets = respHtml
-                          .replace(/<\/?(?:p|br|div)[^>]*>/gi, '\n') // Force breaks/paragraphs into \n
-                          .replace(/<[^>]+>/g, '') // Strip any remaining formatting tags
-                          .split('\n')
-                          .map(line => line.replace(/^[-*•]\s*/, '').trim()) // Remove manual hyphens
-                          .filter(line => line.length > 5); // Ignore empty blank lines
-
-                        return (
-                          <ul className="list-disc pl-5 space-y-2">
-                            {forcedBullets.map((line, i) => (
-                              <li key={i}>{line}</li>
-                            ))}
-                          </ul>
-                        );
-                      })()}
-                    </div>
+                    <div
+                      className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium"
+                      dangerouslySetInnerHTML={{
+                        // FACT: Safely displays new jobSummary, OR cleanly slices the top half of an old legacy description
+                        __html:
+                          job.jobSummary ||
+                          (job.description
+                            ? job.description
+                                .split(
+                                  /(?:Key Responsibilities:?|Key Responsibilities\n)/i,
+                                )[0]
+                                .replace(/(?:Job Summary:?|Job Summary\n)/i, "")
+                                .trim()
+                            : ""),
+                      }}
+                    />
                   </div>
-                )}
-              </section>
+
+                  {/* Key Responsibilities */}
+                  {(job.keyResponsibilities ||
+                    job.description?.includes("Key Responsibilities")) && (
+                    <div className="pt-6 border-t border-slate-100">
+                      <h2 className="text-sm sm:text-base font-extrabold text-purple-900 bg-purple-100 inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-4 shadow-sm border border-purple-200">
+                        <ListChecks size={18} className="text-purple-700" /> Key
+                        Responsibilities
+                      </h2>
+
+                      <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium prose-ul:list-disc prose-ul:pl-5 prose-li:marker:text-purple-500">
+                        {(() => {
+                          let respHtml = job.keyResponsibilities;
+
+                          // Fallback for legacy database entries
+                          if (!respHtml && job.description) {
+                            const parts = job.description.split(
+                              /(?:Key Responsibilities:?|Key Responsibilities\n)/i,
+                            );
+                            respHtml = parts[1] || "";
+                          }
+
+                          if (!respHtml) return null;
+
+                          // If it ALREADY has legitimate HTML bullet points from the editor, render normally.
+                          if (
+                            respHtml.includes("<li") ||
+                            respHtml.includes("<ul")
+                          ) {
+                            return (
+                              <div
+                                dangerouslySetInnerHTML={{ __html: respHtml }}
+                              />
+                            );
+                          }
+
+                          // FACT: The Aggressive HTML Stripper
+                          // This hunts down <p>, <br>, and <div> tags, turns them into \n, and forces a bullet list.
+                          const forcedBullets = respHtml
+                            .replace(/<\/?(?:p|br|div)[^>]*>/gi, "\n") // Force breaks/paragraphs into \n
+                            .replace(/<[^>]+>/g, "") // Strip any remaining formatting tags
+                            .split("\n")
+                            .map((line) => line.replace(/^[-*•]\s*/, "").trim()) // Remove manual hyphens
+                            .filter((line) => line.length > 5); // Ignore empty blank lines
+
+                          return (
+                            <ul className="list-disc pl-5 space-y-2">
+                              {forcedBullets.map((line, i) => (
+                                <li key={i}>{line}</li>
+                              ))}
+                            </ul>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </section>
 
                 {/* FACT: New Assessment / Screening Questions Section */}
                 {job.screeningQuestions?.length > 0 && (
@@ -358,9 +377,20 @@ export default function JobDetailsModal({ job, onClose }) {
                     <div className="flex items-baseline gap-1.5 sm:gap-2 mb-5 sm:mb-6">
                       {/* FACT: Render the dynamic currency symbol and range properly */}
                       <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                        {job.salaryMin === 0 && job.salaryMax === 0
-                          ? "Unpaid"
-                          : `${job.salaryCurrency || "₹"} ${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
+                        {(() => {
+                          // FACT: Safely handle both Legacy Jobs and New Jobs
+                          const sMin =
+                            Number(job.salaryMin) ||
+                            Number(job.salaryAmount) ||
+                            0;
+                          const sMax =
+                            Number(job.salaryMax) ||
+                            Number(job.salaryAmount) ||
+                            0;
+
+                          if (sMin === 0 && sMax === 0) return "UNPAID";
+                          return `${job.salaryCurrency || "₹"} ${sMin.toLocaleString()} - ${sMax.toLocaleString()}`;
+                        })()}
                       </span>
                     </div>
                     <div className="bg-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10 flex justify-between items-center text-xs sm:text-sm font-bold backdrop-blur-md">

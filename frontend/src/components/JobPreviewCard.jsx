@@ -16,24 +16,25 @@ import {
   Calendar,
   Timer,
   HelpCircle,
-  ListChecks
+  ListChecks,
 } from "lucide-react";
 
 export default function JobPreviewCard({ job, onClose }) {
-  
   // FACT: Guard Clause. Prevents the app from crashing if 'job' is undefined.
   if (!job) return null;
 
   // FACT: Safe fallback for legacy strings vs new arrays
   const renderArray = (val) => {
     if (!val) return "Not specified";
-    if (Array.isArray(val)) return val.length > 0 ? val.join(", ") : "Not specified";
+    if (Array.isArray(val))
+      return val.length > 0 ? val.join(", ") : "Not specified";
     return String(val);
   };
 
   // FACT: Now job.mode is perfectly safe to access
-  const isRemote = renderArray(job.mode).toLowerCase().includes("home") || job.mode === "Online";
-  
+  const isRemote =
+    renderArray(job.mode).toLowerCase().includes("home") ||
+    job.mode === "Online";
 
   // FACT: Added pinCode to the preview location
   const locationText = isRemote
@@ -106,10 +107,17 @@ export default function JobPreviewCard({ job, onClose }) {
             <IndianRupee size={12} /> Compensation
           </p>
           <div className="flex items-baseline gap-1.5 mb-3">
-            <span className="text-2xl font-extrabold text-emerald-900 tracking-tight">
-              {job.salaryMin === 0 && job.salaryMax === 0
-                ? "Unpaid"
-                : `${job.salaryCurrency || "₹"} ${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
+            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+              {(() => {
+                // FACT: Safely handle both Legacy Jobs and New Jobs
+                const sMin =
+                  Number(job.salaryMin) || Number(job.salaryAmount) || 0;
+                const sMax =
+                  Number(job.salaryMax) || Number(job.salaryAmount) || 0;
+
+                if (sMin === 0 && sMax === 0) return "UNPAID";
+                return `${job.salaryCurrency || "₹"} ${sMin.toLocaleString()} - ${sMax.toLocaleString()}`;
+              })()}
             </span>
             <span className="text-xs font-bold text-emerald-700 uppercase">
               / {job.salaryFrequency || "Month"}
@@ -189,21 +197,26 @@ export default function JobPreviewCard({ job, onClose }) {
               ? job.customWorkDaysDescription
               : job.workDaysPattern || renderArray(job.workDays)}
           </p>
-          {!job.isFlexibleShifts && job.shifts?.length > 0 && (
-            <div className="space-y-1.5">
-              {job.shifts.map((shift, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between items-center bg-white p-2 border border-slate-200 rounded-lg"
-                >
-                  <span className="text-xs font-bold text-slate-700">
-                    {shift.shiftName}
-                  </span>
-                  <span className="text-xs font-mono font-bold text-slate-500">
-                    {shift.startTime || "--:--"} - {shift.endTime || "--:--"}
-                  </span>
-                </div>
-              ))}
+          {job.shifts?.length > 0 && (
+            <div>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">
+                Expected Shift Timings
+              </p>
+              <div className="space-y-2">
+                {job.shifts.map((shift, i) => (
+                  <div
+                    key={i}
+                    className="flex justify-between items-center bg-slate-50 p-3 border border-slate-200 rounded-xl"
+                  >
+                    <span className="text-xs font-bold text-slate-700">
+                      {shift.shiftName}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                      {shift.startTime || "--:--"} - {shift.endTime || "--:--"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

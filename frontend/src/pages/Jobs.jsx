@@ -11,7 +11,6 @@ import {
   Filter,
   X,
   Building2,
-  ListChecks,
 } from "lucide-react";
 import JobDetailsModal from "../components/JobDetailsModal";
 
@@ -40,7 +39,6 @@ export default function Jobs() {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        // FACT: Maintained your exact API call, no token logic added.
         const res = await axios.get("https://jobone-mrpy.onrender.com/jobs");
         const jobsData = res.data.data || res.data;
 
@@ -64,7 +62,6 @@ export default function Jobs() {
     fetchJobs();
   }, []);
 
-  // FACT: Safe fallbacks for handling both legacy strings and new Phase 2 arrays
   const renderArray = (val) => {
     if (!val) return "Not specified";
     if (Array.isArray(val))
@@ -79,7 +76,7 @@ export default function Jobs() {
       : [String(val).toLowerCase()];
   };
 
-  // --- FILTER LOGIC COMPATIBLE WITH NEW SCHEMA ---
+  // --- FILTER LOGIC ---
   const filteredJobs = allJobs.filter((job) => {
     const jobLocation =
       typeof job.location === "object"
@@ -87,8 +84,8 @@ export default function Jobs() {
         : job.location?.toLowerCase() || "";
     const title = job.title?.toLowerCase() || "";
 
-    // FACT: Uses new salaryAmount but falls back to legacy salary
-    const salary = Number(job.salaryAmount) || Number(job.salary) || 0;
+    // FACT: Filter now properly checks the new salaryMin field
+    const salary = Number(job.salaryMin) || Number(job.salaryAmount) || 0;
 
     const jobTypes = getArraySafe(job.jobType);
     const modes = getArraySafe(job.mode);
@@ -119,7 +116,6 @@ export default function Jobs() {
     );
   });
 
-  // FACT: Uses new postedAt but falls back to legacy createdAt
   const formatTimeAgo = (dateString) => {
     if (!dateString) return "Recently";
     const diff = (Date.now() - new Date(dateString).getTime()) / 1000;
@@ -339,7 +335,13 @@ export default function Jobs() {
                       <div className="flex flex-col sm:flex-row justify-between gap-5">
                         <div className="flex gap-5">
                           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 flex items-center justify-center text-2xl shrink-0 text-indigo-600 font-extrabold shadow-sm">
-                            {job.postedByCompany ? (
+                            {job.postedByImage ? (
+                              <img
+                                src={job.postedByImage}
+                                alt="Company"
+                                className="w-full h-full object-cover rounded-2xl"
+                              />
+                            ) : job.postedByCompany ? (
                               job.postedByCompany.charAt(0)
                             ) : job.postedByName ? (
                               job.postedByName.charAt(0)
@@ -367,11 +369,13 @@ export default function Jobs() {
                                 <Briefcase size={14} />{" "}
                                 {renderArray(job.jobType)}
                               </span>
+
+                              {/* FACT: Properly handles the "UNPAID" logic for Item 7 */}
                               <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100">
                                 <IndianRupee size={14} />{" "}
-                                {job.salaryAmount?.toLocaleString() ||
-                                  job.salary?.toLocaleString() ||
-                                  "TBD"}
+                                {job.salaryMin === 0 && job.salaryMax === 0
+                                  ? "UNPAID"
+                                  : `${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
                               </span>
                             </div>
                           </div>

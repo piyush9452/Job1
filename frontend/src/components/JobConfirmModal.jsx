@@ -324,9 +324,20 @@ export default function JobConfirmModal({
                   </p>
                   <div className="flex items-baseline gap-1.5 sm:gap-2 mb-5 sm:mb-6">
                     <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                      {job.salaryMin === 0 && job.salaryMax === 0
-                        ? "Unpaid"
-                        : `${job.salaryCurrency || "₹"} ${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
+                      {(() => {
+                        // FACT: Safely handle both Legacy Jobs and New Jobs
+                        const sMin =
+                          Number(job.salaryMin) ||
+                          Number(job.salaryAmount) ||
+                          0;
+                        const sMax =
+                          Number(job.salaryMax) ||
+                          Number(job.salaryAmount) ||
+                          0;
+
+                        if (sMin === 0 && sMax === 0) return "UNPAID";
+                        return `${job.salaryCurrency || "₹"} ${sMin.toLocaleString()} - ${sMax.toLocaleString()}`;
+                      })()}
                     </span>
                   </div>
                   <div className="bg-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10 flex justify-between items-center text-xs sm:text-sm font-bold backdrop-blur-md">

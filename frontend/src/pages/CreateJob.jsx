@@ -422,6 +422,7 @@ export default function CreateJob() {
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
+
       // FACT: Format for a standard textarea (Plain text with bullet points and line breaks)
       const lines = data.responsibilities
         .split("\n")
@@ -429,9 +430,24 @@ export default function CreateJob() {
         .filter((line) => line.length > 5);
 
       const plainTextList = lines.map((line) => `• ${line}`).join("\n");
-
       setKeyResponsibilities(plainTextList);
-      await typeWriterEffect(data.summary, setJobSummary, 10);
+
+      // FACT: Merge AI questions with employer's manual questions without duplicates
+      if (data.screeningQuestions && Array.isArray(data.screeningQuestions)) {
+        setJob((prev) => {
+          const existing = prev.screeningQuestions || [];
+          const combined = [...existing, ...data.screeningQuestions];
+          // Use Set to remove identical duplicate questions
+          return { ...prev, screeningQuestions: [...new Set(combined)] };
+        });
+      }
+
+      // Check if typeWriterEffect exists (CreateJob has it, EditJob might not)
+      if (typeof typeWriterEffect === "function") {
+        await typeWriterEffect(data.summary, setJobSummary, 10);
+      } else {
+        setJobSummary(data.summary);
+      }
     } catch (error) {
       console.error("AI generation failed:", error);
       alert("Failed to generate AI content.");
@@ -972,7 +988,7 @@ export default function CreateJob() {
                     type="number"
                     placeholder="Min"
                     disabled={isUnpaid}
-                    value={job.salaryMin}
+                    value={job.salaryMin || ""}
                     onChange={(e) =>
                       setJob((prev) => ({ ...prev, salaryMin: e.target.value }))
                     }
@@ -1252,7 +1268,7 @@ export default function CreateJob() {
                         type="number"
                         min={15}
                         max={59}
-                        value={job.ageLimit.min}
+                        value={job.ageLimit?.min || ""}
                         onChange={(e) => handleAgeChange("min", e.target.value)}
                         onBlur={(e) => {
                           const val = Math.max(
@@ -1307,7 +1323,9 @@ export default function CreateJob() {
                             type="number"
                             min="0"
                             placeholder="0"
-                            value={job.experience.relevantExperience.min}
+                            value={
+                              job.experience?.relevantExperience?.min || ""
+                            }
                             onChange={(e) =>
                               handleExperienceChange(
                                 "relevantExperience",
@@ -1473,10 +1491,11 @@ export default function CreateJob() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Duration & Dates Block */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Duration & Deadline
+                    Duration & Dates
                   </label>
                   <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer">
                     <input
@@ -1486,7 +1505,7 @@ export default function CreateJob() {
                       onChange={handleChange}
                       className="rounded text-blue-600"
                     />{" "}
-                    Flexible
+                    Flexible Dates
                   </label>
                 </div>
                 <div className="flex flex-col gap-3">
@@ -1495,15 +1514,13 @@ export default function CreateJob() {
                       <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">
                         Start Date
                       </label>
+                      {/* FACT: No longer disabled by Flexible */}
                       <input
                         type="date"
                         name="startDate"
-                        value={job.isFlexibleDuration ? "" : job.startDate}
+                        value={job.startDate}
                         onChange={handleChange}
-                        onKeyDown={blockManualInput}
-                        disabled={job.isFlexibleDuration}
-                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100"
-                        title="Start Date"
+                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none focus:ring-2 focus:ring-blue-200 bg-white"
                       />
                     </div>
                     <div className="flex-1">
@@ -1513,15 +1530,25 @@ export default function CreateJob() {
                       <input
                         type="date"
                         name="endDate"
-                        value={job.isFlexibleDuration ? "" : job.endDate}
+                        value={job.isLongTerm ? "" : job.endDate}
                         onChange={handleChange}
-                        onKeyDown={blockManualInput}
-                        disabled={job.isFlexibleDuration}
-                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none disabled:bg-gray-100"
-                        title="End Date"
+                        disabled={job.isLongTerm}
+                        className="w-full p-2 border border-gray-200 rounded text-xs outline-none disabled:bg-gray-100 bg-white"
                       />
                     </div>
                   </div>
+                  {/* FACT: Restored Long Term Checkbox */}
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isLongTerm"
+                      checked={job.isLongTerm}
+                      onChange={handleChange}
+                      className="rounded text-indigo-600"
+                    />{" "}
+                    Long Term Role (No fixed end date)
+                  </label>
+
                   <div className="pt-2 border-t border-gray-200">
                     <label className="text-[10px] text-rose-500 font-bold uppercase mb-1 block flex items-center gap-1">
                       <Calendar size={12} /> Application Deadline (Optional)
@@ -1530,28 +1557,18 @@ export default function CreateJob() {
                       type="date"
                       name="applicationDeadline"
                       value={job.applicationDeadline}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        const min = getMinDeadline();
-                        const max = getMaxDeadline();
-                        if (selected >= min && selected <= max) {
-                          handleChange(e);
-                        }
-                      }}
-                      onKeyDown={blockManualInput}
-                      min={getMinDeadline()}
-                      max={getMaxDeadline()}
+                      onChange={handleChange}
                       className="w-full p-2 border border-rose-200 rounded text-xs outline-none focus:ring-2 focus:ring-rose-200 bg-rose-50/50"
-                      title="Application Deadline"
                     />
                   </div>
                 </div>
               </div>
 
+              {/* Timings Block */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Timings
+                    Expected Timings
                   </label>
                   <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer">
                     <input
@@ -1561,55 +1578,57 @@ export default function CreateJob() {
                       onChange={handleChange}
                       className="rounded text-blue-600"
                     />{" "}
-                    Flexible
+                    Flexible Hours
                   </label>
                 </div>
-                {!job.isFlexibleShifts && (
-                  <div className="space-y-2">
-                    {job.shifts.map((shift, index) => (
-                      <div key={index} className="flex gap-1 items-center">
-                        <input
-                          type="time"
-                          value={shift.startTime}
-                          onChange={(e) =>
-                            updateShift(index, "startTime", e.target.value)
-                          }
-                          onKeyDown={blockManualInput}
-                          className="flex-1 p-1.5 border rounded text-xs outline-none"
-                        />
-                        <span className="text-gray-400 text-xs">to</span>
-                        <input
-                          type="time"
-                          value={shift.endTime}
-                          onChange={(e) =>
-                            updateShift(index, "endTime", e.target.value)
-                          }
-                          onKeyDown={blockManualInput}
-                          className="flex-1 p-1.5 border rounded text-xs outline-none"
-                        />
-                        {index > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => removeShift(index)}
-                            className="text-red-400 p-1"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addShift}
-                      className="text-xs text-blue-600 font-bold flex items-center gap-1 mt-1"
+
+                {/* FACT: Removed the condition that hides this block. Shifts are always visible now. */}
+                <div className="space-y-2">
+                  {job.shifts.map((shift, index) => (
+                    <div
+                      key={index}
+                      className="flex gap-1 items-center bg-white p-1 rounded border border-slate-200"
                     >
-                      <Plus size={12} /> Add Shift
-                    </button>
-                  </div>
-                )}
+                      <input
+                        type="time"
+                        value={shift.startTime}
+                        onChange={(e) =>
+                          updateShift(index, "startTime", e.target.value)
+                        }
+                        className="flex-1 p-1.5 rounded text-xs outline-none"
+                      />
+                      <span className="text-gray-400 text-xs font-bold">
+                        to
+                      </span>
+                      <input
+                        type="time"
+                        value={shift.endTime}
+                        onChange={(e) =>
+                          updateShift(index, "endTime", e.target.value)
+                        }
+                        className="flex-1 p-1.5 rounded text-xs outline-none"
+                      />
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removeShift(index)}
+                          className="text-red-400 p-1"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addShift}
+                    className="text-xs text-blue-600 font-bold flex items-center gap-1 mt-1"
+                  >
+                    <Plus size={12} /> Add Shift
+                  </button>
+                </div>
               </div>
             </div>
-
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
               <label className="block text-sm font-bold text-amber-900 flex items-center gap-1.5">
                 <Zap size={16} className="text-amber-500" /> Job Highlights
