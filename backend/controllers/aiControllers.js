@@ -14,7 +14,7 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   // Dynamically build the experience string based on what was passed from the frontend
   let expString = "Experience flexible based on candidate.";
@@ -93,7 +93,7 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
 
   const fileType = req.file.mimetype;
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const basePrompt = `
     You are an expert Applicant Tracking System (ATS). Extract the following information from the provided resume.
@@ -233,7 +233,7 @@ export const recommendJobs = expressAsyncHandler(async (req, res) => {
 
     // 5. Gemini setup
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
 You are an AI job recommendation engine.
