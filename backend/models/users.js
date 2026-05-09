@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   isProfileComplete:{ type: Boolean,default:false},
   
+  // FACT: resumeData now correctly holds the AI parsed fields INSIDE it
   resumeData: {
       name: String,
       phone: String,
@@ -71,6 +72,29 @@ const userSchema = new mongoose.Schema({
               university: String,
               ended: String,
               CGPA: String
+          }
+      ],
+      projects: [
+          {
+              title: String,
+              technologies: String,
+              link: String,
+              description: String
+          }
+      ],
+      certifications: [
+          {
+              name: String,
+              issuer: String,
+              date: String
+          }
+      ],
+      volunteering: [
+          {
+              organization: String,
+              role: String,
+              duration: String,
+              description: String
           }
       ]
   },
@@ -101,30 +125,7 @@ const userSchema = new mongoose.Schema({
         rating: { type: Number, min: 1, max: 5 },
         review: { type: String },
         }
-    ],
-    projects: [
-          {
-              title: String,
-              technologies: String,
-              link: String,
-              description: String
-          }
-      ],
-      certifications: [
-          {
-              name: String,
-              issuer: String,
-              date: String
-          }
-      ],
-      volunteering: [
-          {
-              organization: String,
-              role: String,
-              duration: String,
-              description: String
-          }
-      ]
+    ]
 });
 
 const User = mongoose.model("User", userSchema);
