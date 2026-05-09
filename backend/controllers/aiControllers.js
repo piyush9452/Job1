@@ -96,20 +96,30 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const basePrompt = `
-    You are an expert Applicant Tracking System (ATS). Extract the following information from the provided resume.
-    Return EXACTLY a raw JSON object and nothing else. Do NOT use markdown formatting (\`\`\`json). If information for a field is missing, return an empty array or empty string.
+    You are an expert Applicant Tracking System (ATS). Extract the maximum possible information from the provided resume.
+    Return EXACTLY a raw JSON object and nothing else. Do NOT use markdown formatting (\`\`\`json). 
+    If information for a specific field is missing from the resume, leave it as an empty string ("") or empty array ([]). Do not invent data.
 
     Strict JSON Schema required:
     {
-      "name": "Candidate's full name if found, else empty string",
-      "phone": "Extract ONLY the core digits of the phone number. Strip away any country codes (like +91), spaces, dashes, and location text (like Bhopal, MP). Example: '7024901312'. Else empty string.",
+      "name": "Candidate's full name",
+      "phone": "Extract ONLY the core digits of the phone number. Strip away any country codes (+91), spaces, or text.",
       "description": "Create a professional 2-3 sentence summary based on their profile.",
       "skills": ["Skill 1", "Skill 2", "Skill 3"],
       "experience": [
         { "role": "Job Title", "company": "Company Name", "duration": "YYYY - YYYY", "description": "Brief summary of duties" }
       ],
       "education": [
-        { "degree": "Degree Name", "university": "Institution Name", "ended": "YYYY", "CGPA": "GPA/Percentage if found, else empty string" }
+        { "degree": "Degree Name", "university": "Institution Name", "ended": "YYYY", "CGPA": "GPA/Percentage" }
+      ],
+      "projects": [
+        { "title": "Project Name", "technologies": "Tech stack/Tools used", "link": "URL if available", "description": "Brief summary of the project" }
+      ],
+      "certifications": [
+        { "name": "Certificate Name", "issuer": "Issuing Organization", "date": "YYYY" }
+      ],
+      "volunteering": [
+        { "organization": "Organization Name", "role": "Volunteer Title", "duration": "YYYY - YYYY", "description": "Brief summary of duties" }
       ]
     }
   `;
