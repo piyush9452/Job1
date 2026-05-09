@@ -141,12 +141,21 @@ export default function EmployerDashboard() {
             icon={<LayoutDashboard size={20} />}
             label="Dashboard"
             active
+            onClick={() => navigate("/employerdashboard")}
           />
-          {/* FACT: Only show these tabs if approved */}
           {approvalStatus === "approved" && (
             <>
-              <NavItem icon={<Users size={20} />} label="Candidates" />
-              <NavItem icon={<Settings size={20} />} label="Settings" />
+              {/* FACT: Added actual navigation paths. Adjust "/candidates" if your route differs */}
+              <NavItem
+                icon={<Users size={20} />}
+                label="Candidates"
+                onClick={() => navigate("/candidates")}
+              />
+              <NavItem
+                icon={<Settings size={20} />}
+                label="Settings"
+                onClick={() => navigate("/employereditprofile")}
+              />
             </>
           )}
         </nav>
@@ -501,9 +510,11 @@ export default function EmployerDashboard() {
   );
 }
 
-function NavItem({ icon, label, active = false }) {
+// FACT: Added onClick prop to the component parameters and the button element
+function NavItem({ icon, label, active = false, onClick }) {
   return (
     <button
+      onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium transition-all ${active ? "bg-blue-50 text-blue-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}
     >
       {icon} {label}

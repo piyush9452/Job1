@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import LocationPicker from "../components/LocationPicker.jsx";
 import ElasticTitleDropdown from "../components/ElasticTitleDropdown.jsx";
+import CourseSuggestionsDropdown from "../components/CourseSuggestionsDropdown.jsx";
+import LanguageSuggestionsDropdown from "../components/LanguageSuggestionsDropdown.jsx";
+import SkillSuggestionsDropdown from "../components/SkillSuggestionsDropdown.jsx";
 import {
   Loader2,
   Save,
@@ -25,6 +28,7 @@ import {
   Languages,
   UserCircle2,
   Calendar,
+  HelpCircle,
 } from "lucide-react";
 
 export default function EditJob() {
@@ -35,7 +39,7 @@ export default function EditJob() {
 
   const [job, setJob] = useState({
     title: "",
-    status: "active", // FACT: Added Status field
+    status: "active",
     description: "",
     jobFeatures: ["", ""],
     skillsRequired: [],
@@ -43,33 +47,85 @@ export default function EditJob() {
     workDaysPattern: "Mon to Fri",
     customWorkDaysDescription: "",
     mode: [],
-    salaryAmount: "",
+    salaryMin: "",
+    salaryMax: "",
     salaryFrequency: "Monthly",
-    incentives: "",
+    salaryCurrency: "INR",
+    incentives: [],
+    screeningQuestions: [],
     startDate: "",
     endDate: "",
     applicationDeadline: "",
     isLongTerm: false,
     shifts: [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
     isFlexibleShifts: false,
+    isFlexibleDuration: false,
     noOfPeopleRequired: "",
     genderPreference: "No Preference",
     qualifications: [],
     courses: [],
     ageLimit: { min: "", max: "", isAny: true },
     languages: [],
+    experience: {
+      relevantExperience: { min: "", max: "", isAny: true },
+      totalExperience: { min: "", max: "", isAny: true },
+    },
     useOfficeLocation: false,
     location: "",
     latitude: null,
     longitude: null,
   });
 
+  const [isUnpaid, setIsUnpaid] = useState(false);
   const [jobSummary, setJobSummary] = useState("");
   const [keyResponsibilities, setKeyResponsibilities] = useState("");
-  const [skillsInput, setSkillsInput] = useState("");
-  const [languageInput, setLanguageInput] = useState("");
-  const [courseInput, setCourseInput] = useState("");
+  const [customPerkInput, setCustomPerkInput] = useState("");
+  const [newQuestion, setNewQuestion] = useState("");
   const [originalLocation, setOriginalLocation] = useState(null);
+
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [currencySearch, setCurrencySearch] = useState("");
+  const currencyRef = useRef(null);
+
+  const flagUrl = (iso) => `https://flagcdn.com/20x15/${iso}.png`;
+
+  const PERKS_OPTIONS = [
+    { value: "Health Insurance", icon: "🏥" },
+    { value: "Travel Allowance", icon: "🚌" },
+    { value: "Performance Bonus", icon: "🎯" },
+    { value: "Goal Incentive", icon: "🏆" },
+    { value: "Housing Allowance", icon: "🏠" },
+    { value: "PF", icon: "🏦" },
+    { value: "ESI", icon: "🩺" },
+    { value: "Overtime Pay", icon: "⏰" },
+    { value: "Gratuity", icon: "🎁" },
+    { value: "Meal Allowance", icon: "🍱" },
+    { value: "Internet Allowance", icon: "📶" },
+    { value: "Joining Bonus", icon: "✨" },
+  ];
+
+  const TOP_CURRENCIES = [
+    { code: "INR", iso: "in", name: "Indian Rupee", sym: "₹" },
+    { code: "USD", iso: "us", name: "US Dollar", sym: "$" },
+    { code: "EUR", iso: "eu", name: "Euro", sym: "€" },
+    { code: "AED", iso: "ae", name: "UAE Dirham", sym: "د.إ" },
+  ];
+  const REST_CURRENCIES = [
+    { code: "GBP", iso: "gb", name: "British Pound", sym: "£" },
+    { code: "AUD", iso: "au", name: "Australian Dollar", sym: "A$" },
+    { code: "CAD", iso: "ca", name: "Canadian Dollar", sym: "C$" },
+    { code: "SGD", iso: "sg", name: "Singapore Dollar", sym: "S$" },
+  ];
+  const CURRENCIES = [...TOP_CURRENCIES, ...REST_CURRENCIES];
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (currencyRef.current && !currencyRef.current.contains(e.target))
+        setCurrencyOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   useEffect(() => {
     const fetchJobData = async () => {
@@ -85,94 +141,84 @@ export default function EditJob() {
           },
         );
 
-        const jobData = data.job || data;
-        setOriginalLocation(jobData.location);
+        const d = data.job || data;
+        setOriginalLocation(d.location);
 
         const formatDate = (dateStr) => {
           if (!dateStr) return "";
           return new Date(dateStr).toISOString().split("T")[0];
         };
 
-        const rawDesc = jobData.description || "";
-        const parts = rawDesc.split("Key Responsibilities:");
+        const rawDesc = d.description || "";
+        const parts = rawDesc.split("<h3>Key Responsibilities</h3>");
         setJobSummary(
-          parts[0] ? parts[0].replace("Job Summary:", "").trim() : rawDesc,
-        );
-        setKeyResponsibilities(parts[1] ? parts[1].trim() : "");
-
-        const safeArray = (val, defaultVal) => {
-          if (!val) return defaultVal ? [defaultVal] : [];
-          return Array.isArray(val) ? val : [val];
-        };
-
-        setJobSummary(
-          jobData.jobSummary ||
-            (parts[0] ? parts[0].replace("Job Summary:", "").trim() : rawDesc),
+          d.jobSummary ||
+            (parts[0]
+              ? parts[0].replace("<h3>Job Summary</h3>", "").trim()
+              : rawDesc),
         );
         setKeyResponsibilities(
-          jobData.keyResponsibilities || (parts[1] ? parts[1].trim() : ""),
+          d.keyResponsibilities || (parts[1] ? parts[1].trim() : ""),
         );
 
-        // FACT: Calculate Unpaid based on new min/max logic
         const isCurrentlyUnpaid =
-          jobData.salaryMin === 0 && jobData.salaryMax === 0;
+          (d.salaryMin === 0 && d.salaryMax === 0) || d.salaryAmount === 0;
+        setIsUnpaid(isCurrentlyUnpaid);
 
         setJob({
-          title: jobData.title || "",
-          status: jobData.status || "active",
-          jobSummary: "", // Handled by separate state
-          keyResponsibilities: "", // Handled by separate state
+          title: d.title || "",
+          status: d.status || "active",
           jobFeatures:
-            jobData.jobFeatures?.length >= 2
-              ? jobData.jobFeatures
-              : [
-                  jobData.jobFeatures?.[0] || "",
-                  jobData.jobFeatures?.[1] || "",
-                ],
-          skillsRequired: jobData.skillsRequired || [],
-          jobType: safeArray(jobData.jobType, "full-time"),
-          workDaysPattern: jobData.workDaysPattern || "Mon to Fri",
-          customWorkDaysDescription: jobData.customWorkDaysDescription || "",
-          mode: safeArray(jobData.mode, "Work from office"),
-
-          // FACT: Upgraded Salary Variables
+            d.jobFeatures?.length === 2
+              ? d.jobFeatures
+              : [d.jobFeatures?.[0] || "", d.jobFeatures?.[1] || ""],
+          skillsRequired: d.skillsRequired || [],
+          jobType: d.jobType?.length ? d.jobType : ["full-time"],
+          workDaysPattern: d.workDaysPattern || "Mon to Fri",
+          customWorkDaysDescription: d.customWorkDaysDescription || "",
+          mode: d.mode?.length ? d.mode : ["Work from office"],
           salaryMin: isCurrentlyUnpaid
             ? ""
-            : jobData.salaryMin || jobData.salaryAmount || "",
+            : d.salaryMin || d.salaryAmount || "",
           salaryMax: isCurrentlyUnpaid
             ? ""
-            : jobData.salaryMax || jobData.salaryAmount || "",
-          isUnpaid: isCurrentlyUnpaid,
-
-          salaryFrequency: jobData.salaryFrequency || "Monthly",
-          incentives: jobData.incentives || "",
-          startDate: formatDate(jobData.startDate),
-          endDate: formatDate(jobData.endDate),
-          applicationDeadline: formatDate(jobData.applicationDeadline),
-          isLongTerm: jobData.isLongTerm || false,
+            : d.salaryMax || d.salaryAmount || "",
+          salaryFrequency: d.salaryFrequency || "Month",
+          salaryCurrency: d.salaryCurrency || "INR",
+          incentives: Array.isArray(d.incentives) ? d.incentives : [],
+          screeningQuestions: d.screeningQuestions || [],
+          startDate: formatDate(d.startDate),
+          endDate: formatDate(d.endDate),
+          applicationDeadline: formatDate(d.applicationDeadline),
+          isLongTerm: d.isLongTerm || false,
+          isFlexibleDuration: d.isFlexibleDuration || false,
           shifts:
-            jobData.shifts?.length > 0
-              ? jobData.shifts
+            d.shifts?.length > 0
+              ? d.shifts
               : [{ shiftName: "Shift 1", startTime: "", endTime: "" }],
-          isFlexibleShifts: jobData.isFlexibleShifts || false,
-          noOfPeopleRequired: jobData.noOfPeopleRequired || "",
-          genderPreference: jobData.genderPreference || "No Preference",
-          qualifications: jobData.qualifications || [],
-          courses: jobData.courses || [],
-          ageLimit: jobData.ageLimit || { min: "", max: "", isAny: true },
-          languages: jobData.languages || [],
+          isFlexibleShifts: d.isFlexibleShifts || false,
+          noOfPeopleRequired: d.noOfPeopleRequired || "",
+          genderPreference: d.genderPreference || "No Preference",
+          qualifications: d.qualifications || [],
+          courses: d.courses || [],
+          ageLimit: d.ageLimit || { min: "", max: "", isAny: true },
+          languages: d.languages?.length ? d.languages : [],
+          experience: d.experience || {
+            relevantExperience: { min: "", max: "", isAny: true },
+            totalExperience: { min: "", max: "", isAny: true },
+          },
           useOfficeLocation: false,
           location:
-            typeof jobData.location === "object"
-              ? jobData.location?.address
-              : jobData.location || "",
+            typeof d.location === "object"
+              ? d.location?.address
+              : d.location || "",
           latitude:
-            typeof jobData.location === "object"
-              ? jobData.location?.coordinates?.[1]
+            typeof d.location === "object"
+              ? d.location?.coordinates?.[1]
               : null,
           longitude:
-            typeof jobData.location === "object"
-              ? jobData.location?.coordinates?.[0]
+            typeof d.location === "object"
+              ? d.location?.coordinates?.[0]
               : null,
         });
       } catch (err) {
@@ -183,7 +229,6 @@ export default function EditJob() {
         setLoading(false);
       }
     };
-
     fetchJobData();
   }, [id, navigate]);
 
@@ -202,6 +247,26 @@ export default function EditJob() {
     }));
   };
 
+  const handleExperienceChange = (type, field, value) => {
+    setJob((prev) => ({
+      ...prev,
+      experience: {
+        ...prev.experience,
+        [type]: { ...prev.experience[type], [field]: value, isAny: false },
+      },
+    }));
+  };
+
+  const toggleExperienceAny = (type, checked) => {
+    setJob((prev) => ({
+      ...prev,
+      experience: {
+        ...prev.experience,
+        [type]: { min: "", max: "", isAny: checked },
+      },
+    }));
+  };
+
   const toggleArrayItem = (field, value) => {
     setJob((prev) => {
       const arr = prev[field] || [];
@@ -214,23 +279,23 @@ export default function EditJob() {
     });
   };
 
-  const addTag = (field, inputState, setInputState) => {
+  const handleAddQuestion = () => {
     if (
-      inputState.trim() !== "" &&
-      !(job[field] || []).includes(inputState.trim())
+      newQuestion.trim() &&
+      !job.screeningQuestions.includes(newQuestion.trim())
     ) {
       setJob((prev) => ({
         ...prev,
-        [field]: [...(prev[field] || []), inputState.trim()],
+        screeningQuestions: [...prev.screeningQuestions, newQuestion.trim()],
       }));
+      setNewQuestion("");
     }
-    setInputState("");
   };
 
-  const removeTag = (field, index) => {
+  const handleRemoveQuestion = (index) => {
     setJob((prev) => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== index),
+      screeningQuestions: prev.screeningQuestions.filter((_, i) => i !== index),
     }));
   };
 
@@ -261,45 +326,55 @@ export default function EditJob() {
         .filter((_, i) => i !== index)
         .map((s, i) => ({ ...s, shiftName: `Shift ${i + 1}` })),
     }));
-
-  const handleLocationSelect = useCallback((locData) => {
-    setJob((prev) => ({
-      ...prev,
-      location: locData.address,
-      latitude: locData.latitude,
-      longitude: locData.longitude,
-    }));
-  }, []);
+  const handleLocationSelect = useCallback(
+    (locData) =>
+      setJob((prev) => ({
+        ...prev,
+        location: locData.address,
+        latitude: locData.latitude,
+        longitude: locData.longitude,
+      })),
+    [],
+  );
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-
-    if (
-      !job.title ||
-      !job.salaryAmount ||
-      job.mode.length === 0 ||
-      job.jobType.length === 0
-    ) {
-      return alert("Title, Salary, Mode, and Job Type are required.");
+    if (!job.title || job.mode.length === 0 || job.jobType.length === 0) {
+      return alert("Title, Mode, and Job Type are required.");
     }
-
     setSaving(true);
-
     try {
       const stored = localStorage.getItem("employerInfo");
       const token = JSON.parse(stored).token;
+
+      const parsedMin = isUnpaid
+        ? 0
+        : job.salaryMin === ""
+          ? 0
+          : Number(job.salaryMin);
+      const parsedMax = isUnpaid
+        ? 0
+        : job.salaryMax === ""
+          ? 0
+          : Number(job.salaryMax);
+
+      if (!isUnpaid && (parsedMin === 0 || parsedMax === 0)) {
+        alert("Please enter a valid minimum and maximum salary.");
+        setSaving(false);
+        return;
+      }
 
       const payload = {
         ...job,
         jobSummary: jobSummary,
         keyResponsibilities: keyResponsibilities,
-        salaryMin: job.isUnpaid ? 0 : Number(job.salaryMin),
-        salaryMax: job.isUnpaid ? 0 : Number(job.salaryMax),
+        description: `<h3>Job Summary</h3>${jobSummary}<h3>Key Responsibilities</h3>${keyResponsibilities}`,
+        salaryMin: parsedMin,
+        salaryMax: parsedMax,
         noOfPeopleRequired: Number(job.noOfPeopleRequired),
       };
-      if (job.isLongTerm) {
-        payload.endDate = null; // FACT: Force end date to null if long term is checked
-      }
+
+      if (job.isLongTerm) payload.endDate = null;
       if (!payload.applicationDeadline) delete payload.applicationDeadline;
       if (!payload.startDate) delete payload.startDate;
       if (!payload.endDate) delete payload.endDate;
@@ -307,7 +382,6 @@ export default function EditJob() {
       const needsLocation =
         job.mode.includes("Work from office") ||
         job.mode.includes("Work from field");
-
       if (
         !job.useOfficeLocation &&
         needsLocation &&
@@ -339,7 +413,6 @@ export default function EditJob() {
         payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-
       alert("Job updated successfully!");
       navigate(`/job/${id}`);
     } catch (err) {
@@ -352,59 +425,39 @@ export default function EditJob() {
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center">
-        <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
-        <p className="text-slate-500 font-medium">Loading workspace...</p>
+      <div className="min-h-screen bg-slate-50 flex justify-center items-center">
+        <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans mt-16 sm:mt-20">
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors"
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <div>
-              <h1 className="text-xl font-extrabold text-slate-900 leading-tight">
-                Edit Posting
-              </h1>
-              <p className="text-xs font-medium text-slate-500 truncate max-w-[200px] md:max-w-md">
-                {job.title || "Untitled Job"}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleUpdate}
-            disabled={saving}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 active:scale-95"
-          >
-            {saving ? (
-              <Loader2 className="animate-spin" size={18} />
-            ) : (
-              <Save size={18} />
-            )}
-            <span className="hidden sm:inline">
-              {saving ? "Saving..." : "Save Changes"}
-            </span>
-          </button>
-        </div>
-      </div>
-
+      {/* FACT: Sticky Top Header Removed. Back button and Title moved to standard flow. */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-8">
+        <div className="flex items-center gap-4 mb-6 border-b border-slate-200 pb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-3 bg-white shadow-sm border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+              Edit Posting
+            </h1>
+            <p className="text-sm font-medium text-slate-500 truncate max-w-sm">
+              {job.title || "Untitled Job"}
+            </p>
+          </div>
+        </div>
+
         {/* CORE DETAILS */}
         <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
           <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
             <Briefcase size={20} className="text-indigo-600" /> Core Details
           </h2>
-
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2">
@@ -418,8 +471,6 @@ export default function EditJob() {
                   }
                 />
               </div>
-
-              {/* FACT: Status Editor Added Here */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Job Status
@@ -467,8 +518,6 @@ export default function EditJob() {
                   ))}
                 </div>
               </div>
-
-              {/* FACT: Openings moved out of Compensation */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Openings Required
@@ -489,7 +538,6 @@ export default function EditJob() {
               </div>
             </div>
 
-            {/* FACT: Work Mode is now underneath Job Type */}
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Work Mode
@@ -517,57 +565,239 @@ export default function EditJob() {
           </div>
         </section>
 
-        {/* COMPENSATION */}
-        <section className="bg-emerald-50/50 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-100">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
-                Salary Amount & Frequency
+        {/* FACT: Fully Synced Compensation Block */}
+        <section className="p-6 sm:p-8 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-3xl space-y-4">
+          <div className="flex items-center justify-between border-b border-green-200 pb-4 mb-2">
+            <h2 className="text-lg font-extrabold text-green-900 flex items-center gap-2">
+              <IndianRupee size={20} className="text-green-600" /> Compensation
+              & Perks
+            </h2>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                id="unpaid-check"
+                checked={isUnpaid}
+                onChange={(e) => {
+                  setIsUnpaid(e.target.checked);
+                  if (e.target.checked)
+                    setJob((prev) => ({
+                      ...prev,
+                      salaryMin: "",
+                      salaryMax: "",
+                    }));
+                }}
+                className="accent-green-600 cursor-pointer"
+              />
+              <label
+                htmlFor="unpaid-check"
+                className="text-sm font-bold text-green-700 cursor-pointer"
+              >
+                Unpaid / Volunteer
               </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <IndianRupee
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600"
-                    size={16}
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative" ref={currencyRef}>
+              <button
+                type="button"
+                onClick={() => setCurrencyOpen((o) => !o)}
+                className="flex items-center justify-between gap-2 h-12 px-4 border border-green-200 rounded-xl bg-white text-sm font-bold text-gray-700 hover:bg-green-50 min-w-[110px]"
+              >
+                <div className="flex items-center gap-2">
+                  <img
+                    src={flagUrl(
+                      CURRENCIES.find((c) => c.code === job.salaryCurrency)
+                        ?.iso,
+                    )}
+                    width={20}
+                    height={15}
+                    style={{ borderRadius: 2, objectFit: "cover" }}
+                    alt={job.salaryCurrency}
                   />
-                  <input
-                    type="number"
-                    name="salaryAmount"
-                    value={job.salaryAmount}
-                    onChange={handleChange}
-                    className="w-full bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl pl-10 pr-3 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <span>{job.salaryCurrency}</span>
                 </div>
-                <select
-                  name="salaryFrequency"
-                  value={job.salaryFrequency}
-                  onChange={handleChange}
-                  className="bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  {["Hourly", "Daily", "Weekly", "Monthly", "Lump-Sum"].map(
-                    (f) => (
-                      <option key={f} value={f}>
-                        {f}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </div>
+              </button>
+              {currencyOpen && (
+                <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg w-56 max-h-64 overflow-y-auto">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={currencySearch}
+                    onChange={(e) => setCurrencySearch(e.target.value)}
+                    placeholder="Search..."
+                    className="w-full px-3 py-2 text-xs border-b border-gray-100 outline-none"
+                  />
+                  {CURRENCIES.filter(
+                    (c) =>
+                      c.code
+                        .toLowerCase()
+                        .includes(currencySearch.toLowerCase()) ||
+                      c.name
+                        .toLowerCase()
+                        .includes(currencySearch.toLowerCase()),
+                  ).map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => {
+                        setJob((p) => ({ ...p, salaryCurrency: c.code }));
+                        setCurrencyOpen(false);
+                        setCurrencySearch("");
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-gray-50 text-left"
+                    >
+                      <img
+                        src={flagUrl(c.iso)}
+                        width={20}
+                        height={15}
+                        style={{
+                          borderRadius: 2,
+                          objectFit: "cover",
+                          flexShrink: 0,
+                        }}
+                        alt={c.code}
+                      />
+                      <span className="font-bold w-8">{c.code}</span>
+                      <span className="text-gray-400">{c.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
-                Incentives & Perks (Optional)
-              </label>
+            <div className="flex-1 flex items-center gap-3 w-full">
               <input
-                type="text"
-                name="incentives"
-                value={job.incentives}
-                onChange={handleChange}
-                placeholder="e.g. Performance Bonus, Health Insurance..."
-                className="w-full bg-white border border-emerald-200 text-emerald-900 font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                type="number"
+                placeholder="Min Salary"
+                disabled={isUnpaid}
+                value={job.salaryMin}
+                onChange={(e) =>
+                  setJob((prev) => ({ ...prev, salaryMin: e.target.value }))
+                }
+                className="w-full p-3 border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300 disabled:bg-green-100/50 font-bold"
+              />
+              <span className="text-green-600 font-bold">-</span>
+              <input
+                type="number"
+                placeholder="Max Salary"
+                disabled={isUnpaid}
+                value={job.salaryMax}
+                onChange={(e) =>
+                  setJob((prev) => ({ ...prev, salaryMax: e.target.value }))
+                }
+                className="w-full p-3 border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300 disabled:bg-green-100/50 font-bold"
               />
             </div>
+
+            <select
+              value={job.salaryFrequency}
+              onChange={(e) =>
+                setJob((prev) => ({ ...prev, salaryFrequency: e.target.value }))
+              }
+              className="w-full md:w-auto p-3 border border-green-200 rounded-xl outline-none bg-white text-sm font-bold text-green-800"
+            >
+              <option value="Month">/ Month</option>
+              <option value="Year">/ Year</option>
+              <option value="Hour">/ Hour</option>
+              <option value="Lump-Sum">Lump-Sum</option>
+            </select>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-green-200/50">
+            <label className="block text-xs font-semibold text-green-800 mb-3">
+              Perks & Benefits
+            </label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {PERKS_OPTIONS.map((perk) => {
+                const isSelected = job.incentives.includes(perk.value);
+                return (
+                  <button
+                    key={perk.value}
+                    type="button"
+                    onClick={() =>
+                      setJob((prev) => ({
+                        ...prev,
+                        incentives: isSelected
+                          ? prev.incentives.filter((i) => i !== perk.value)
+                          : [...prev.incentives, perk.value],
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${isSelected ? "bg-green-600 text-white border-green-600 shadow-sm" : "bg-white text-green-700 border-green-200 hover:bg-green-50"}`}
+                  >
+                    <span>{perk.icon}</span> {perk.value}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add custom perk..."
+                value={customPerkInput}
+                onChange={(e) => setCustomPerkInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = customPerkInput.trim();
+                    if (val && !job.incentives.includes(val)) {
+                      setJob((prev) => ({
+                        ...prev,
+                        incentives: [...prev.incentives, val],
+                      }));
+                    }
+                    setCustomPerkInput("");
+                  }
+                }}
+                className="max-w-xs p-2.5 text-sm border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300 bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const val = customPerkInput.trim();
+                  if (val && !job.incentives.includes(val)) {
+                    setJob((prev) => ({
+                      ...prev,
+                      incentives: [...prev.incentives, val],
+                    }));
+                  }
+                  setCustomPerkInput("");
+                }}
+                className="px-4 py-2 bg-green-200 text-green-800 text-sm font-bold rounded-xl hover:bg-green-300 transition-colors"
+              >
+                Add
+              </button>
+            </div>
+            {job.incentives.filter(
+              (i) => !PERKS_OPTIONS.map((p) => p.value).includes(i),
+            ).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {job.incentives
+                  .filter((i) => !PERKS_OPTIONS.map((p) => p.value).includes(i))
+                  .map((custom, idx) => (
+                    <span
+                      key={idx}
+                      className="flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    >
+                      {custom}{" "}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setJob((prev) => ({
+                            ...prev,
+                            incentives: prev.incentives.filter(
+                              (i) => i !== custom,
+                            ),
+                          }))
+                        }
+                        className="ml-1 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -584,7 +814,6 @@ export default function EditJob() {
                 Qualifications
               </label>
               <div className="flex flex-wrap gap-2.5">
-                {/* FACT: Made Qualification Buttons Larger */}
                 {[
                   "10th Pass",
                   "12th Pass",
@@ -612,43 +841,129 @@ export default function EditJob() {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Courses / Streams
               </label>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {job.courses.map((course, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-slate-100 text-slate-700 text-[10px] px-2 py-1 rounded flex items-center font-bold"
-                  >
-                    {course}{" "}
-                    <button
-                      type="button"
-                      onClick={() => removeTag("courses", idx)}
-                      className="ml-1 text-red-400"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={courseInput}
-                  onChange={(e) => setCourseInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" &&
-                    (e.preventDefault(),
-                    addTag("courses", courseInput, setCourseInput))
-                  }
-                  placeholder="e.g. Commerce, B.Tech..."
-                  className="flex-1 p-2.5 border rounded-xl outline-none text-sm focus:border-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => addTag("courses", courseInput, setCourseInput)}
-                  className="bg-slate-100 px-4 rounded-xl text-sm font-bold"
-                >
-                  Add
-                </button>
+              <CourseSuggestionsDropdown
+                courses={job.courses}
+                onAdd={(course) =>
+                  setJob((prev) => ({
+                    ...prev,
+                    courses: [...prev.courses, course],
+                  }))
+                }
+                onRemove={(idx) =>
+                  setJob((prev) => ({
+                    ...prev,
+                    courses: prev.courses.filter((_, i) => i !== idx),
+                  }))
+                }
+              />
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-xs font-bold text-indigo-800 mb-3 uppercase">
+                Experience Required
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-white border border-indigo-100 rounded-xl space-y-3">
+                  <p className="text-xs font-bold text-indigo-700">
+                    Relevant Field Experience
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Min"
+                      value={job.experience.relevantExperience.min || ""}
+                      onChange={(e) =>
+                        handleExperienceChange(
+                          "relevantExperience",
+                          "min",
+                          e.target.value,
+                        )
+                      }
+                      disabled={job.experience.relevantExperience.isAny}
+                      className="flex-1 p-2.5 border border-indigo-200 rounded-lg text-sm outline-none disabled:bg-gray-50 focus:ring-2 focus:ring-indigo-200"
+                    />
+                    <span className="text-slate-400 font-bold">-</span>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Max"
+                      value={job.experience.relevantExperience.max || ""}
+                      onChange={(e) =>
+                        handleExperienceChange(
+                          "relevantExperience",
+                          "max",
+                          e.target.value,
+                        )
+                      }
+                      disabled={job.experience.relevantExperience.isAny}
+                      className="flex-1 p-2.5 border border-indigo-200 rounded-lg text-sm outline-none disabled:bg-gray-50 focus:ring-2 focus:ring-indigo-200"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-indigo-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={job.experience.relevantExperience.isAny}
+                      onChange={(e) =>
+                        toggleExperienceAny(
+                          "relevantExperience",
+                          e.target.checked,
+                        )
+                      }
+                      className="rounded w-4 h-4 text-indigo-600"
+                    />{" "}
+                    Any / Freshers welcome
+                  </label>
+                </div>
+                <div className="p-4 bg-white border border-indigo-100 rounded-xl space-y-3">
+                  <p className="text-xs font-bold text-indigo-700">
+                    Total Work Experience
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Min"
+                      value={job.experience.totalExperience.min || ""}
+                      onChange={(e) =>
+                        handleExperienceChange(
+                          "totalExperience",
+                          "min",
+                          e.target.value,
+                        )
+                      }
+                      disabled={job.experience.totalExperience.isAny}
+                      className="flex-1 p-2.5 border border-indigo-200 rounded-lg text-sm outline-none disabled:bg-gray-50 focus:ring-2 focus:ring-indigo-200"
+                    />
+                    <span className="text-slate-400 font-bold">-</span>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Max"
+                      value={job.experience.totalExperience.max || ""}
+                      onChange={(e) =>
+                        handleExperienceChange(
+                          "totalExperience",
+                          "max",
+                          e.target.value,
+                        )
+                      }
+                      disabled={job.experience.totalExperience.isAny}
+                      className="flex-1 p-2.5 border border-indigo-200 rounded-lg text-sm outline-none disabled:bg-gray-50 focus:ring-2 focus:ring-indigo-200"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-indigo-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={job.experience.totalExperience.isAny}
+                      onChange={(e) =>
+                        toggleExperienceAny("totalExperience", e.target.checked)
+                      }
+                      className="rounded w-4 h-4 text-indigo-600"
+                    />{" "}
+                    Any / Freshers welcome
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -656,25 +971,25 @@ export default function EditJob() {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Age Limit
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <input
                   type="number"
                   placeholder="Min"
-                  value={job.ageLimit.min}
+                  value={job.ageLimit.min || ""}
                   onChange={(e) => handleAgeChange("min", e.target.value)}
                   disabled={job.ageLimit.isAny}
-                  className="w-20 p-2.5 border rounded-xl text-sm outline-none disabled:bg-slate-100 focus:border-indigo-500"
+                  className="w-24 p-3 border rounded-xl text-sm outline-none disabled:bg-slate-100 focus:border-indigo-500"
                 />
                 <span className="text-sm text-slate-400 font-bold">to</span>
                 <input
                   type="number"
                   placeholder="Max"
-                  value={job.ageLimit.max}
+                  value={job.ageLimit.max || ""}
                   onChange={(e) => handleAgeChange("max", e.target.value)}
                   disabled={job.ageLimit.isAny}
-                  className="w-20 p-2.5 border rounded-xl text-sm outline-none disabled:bg-slate-100 focus:border-indigo-500"
+                  className="w-24 p-3 border rounded-xl text-sm outline-none disabled:bg-slate-100 focus:border-indigo-500"
                 />
-                <label className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 ml-2 bg-indigo-50 px-3 py-2.5 rounded-xl cursor-pointer">
+                <label className="flex items-center gap-2 text-sm font-bold text-indigo-600 ml-2 bg-indigo-50 px-4 py-3 rounded-xl cursor-pointer">
                   <input
                     type="checkbox"
                     checked={job.ageLimit.isAny}
@@ -684,7 +999,7 @@ export default function EditJob() {
                         ageLimit: { min: "", max: "", isAny: e.target.checked },
                       }))
                     }
-                    className="rounded"
+                    className="rounded w-4 h-4"
                   />{" "}
                   Any
                 </label>
@@ -699,7 +1014,7 @@ export default function EditJob() {
                 name="genderPreference"
                 value={job.genderPreference}
                 onChange={handleChange}
-                className="w-full p-2.5 border rounded-xl text-sm outline-none font-bold text-slate-700 bg-white focus:border-indigo-500"
+                className="w-full p-3 border rounded-xl text-sm outline-none font-bold text-slate-700 bg-white focus:border-indigo-500"
               >
                 <option value="No Preference">No Preference</option>
                 <option value="Male">Male</option>
@@ -712,93 +1027,45 @@ export default function EditJob() {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Languages
               </label>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {job.languages.map((lang, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-slate-100 text-slate-700 text-[10px] px-2 py-1 rounded flex items-center font-bold"
-                  >
-                    {lang}{" "}
-                    <button
-                      type="button"
-                      onClick={() => removeTag("languages", idx)}
-                      className="ml-1 text-red-400"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={languageInput}
-                  onChange={(e) => setLanguageInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" &&
-                    (e.preventDefault(),
-                    addTag("languages", languageInput, setLanguageInput))
-                  }
-                  placeholder="e.g. Hindi, English..."
-                  className="flex-1 p-2.5 border rounded-xl text-sm outline-none focus:border-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    addTag("languages", languageInput, setLanguageInput)
-                  }
-                  className="bg-slate-100 px-4 rounded-xl font-bold text-sm"
-                >
-                  Add
-                </button>
-              </div>
+              <LanguageSuggestionsDropdown
+                languages={job.languages}
+                onAdd={(lang) =>
+                  setJob((prev) => ({
+                    ...prev,
+                    languages: [...prev.languages, lang],
+                  }))
+                }
+                onRemove={(idx) =>
+                  setJob((prev) => ({
+                    ...prev,
+                    languages: prev.languages.filter((_, i) => i !== idx),
+                  }))
+                }
+              />
             </div>
-          </div>
 
-          <div className="space-y-4 pt-6 border-t border-slate-100">
-            <div>
+            <div className="col-span-1 md:col-span-2 pt-6 border-t border-slate-100">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
                 Required Skills
               </label>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {job.skillsRequired.map((skill, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm"
-                  >
-                    {skill}{" "}
-                    <button
-                      type="button"
-                      onClick={() => removeTag("skillsRequired", i)}
-                      className="hover:text-rose-400"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={skillsInput}
-                  onChange={(e) => setSkillsInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" &&
-                    (e.preventDefault(),
-                    addTag("skillsRequired", skillsInput, setSkillsInput))
-                  }
-                  placeholder="Type a skill and press Add..."
-                  className="p-3 border border-slate-200 rounded-xl text-sm w-full md:w-1/2 outline-none focus:border-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    addTag("skillsRequired", skillsInput, setSkillsInput)
-                  }
-                  className="bg-slate-100 hover:bg-slate-200 px-5 rounded-xl font-bold text-sm transition-colors"
-                >
-                  Add
-                </button>
-              </div>
+              <SkillSuggestionsDropdown
+                skills={job.skillsRequired}
+                jobTitle={job.title}
+                onAdd={(skill) =>
+                  setJob((prev) => ({
+                    ...prev,
+                    skillsRequired: [...prev.skillsRequired, skill],
+                  }))
+                }
+                onRemove={(idx) =>
+                  setJob((prev) => ({
+                    ...prev,
+                    skillsRequired: prev.skillsRequired.filter(
+                      (_, i) => i !== idx,
+                    ),
+                  }))
+                }
+              />
             </div>
           </div>
         </section>
@@ -847,7 +1114,6 @@ export default function EditJob() {
                 )}
               </div>
 
-              {/* FACT: Shifts are always visible now, with flexible as a modifier */}
               <div className="pt-2 border-t border-slate-100">
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -864,10 +1130,6 @@ export default function EditJob() {
                     Flexible
                   </label>
                 </div>
-                <p className="text-[10px] text-slate-400 mb-3 font-medium">
-                  Set the standard expected hours. Check 'Flexible' if
-                  candidates can adjust these.
-                </p>
                 <div className="space-y-2">
                   {job.shifts.map((shift, index) => (
                     <div
@@ -879,7 +1141,7 @@ export default function EditJob() {
                         onChange={(e) =>
                           updateShift(index, "shiftName", e.target.value)
                         }
-                        className="w-20 bg-transparent text-xs font-bold outline-none text-slate-700"
+                        className="w-24 bg-transparent text-xs font-bold outline-none text-slate-700"
                         placeholder="Shift Name"
                       />
                       <input
@@ -922,9 +1184,25 @@ export default function EditJob() {
             </div>
 
             <div className="space-y-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                  Duration & Dates
+                </label>
+                <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                  <input
+                    type="checkbox"
+                    name="isFlexibleDuration"
+                    checked={job.isFlexibleDuration}
+                    onChange={handleChange}
+                    className="rounded"
+                  />{" "}
+                  Flexible Dates
+                </label>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">
                     Start Date
                   </label>
                   <input
@@ -936,7 +1214,7 @@ export default function EditJob() {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">
                     End Date
                   </label>
                   <input
@@ -961,7 +1239,7 @@ export default function EditJob() {
               </label>
 
               <div className="pt-4 border-t border-slate-200">
-                <label className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-2 flex items-center gap-1 block">
+                <label className="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-2 flex items-center gap-1 block">
                   <Calendar size={14} /> Application Deadline
                 </label>
                 <input
@@ -976,6 +1254,62 @@ export default function EditJob() {
           </div>
         </section>
 
+        {/* SCREENING QUESTIONS */}
+        <section className="bg-purple-50 border border-purple-100 rounded-3xl p-6 sm:p-8 space-y-4">
+          <label className="block text-lg font-extrabold text-purple-900 flex items-center gap-2">
+            <HelpCircle size={20} /> Candidate Screening Questions
+          </label>
+          <p className="text-sm text-purple-700 font-medium">
+            Add questions candidates must answer when applying.
+          </p>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={newQuestion}
+              onChange={(e) => setNewQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddQuestion();
+                }
+              }}
+              placeholder="Type a question..."
+              className="flex-1 p-3.5 border border-purple-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-300 bg-white"
+            />
+            <button
+              type="button"
+              onClick={handleAddQuestion}
+              className="bg-purple-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-purple-700 shadow-md"
+            >
+              Add
+            </button>
+          </div>
+          {job.screeningQuestions.length > 0 && (
+            <ul className="space-y-2 mt-4">
+              {job.screeningQuestions.map((q, idx) => (
+                <li
+                  key={idx}
+                  className="flex justify-between items-center bg-white p-4 border border-purple-100 rounded-xl text-sm font-medium text-purple-900 shadow-sm"
+                >
+                  <span>
+                    <strong className="text-purple-600 mr-2">
+                      Q{idx + 1}.
+                    </strong>{" "}
+                    {q}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveQuestion(idx)}
+                    className="text-rose-400 hover:text-rose-600 p-1"
+                  >
+                    <X size={18} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         {/* FEATURES & DESCRIPTION */}
         <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200">
           <h2 className="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
@@ -987,9 +1321,6 @@ export default function EditJob() {
             <label className="block text-sm font-extrabold text-amber-900 uppercase mb-3 flex items-center gap-1.5">
               <Zap size={16} /> Job Highlights / Features
             </label>
-            <p className="text-xs text-amber-700 mb-4 font-medium">
-              Add two key selling points about this role.
-            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <input
                 type="text"
@@ -1001,7 +1332,7 @@ export default function EditJob() {
                     return { ...p, jobFeatures: arr };
                   })
                 }
-                placeholder="Feature 1 (e.g., Fast-paced startup environment)"
+                placeholder="Feature 1"
                 className="p-3.5 rounded-xl border border-amber-200 text-sm font-bold text-amber-900 outline-none focus:ring-2 focus:ring-amber-400 bg-white"
               />
               <input
@@ -1014,7 +1345,7 @@ export default function EditJob() {
                     return { ...p, jobFeatures: arr };
                   })
                 }
-                placeholder="Feature 2 (e.g., Weekly team lunches)"
+                placeholder="Feature 2"
                 className="p-3.5 rounded-xl border border-amber-200 text-sm font-bold text-amber-900 outline-none focus:ring-2 focus:ring-amber-400 bg-white"
               />
             </div>
@@ -1079,6 +1410,28 @@ export default function EditJob() {
             )}
           </section>
         )}
+
+        {/* FACT: Save Button Moved to Bottom Right */}
+        <div className="flex gap-4 justify-end mt-12 pt-8 border-t border-slate-200">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleUpdate}
+            disabled={saving}
+            className="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 disabled:bg-indigo-300 font-bold shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 active:scale-95"
+          >
+            {saving ? (
+              <Loader2 className="animate-spin" size={18} />
+            ) : (
+              <Save size={18} />
+            )}
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -21,7 +21,6 @@ export default function PublicProfile() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get Application Context if available (passed from JobApplicants page)
   const applicationId = location.state?.applicationId;
   const initialStatus = location.state?.status || "applied";
 
@@ -36,13 +35,13 @@ export default function PublicProfile() {
     requireMessage: false,
   });
   const [employerMessage, setEmployerMessage] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const stored = localStorage.getItem("employerInfo");
         const token = stored ? JSON.parse(stored).token : null;
-
-        // If viewed by employer, use token. If public, might need public endpoint or standard token.
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const { data } = await axios.get(
@@ -50,7 +49,6 @@ export default function PublicProfile() {
           { headers },
         );
 
-        // Parse JSON fields if necessary
         const safeParse = (val) => {
           if (Array.isArray(val)) return val;
           if (typeof val === "string") {
@@ -75,25 +73,20 @@ export default function PublicProfile() {
         setLoading(false);
       }
     };
-
     fetchUserProfile();
   }, [userId]);
 
   const handleStatusUpdate = async () => {
     if (!applicationId) return;
-
     setActionLoading(true);
     try {
       const stored = localStorage.getItem("employerInfo");
       const { token } = JSON.parse(stored);
-
       await axios.patch(
         `https://jobone-mrpy.onrender.com/applications/${applicationId}/status`,
-        // FACT: Sending the message payload to the backend
         { status: actionModal.status, employerMessage: employerMessage },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-
       setStatus(actionModal.status);
       alert(`Candidate status updated to: ${actionModal.status}`);
     } catch (error) {
@@ -110,10 +103,32 @@ export default function PublicProfile() {
       setEmployerMessage("");
     }
   };
-  const applicantList = location.state?.applicantList || [];
 
-  // Find current index
-  const currentIndex = applicantList.indexOf(userId); // Assuming userId is the param from useParams()
+  // FACT: Forces a hard download instead of just opening a new tab
+  const handleDownloadResume = async () => {
+    if (!profile?.resume) return;
+    setIsDownloading(true);
+    try {
+      const response = await fetch(profile.resume);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${profile.name.replace(/\s+/g, "_")}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed, opening in new tab instead", error);
+      window.open(profile.resume, "_blank"); // Fallback
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const applicantList = location.state?.applicantList || [];
+  const currentIndex = applicantList.indexOf(userId);
 
   const goToNext = () => {
     if (currentIndex < applicantList.length - 1) {
@@ -137,28 +152,33 @@ export default function PublicProfile() {
         <Loader2 className="animate-spin text-blue-600" />
       </div>
     );
-
   if (!profile) return <div className="p-10 text-center">User not found.</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 font-sans">
-      <div className="max-w-5xl mx-auto mt-10">
-        {/* HEADER & ACTIONS */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 font-sans">
+      <div className="max-w-5xl mx-auto">
+        {/* FACT: Fixed Back Button Placement */}
+        <div className="mb-6 flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
+            className="p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl hover:bg-slate-50 transition-colors text-slate-600"
           >
-            <ArrowLeft size={18} /> Back
+            <ArrowLeft size={18} />
           </button>
-          {applicantList.length > 1 && (
-            <div className="flex items-center gap-2 mb-4">
+          <h1 className="text-2xl font-extrabold text-slate-900">
+            Applicant Review
+          </h1>
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          {applicantList.length > 1 ? (
+            <div className="flex items-center gap-2">
               <button
                 onClick={goToPrev}
                 disabled={currentIndex === 0}
                 className="px-4 py-2 bg-slate-800 text-white rounded-lg disabled:opacity-50 font-bold"
               >
-                ← Previous Candidate
+                ← Previous
               </button>
               <span className="text-sm font-bold text-slate-500">
                 {currentIndex + 1} of {applicantList.length}
@@ -168,12 +188,13 @@ export default function PublicProfile() {
                 disabled={currentIndex === applicantList.length - 1}
                 className="px-4 py-2 bg-slate-800 text-white rounded-lg disabled:opacity-50 font-bold"
               >
-                Next Candidate →
+                Next →
               </button>
             </div>
+          ) : (
+            <div></div>
           )}
 
-          {/* EMPLOYER ACTIONS (Mapped to new Phase 1 DB Schema) */}
           {applicationId && (
             <div className="flex flex-wrap gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
               {status === "hired" ? (
@@ -181,10 +202,7 @@ export default function PublicProfile() {
                   <CheckCircle size={18} /> Hired
                 </span>
               ) : status === "NCTT" ? (
-                <span
-                  className="px-6 py-2 bg-rose-100 text-rose-700 font-bold rounded-lg border border-rose-200 flex items-center gap-2"
-                  title="Not Considered This Time"
-                >
+                <span className="px-6 py-2 bg-rose-100 text-rose-700 font-bold rounded-lg border border-rose-200 flex items-center gap-2">
                   <XCircle size={18} /> Not Considered (NCTT)
                 </span>
               ) : (
@@ -198,8 +216,7 @@ export default function PublicProfile() {
                         requireMessage: true,
                       })
                     }
-                    disabled={actionLoading}
-                    className="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 transition-colors text-sm"
+                    className="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 text-sm"
                   >
                     Shortlist
                   </button>
@@ -212,8 +229,7 @@ export default function PublicProfile() {
                         requireMessage: true,
                       })
                     }
-                    disabled={actionLoading}
-                    className="px-4 py-2 bg-purple-50 text-purple-600 font-bold rounded-lg hover:bg-purple-100 transition-colors text-sm"
+                    className="px-4 py-2 bg-purple-50 text-purple-600 font-bold rounded-lg hover:bg-purple-100 text-sm"
                   >
                     Interview
                   </button>
@@ -226,8 +242,7 @@ export default function PublicProfile() {
                         requireMessage: true,
                       })
                     }
-                    disabled={actionLoading}
-                    className="px-4 py-2 bg-orange-50 text-orange-600 font-bold rounded-lg hover:bg-orange-100 transition-colors text-sm"
+                    className="px-4 py-2 bg-orange-50 text-orange-600 font-bold rounded-lg hover:bg-orange-100 text-sm"
                   >
                     Assignment
                   </button>
@@ -240,8 +255,7 @@ export default function PublicProfile() {
                         requireMessage: false,
                       })
                     }
-                    disabled={actionLoading}
-                    className="px-4 py-2 bg-white border border-rose-200 text-rose-600 font-bold rounded-lg hover:bg-rose-50 transition-colors text-sm"
+                    className="px-4 py-2 bg-white border border-rose-200 text-rose-600 font-bold rounded-lg hover:bg-rose-50 text-sm"
                   >
                     NCTT
                   </button>
@@ -254,8 +268,7 @@ export default function PublicProfile() {
                         requireMessage: false,
                       })
                     }
-                    disabled={actionLoading}
-                    className="px-5 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors flex items-center gap-2 text-sm"
+                    className="px-5 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm"
                   >
                     Hire
                   </button>
@@ -266,7 +279,6 @@ export default function PublicProfile() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT SIDEBAR */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center">
               <img
@@ -298,14 +310,18 @@ export default function PublicProfile() {
               </div>
 
               {profile.resume && (
-                <a
-                  href={profile.resume}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-colors"
+                <button
+                  onClick={handleDownloadResume}
+                  disabled={isDownloading}
+                  className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-colors disabled:opacity-70"
                 >
-                  <Download size={18} /> Download Resume
-                </a>
+                  {isDownloading ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Download size={18} />
+                  )}
+                  {isDownloading ? "Downloading..." : "Download Resume"}
+                </button>
               )}
             </div>
 
@@ -332,7 +348,6 @@ export default function PublicProfile() {
             </div>
           </div>
 
-          {/* RIGHT CONTENT */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
               <h3 className="text-lg font-bold text-slate-900 mb-4">
@@ -416,14 +431,12 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      {/* Unified Action Modal with Messaging */}
       {actionModal.show && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
             <h3 className="text-xl font-bold text-slate-900 mb-2">
               {actionModal.title}
             </h3>
-
             {actionModal.requireMessage ? (
               <div className="mb-6 mt-4">
                 <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -439,10 +452,9 @@ export default function PublicProfile() {
             ) : (
               <p className="text-slate-600 mb-6 mt-2">
                 Are you sure you want to mark this candidate as{" "}
-                {actionModal.status}? This action will update their dashboard.
+                {actionModal.status}?
               </p>
             )}
-
             <div className="flex gap-4 justify-end">
               <button
                 onClick={() => {
@@ -470,7 +482,7 @@ export default function PublicProfile() {
                   <Loader2 className="animate-spin" size={16} />
                 ) : (
                   <CheckCircle size={18} />
-                )}
+                )}{" "}
                 Confirm
               </button>
             </div>
