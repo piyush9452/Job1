@@ -14,6 +14,8 @@ import {
   Download,
   User,
   Clock,
+  Code,
+  Award, // <-- Added Code and Award
 } from "lucide-react";
 
 export default function PublicProfile() {
@@ -427,6 +429,85 @@ export default function PublicProfile() {
                 )}
               </div>
             </div>
+            {/* FACT: New Projects Section UI */}
+            {(profile.resumeData?.projects?.length > 0 ||
+              profile.projects?.length > 0) && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                  <Code className="text-blue-500" size={20} /> Technical
+                  Projects
+                </h3>
+                <div className="space-y-6">
+                  {(profile.resumeData?.projects || profile.projects).map(
+                    (proj, i) => (
+                      <div
+                        key={i}
+                        className="p-5 bg-slate-50 rounded-xl border border-slate-100"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-extrabold text-slate-900 text-base">
+                            {proj.title}
+                          </h4>
+                          {proj.link && (
+                            <a
+                              href={proj.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-blue-600 font-bold hover:underline bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"
+                            >
+                              View Project ↗
+                            </a>
+                          )}
+                        </div>
+                        {proj.technologies && (
+                          <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">
+                            Tech Stack:{" "}
+                            <span className="text-slate-600">
+                              {proj.technologies}
+                            </span>
+                          </p>
+                        )}
+                        <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">
+                          {proj.description}
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* FACT: New Certifications Section UI */}
+            {(profile.resumeData?.certifications?.length > 0 ||
+              profile.certifications?.length > 0) && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                  <Award className="text-amber-500" size={20} /> Certifications
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(
+                    profile.resumeData?.certifications || profile.certifications
+                  ).map((cert, i) => (
+                    <div
+                      key={i}
+                      className="p-4 bg-slate-50 rounded-xl border border-slate-100"
+                    >
+                      <h4 className="font-bold text-slate-900 mb-1">
+                        {cert.name}
+                      </h4>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xs font-bold text-slate-500">
+                          {cert.issuer}
+                        </span>
+                        <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
+                          {cert.date}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

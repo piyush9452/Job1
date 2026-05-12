@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
+import Candidates from "./pages/EmployerCandidateSearch"
 
 // --- PUBLIC PAGES ---
 import Home from "./pages/Home";
@@ -61,6 +62,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/userregister" element={<UserRegister />} />
         <Route path="/employerregister" element={<EmployerRegister />} />
+        <Route path="/candidates" element={<Candidates />} />
         <Route
           path="/employerregisteroption"
           element={<EmployerRegisterOption />}

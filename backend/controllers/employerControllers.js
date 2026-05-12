@@ -563,3 +563,81 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
     throw new Error(`Google Login Failed: ${error.message}`);
   }
 });
+
+// GET /employer/search-candidates?skills=React,Node
+export const searchCandidatesBySkills = expressAsyncHandler(async (req, res) => {
+  const { skills, page = 1, limit = 20 } = req.query;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
+
+  // 1. Empty Search: Return all paginated
+  if (!skills || skills.trim() === "") {
+    const total = await User.countDocuments({});
+    const candidates = await User.find({})
+      .select("name email phone skills profilePicture description resumeData createdAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    return res.status(200).json({
+      candidates,
+      currentPage: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+      totalCandidates: total
+    });
+  }
+
+  // 2. Clean the input into an array of lowercase search terms
+  const searchSkills = skills.split(",").map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+  
+  // 3. Create Regex to pull anyone with AT LEAST ONE match from the DB
+  const skillRegexArray = searchSkills.map(s => new RegExp(s, "i"));
+
+  const matchedUsers = await User.find({
+    skills: { $in: skillRegexArray },
+  }).select("name email phone skills profilePicture description resumeData createdAt");
+
+  // 4. Calculate exact match scores for the ranking system
+  const scoredCandidates = matchedUsers.map(candidate => {
+    const candidateSkillsLower = candidate.skills.map(s => s.toLowerCase());
+    
+    let matchCount = 0;
+    const matchedSkills = [];
+
+    // Loop through every skill the employer typed
+    searchSkills.forEach(searchTerm => {
+      // Find if the candidate has a skill containing this term (e.g. "React.js" includes "react")
+      const found = candidateSkillsLower.find(cs => cs.includes(searchTerm));
+      if (found) {
+        matchCount++;
+        matchedSkills.push(found);
+      }
+    });
+    
+    return {
+      ...candidate.toObject(),
+      matchCount,
+      totalSearched: searchSkills.length, // Track how many skills were requested
+      matchedSkills: [...new Set(matchedSkills)] // Remove duplicates
+    };
+  });
+
+  // 5. Sort: Candidates with all skills at the top. Tie-breaker goes to the newest profile.
+  scoredCandidates.sort((a, b) => {
+    if (b.matchCount !== a.matchCount) {
+      return b.matchCount - a.matchCount; 
+    }
+    return new Date(b.createdAt) - new Date(a.createdAt); 
+  });
+
+  // 6. Paginate the sorted results
+  const paginatedCandidates = scoredCandidates.slice(skip, skip + limitNum);
+
+  res.status(200).json({
+    candidates: paginatedCandidates,
+    currentPage: pageNum,
+    totalPages: Math.ceil(scoredCandidates.length / limitNum),
+    totalCandidates: scoredCandidates.length
+  });
+});
