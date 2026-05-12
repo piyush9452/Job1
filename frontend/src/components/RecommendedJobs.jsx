@@ -12,7 +12,7 @@ const RecommendedJobs = () => {
             setLoading(true);
             const userInfo = JSON.parse(localStorage.getItem("userInfo"));
             const token = userInfo?.token
-            const res = await axios.get("http://localhost:5000/ai/recommend-jobs", {
+            const res = await axios.get("https://jobone-if7l.onrender.com/ai/recommend-jobs", {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

@@ -34,9 +34,9 @@ export default function ApplyPage() {
         setJobLoading(true);
         // FACT: Fetching both concurrently to save loading time
         const [jobRes, similarRes] = await Promise.all([
-          axios.get(`https://jobone-mrpy.onrender.com/jobs/${jobId}`),
+          axios.get(`https://jobone-if7l.onrender.com/jobs/${jobId}`),
           axios
-            .get(`https://jobone-mrpy.onrender.com/jobs/${jobId}/similar`)
+            .get(`https://jobone-if7l.onrender.com/jobs/${jobId}/similar`)
             .catch(() => ({ data: [] })),
         ]);
 

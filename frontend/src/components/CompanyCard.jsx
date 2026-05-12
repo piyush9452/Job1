@@ -14,6 +14,7 @@ export default function CompanyCard() {
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["12deg", "-12deg"]);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-12deg", "12deg"]);
 
+  
   useEffect(() => {
     const handleGlobalMouseMove = (e) => {
       const xPct = e.clientX / window.innerWidth - 0.5;

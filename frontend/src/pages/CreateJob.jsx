@@ -412,7 +412,7 @@ export default function CreateJob() {
       if (!token) throw new Error("No token found");
 
       const { data } = await axios.post(
-        "https://jobone-mrpy.onrender.com/ai/generate-job-details",
+        "https://jobone-if7l.onrender.com/ai/generate-job-details",
         {
           title: job.title,
           jobType: job.jobType.join(", "),
