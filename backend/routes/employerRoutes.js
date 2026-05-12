@@ -40,8 +40,7 @@ router.get("/createdJobs", protectEmployer,getEmployerCreatedJobs);
 
 router.get("/check-eligibility", protectEmployer, checkEmployerEligibility);
 
-router.get("/search-candidates", protectEmployer, checkEmployerEligibility);
-
+router.get("/search-candidates", protectEmployer, searchCandidatesBySkills);
 
 
 
