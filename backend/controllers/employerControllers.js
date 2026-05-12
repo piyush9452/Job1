@@ -11,6 +11,7 @@ import {S3Client, PutObjectCommand, GetObjectCommand} from '@aws-sdk/client-s3';
 import crypto from 'crypto';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import mime from 'mime-types';
+import User from "../models/users.js";
 import { OAuth2Client } from 'google-auth-library';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
