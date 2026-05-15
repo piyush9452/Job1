@@ -3,18 +3,21 @@ import { motion } from "framer-motion";
 import {
   FaCode,
   FaChartLine,
-  FaPalette,
   FaBullhorn,
   FaHeadset,
-  FaMicrochip,
-  FaShieldAlt,
   FaArrowRight,
+  FaHeartbeat,
+  FaCogs,
+  FaTruck,
+  FaUserTie,
+  FaGraduationCap,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
+// FACT: The 9 Specific Industries mapped perfectly to your blob UI
 const categories = [
   {
-    name: "Development",
+    name: "IT & Software",
     count: "1.2k+ Jobs",
     icon: FaCode,
     color: "from-blue-500 to-cyan-400",
@@ -26,43 +29,67 @@ const categories = [
     initY: 0,
   },
   {
-    name: "Marketing",
+    name: "Banking & Finance",
     count: "850 Jobs",
+    icon: FaChartLine,
+    color: "from-emerald-400 to-teal-500",
+    blob1: "bg-emerald-400",
+    blob2: "bg-teal-500",
+    shadow: "shadow-emerald-500/20",
+    size: "md:col-span-1",
+    initX: 100,
+    initY: 0,
+  },
+  {
+    name: "Sales & Marketing",
+    count: "640 Jobs",
     icon: FaBullhorn,
     color: "from-purple-500 to-pink-500",
     blob1: "bg-purple-500",
     blob2: "bg-pink-500",
     shadow: "shadow-purple-500/20",
     size: "md:col-span-1",
-    initX: 100,
-    initY: 0,
-  },
-  {
-    name: "Design",
-    count: "640 Jobs",
-    icon: FaPalette,
-    color: "from-orange-400 to-red-500",
-    blob1: "bg-orange-400",
-    blob2: "bg-red-500",
-    shadow: "shadow-orange-500/20",
-    size: "md:col-span-1",
     initX: -100,
     initY: 0,
   },
   {
-    name: "Finance",
+    name: "Healthcare & Pharma",
     count: "420 Jobs",
-    icon: FaChartLine,
-    color: "from-emerald-400 to-teal-500",
-    blob1: "bg-emerald-400",
-    blob2: "bg-teal-500",
-    shadow: "shadow-emerald-500/20",
+    icon: FaHeartbeat,
+    color: "from-rose-400 to-red-500",
+    blob1: "bg-rose-400",
+    blob2: "bg-red-500",
+    shadow: "shadow-rose-500/20",
     size: "md:col-span-2",
     initX: 100,
     initY: 0,
   },
   {
-    name: "Tech Support",
+    name: "Engineering & Manufacturing",
+    count: "310 Jobs",
+    icon: FaCogs,
+    color: "from-amber-400 to-orange-600",
+    blob1: "bg-amber-400",
+    blob2: "bg-orange-600",
+    shadow: "shadow-amber-500/20",
+    size: "md:col-span-1",
+    initX: -100,
+    initY: 0,
+  },
+  {
+    name: "Operations & Logistics",
+    count: "150 Jobs",
+    icon: FaTruck,
+    color: "from-slate-500 to-slate-700",
+    blob1: "bg-slate-500",
+    blob2: "bg-slate-700",
+    shadow: "shadow-slate-500/20",
+    size: "md:col-span-1",
+    initX: 0,
+    initY: 100,
+  },
+  {
+    name: "Customer Support",
     count: "310 Jobs",
     icon: FaHeadset,
     color: "from-indigo-500 to-blue-600",
@@ -71,31 +98,31 @@ const categories = [
     shadow: "shadow-indigo-500/20",
     size: "md:col-span-1",
     initX: -100,
-    initY: 0, // FACT: Fixed! Now comes from the left
+    initY: 0,
   },
   {
-    name: "AI & ML",
+    name: "HR & Admin",
     count: "95 Jobs",
-    icon: FaMicrochip,
-    color: "from-amber-400 to-orange-600",
-    blob1: "bg-amber-400",
-    blob2: "bg-orange-600",
-    shadow: "shadow-amber-500/20",
-    size: "md:col-span-1",
-    initX: 0,
-    initY: 100,
-  },
-  {
-    name: "Cybersecurity",
-    count: "150 Jobs",
-    icon: FaShieldAlt,
-    color: "from-rose-500 to-red-500",
-    blob1: "bg-rose-500",
-    blob2: "bg-red-500",
-    shadow: "shadow-rose-500/20",
+    icon: FaUserTie,
+    color: "from-fuchsia-500 to-purple-600",
+    blob1: "bg-fuchsia-500",
+    blob2: "bg-purple-600",
+    shadow: "shadow-fuchsia-500/20",
     size: "md:col-span-1",
     initX: 100,
     initY: 0,
+  },
+  {
+    name: "Education & EdTech",
+    count: "150 Jobs",
+    icon: FaGraduationCap,
+    color: "from-yellow-400 to-orange-500",
+    blob1: "bg-yellow-400",
+    blob2: "bg-orange-500",
+    shadow: "shadow-yellow-500/20",
+    size: "md:col-span-1",
+    initX: 0,
+    initY: -100,
   },
 ];
 
@@ -127,7 +154,8 @@ export default function JobCategories() {
   }, []);
 
   const handleCategoryClick = (category) => {
-    navigate(`/jobs?title=${encodeURIComponent(category)}`);
+    // FACT: Updates routing to strictly map to the industry parameter
+    navigate(`/jobs?industry=${encodeURIComponent(category)}`);
   };
 
   return (
@@ -159,7 +187,6 @@ export default function JobCategories() {
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
-          // FACT: Added once: false so the header also vanishes and reappears
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.2 }}
           transition={{ duration: 0.6 }}
@@ -169,7 +196,7 @@ export default function JobCategories() {
             <div className="flex items-center gap-2 mb-2">
               <span className="w-6 h-[2px] bg-blue-600 rounded-full"></span>
               <span className="text-blue-600 font-bold tracking-widest uppercase text-[10px]">
-                Categories
+                Industries
               </span>
             </div>
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
@@ -200,7 +227,6 @@ export default function JobCategories() {
               key={index}
               initial={{ opacity: 0, x: cat.initX, y: cat.initY }}
               whileInView={{ opacity: 1, x: 0, y: 0 }}
-              // FACT: once: false makes the cards animate in BOTH directions (up and down)
               viewport={{ once: false, amount: 0.1 }}
               transition={{
                 type: "spring",
@@ -220,18 +246,15 @@ export default function JobCategories() {
               />
 
               <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                {/* FACT: The CSS Conflict Fix. Framer Motion handles the JS Twirl on the outer div... */}
                 <motion.div
                   animate={
                     twirlingIndex === index
-                      ? // Jump height restricted to -15 so it doesn't clip outside the card padding
-                        { y: [0, -15, 0], rotate: [0, 720, 720] }
+                      ? { y: [0, -15, 0], rotate: [0, 720, 720] }
                       : { y: 0, rotate: 0 }
                   }
                   transition={{ duration: 1.2, ease: "easeInOut" }}
                   className="w-12 h-12"
                 >
-                  {/* ...and Tailwind handles the CSS hover on the inner div! They will never fight again. */}
                   <div
                     className={`w-full h-full rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg ${cat.shadow} group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300`}
                   >

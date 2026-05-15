@@ -2,15 +2,25 @@ import mongoose from "mongoose";
 
 const JobSchema = new mongoose.Schema({
   title: { type: String, required: true }, 
-  // FACT: Split description into two specific fields
+  
+  // FACT: Added the 9 specific Industries and Subdomain requirement
+  industry: { 
+    type: String, 
+    required: true,
+    enum: [
+      "IT & Software", "Banking & Finance", "Sales & Marketing", 
+      "Healthcare & Pharma", "Engineering & Manufacturing", 
+      "Operations & Logistics", "Customer Support", "HR & Admin", "Education & EdTech"
+    ]
+  },
+  subdomain: { type: String, required: true },
+
   jobSummary: { type: String, required: true },
   keyResponsibilities: { type: String, required: true }, 
-  
   jobFeatures: { type: [String], default: ["", ""] },
 
   jobType: [{
     type: String,
-    // FACT: Added "volunteer opportunity"
     enum: ["permanent", "temporary", "internship", "part-time", "full-time", "contractual", "freelance", "volunteer opportunity"]
   }],
 
@@ -20,7 +30,6 @@ const JobSchema = new mongoose.Schema({
   },
 
   customWorkDaysDescription: { type: String },
-
   skillsRequired: { type: [String], default: [] },
   
   location: {
@@ -30,22 +39,18 @@ const JobSchema = new mongoose.Schema({
   },
   pinCode: { type: Number }, 
   
-  // FACT: Swapped salaryAmount for Min/Max range
   salaryMin: { type: Number, required: true },
   salaryMax: { type: Number, required: true },
   salaryCurrency: { type: String, default: "INR" },
   salaryFrequency: { type: String, enum: ["Hour", "Day", "Week", "Month", "Year", "Lump-Sum"], default: "Month" },
 
   incentives: { type: [String], default: [] },
-  
-  // FACT: Added Screening Questions Array
   screeningQuestions: [{ type: String }],
   
   durationType: { type: String, enum: ["Day", "Week", "Month"], required: false },
   startDate: { type: Date, default: null },
   endDate: { type: Date, required: false, default: null },
   isFlexibleDuration: { type: Boolean, default: false },
-  
   applicationDeadline: { type: Date, required: false },
 
   shifts: [{

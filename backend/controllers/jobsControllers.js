@@ -59,8 +59,8 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   }
 
   const { 
-    title, jobSummary, keyResponsibilities, jobType, workDaysPattern, customWorkDaysDescription,
-    skillsRequired, salaryMin, salaryMax, salaryFrequency, salaryCurrency, incentives, // <-- THESE MUST BE HERE
+    title, industry, subdomain, jobSummary, keyResponsibilities, jobType, workDaysPattern, customWorkDaysDescription,
+    skillsRequired, salaryMin, salaryMax, salaryFrequency, salaryCurrency, incentives, 
     screeningQuestions, durationType, startDate, endDate, isFlexibleDuration,
     shifts, isFlexibleShifts, mode, noOfDays, noOfPeopleRequired, 
     genderPreference, qualifications, courses, ageLimit, languages, experience,
@@ -88,6 +88,8 @@ export const createJob = expressAsyncHandler(async (req, res) => {
 
   const newJob = new Job({
     title, 
+    industry, // <-- ADDED
+    subdomain, // <-- ADDED
     jobSummary, 
     keyResponsibilities,
     jobType,
@@ -188,6 +190,13 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
   }
   if (queryObj.status) {
     filters.status = queryObj.status;
+  }
+  // FACT: Added Backend filtering for Industry and Subdomain
+  if (queryObj.industry) {
+    filters.industry = queryObj.industry;
+  }
+  if (queryObj.subdomain) {
+    filters.subdomain = queryObj.subdomain;
   }
   if (queryObj.skillsRequired) {
     const skills = queryObj.skillsRequired.split(',');

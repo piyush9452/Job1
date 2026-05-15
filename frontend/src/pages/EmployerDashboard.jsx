@@ -12,6 +12,7 @@ import {
   Clock,
   ShieldAlert,
   XOctagon,
+  Search,
 } from "lucide-react";
 import axios from "axios";
 
@@ -145,16 +146,17 @@ export default function EmployerDashboard() {
           />
           {approvalStatus === "approved" && (
             <>
-              {/* FACT: Added actual navigation paths. Adjust "/candidates" if your route differs */}
+              {/* FACT: Global Search */}
               <NavItem
-                icon={<Users size={20} />}
-                label="Candidates"
+                icon={<Search size={20} />}
+                label="Find Candidates"
                 onClick={() => navigate("/candidates")}
               />
+              {/* FACT: Historical Applicants replacing Settings */}
               <NavItem
-                icon={<Settings size={20} />}
-                label="Settings"
-                onClick={() => navigate("/employereditprofile")}
+                icon={<Users size={20} />}
+                label="My Candidates"
+                onClick={() => navigate("/my-candidates")}
               />
             </>
           )}

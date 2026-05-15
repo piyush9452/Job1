@@ -11,6 +11,7 @@ import {S3Client, PutObjectCommand, GetObjectCommand} from '@aws-sdk/client-s3';
 import crypto from 'crypto';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import mime from 'mime-types';
+import Application from "../models/applications.js";
 import User from "../models/users.js";
 import { OAuth2Client } from 'google-auth-library';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -641,4 +642,25 @@ export const searchCandidatesBySkills = expressAsyncHandler(async (req, res) => 
     totalPages: Math.ceil(scoredCandidates.length / limitNum),
     totalCandidates: scoredCandidates.length
   });
+});
+
+
+export const getMyCandidates = expressAsyncHandler(async (req, res) => {
+  const employerId = req.employerId;
+
+  // 1. Find all jobs posted by this employer
+  const jobs = await Job.find({ postedBy: employerId }).select('_id title');
+  const jobIds = jobs.map(j => j._id);
+
+  if (jobIds.length === 0) {
+    return res.status(200).json([]);
+  }
+
+  // 2. Find all applications for these jobs and populate candidate data
+  const applications = await Application.find({ job: { $in: jobIds } })
+    .populate("appliedBy", "name email phone profilePicture skills resumeData")
+    .populate("job", "title")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json(applications);
 });

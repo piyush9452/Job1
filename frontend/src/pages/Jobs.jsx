@@ -11,8 +11,76 @@ import {
   Filter,
   X,
   Building2,
+  Target,
 } from "lucide-react";
 import JobDetailsModal from "../components/JobDetailsModal";
+
+// FACT: Removed 'export' to fix the React Module Redline Error
+const INDUSTRY_SUBDOMAINS = {
+  "IT & Software": [
+    "Software Development",
+    "Data & Analytics",
+    "Infrastructure & Cloud",
+    "Security & Testing",
+    "Design & Product",
+  ],
+  "Banking & Finance": [
+    "Corporate & Investment Banking",
+    "Core Finance & Accounting",
+    "Retail Banking",
+    "Wealth & Asset Management",
+    "Risk & Insurance",
+  ],
+  "Sales & Marketing": [
+    "B2B & Corporate Sales",
+    "Digital Marketing",
+    "Brand & Strategy",
+    "Retail & B2C Sales",
+    "Communications",
+  ],
+  "Healthcare & Pharma": [
+    "Clinical & Medical",
+    "Pharmaceuticals",
+    "Healthcare Administration",
+    "Medical Sales & Support",
+    "Life Sciences",
+  ],
+  "Engineering & Manufacturing": [
+    "Core Engineering",
+    "Production & Plant Operations",
+    "Quality & Process Improvement",
+    "Design & Drafting",
+    "Emerging Sectors",
+  ],
+  "Operations & Logistics": [
+    "Supply Chain & Logistics",
+    "E-commerce & Delivery",
+    "Inventory & Warehousing",
+    "Vendor Management",
+    "Business Operations",
+  ],
+  "Customer Support": [
+    "Voice Operations",
+    "Non-Voice/Digital Support",
+    "Technical Support",
+    "Client Management",
+    "Outsourcing",
+  ],
+  "HR & Admin": [
+    "Talent Acquisition",
+    "Core HR",
+    "Operations & Compliance",
+    "Employee Development",
+    "Administration",
+  ],
+  "Education & EdTech": [
+    "Teaching & Academics",
+    "EdTech Content",
+    "Student Services",
+    "Institutional Operations",
+    "Corporate Training",
+  ],
+};
 
 export default function Jobs() {
   const location = useLocation();
@@ -23,6 +91,8 @@ export default function Jobs() {
   const [filters, setFilters] = useState({
     profile: queryParams.get("title") || "",
     location: queryParams.get("location") || "",
+    industry: queryParams.get("industry") || "", // FACT: Injected Industry URL parameter
+    subdomain: "", // FACT: Injected Subdomain parameter
     stipend: 0,
     workFromHome: false,
     partTime: false,
@@ -84,7 +154,6 @@ export default function Jobs() {
         : job.location?.toLowerCase() || "";
     const title = job.title?.toLowerCase() || "";
 
-    // FACT: Filter now properly checks the new salaryMin field
     const salary = Number(job.salaryMin) || Number(job.salaryAmount) || 0;
 
     const jobTypes = getArraySafe(job.jobType);
@@ -111,8 +180,22 @@ export default function Jobs() {
       ? jobTypes.some((t) => t.includes("part-time"))
       : true;
 
+    // FACT: Implemented the logic to strictly filter by Industry & Subdomain
+    const matchIndustry = filters.industry
+      ? job.industry === filters.industry
+      : true;
+    const matchSubdomain = filters.subdomain
+      ? job.subdomain === filters.subdomain
+      : true;
+
     return (
-      matchProfile && matchLocation && matchSalary && matchWFH && matchPartTime
+      matchProfile &&
+      matchLocation &&
+      matchSalary &&
+      matchWFH &&
+      matchPartTime &&
+      matchIndustry &&
+      matchSubdomain
     );
   });
 
@@ -166,6 +249,56 @@ export default function Jobs() {
             </div>
 
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 space-y-8 md:sticky md:top-24">
+              {/* FACT: New Domain Filters cleanly injected into the sidebar */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                    Industry
+                  </label>
+                  <select
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none text-sm font-medium text-slate-700"
+                    value={filters.industry}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        industry: e.target.value,
+                        subdomain: "",
+                      })
+                    }
+                  >
+                    <option value="">All Industries</option>
+                    {Object.keys(INDUSTRY_SUBDOMAINS).map((ind) => (
+                      <option key={ind} value={ind}>
+                        {ind}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {filters.industry && (
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                      Speciality
+                    </label>
+                    <select
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none text-sm font-medium text-slate-700"
+                      value={filters.subdomain}
+                      onChange={(e) =>
+                        setFilters({ ...filters, subdomain: e.target.value })
+                      }
+                    >
+                      <option value="">All {filters.industry} Roles</option>
+                      {INDUSTRY_SUBDOMAINS[filters.industry].map((sub) => (
+                        <option key={sub} value={sub}>
+                          {sub}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div className="h-px bg-slate-100"></div>
+
               <div className="space-y-5">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
@@ -268,6 +401,8 @@ export default function Jobs() {
                   setFilters({
                     profile: "",
                     location: "",
+                    industry: "", // FACT: Clear new filters on reset
+                    subdomain: "", // FACT: Clear new filters on reset
                     stipend: 0,
                     workFromHome: false,
                     partTime: false,
@@ -370,13 +505,27 @@ export default function Jobs() {
                                 {renderArray(job.jobType)}
                               </span>
 
-                              {/* FACT: Properly handles the "UNPAID" logic for Item 7 */}
                               <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100">
                                 <IndianRupee size={14} />{" "}
                                 {job.salaryMin === 0 && job.salaryMax === 0
                                   ? "UNPAID"
                                   : `${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
                               </span>
+
+                              {/* FACT: Explicitly renders the Industry & Subdomain badges on the card */}
+                              {job.industry && (
+                                <span className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100">
+                                  <Target size={14} /> {job.industry}
+                                  {job.subdomain && (
+                                    <span className="text-amber-500/80 mx-0.5">
+                                      •
+                                    </span>
+                                  )}
+                                  {job.subdomain && (
+                                    <span>{job.subdomain}</span>
+                                  )}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

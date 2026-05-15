@@ -6,7 +6,7 @@ import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
 import Candidates from "./pages/EmployerCandidateSearch"
-
+import MyCandidates from "./pages/EmployerMyCandidates"
 // --- PUBLIC PAGES ---
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -66,6 +66,10 @@ function App() {
         <Route
           path="/employerregisteroption"
           element={<EmployerRegisterOption />}
+        />
+        <Route
+          path="/my-candidates"
+          element={<MyCandidates />}
         />
 
         <Route path="/admin/employer/:id" element={<EmployerAdminView />} />

@@ -9,6 +9,72 @@ import CourseSuggestionsDropdown from "../components/CourseSuggestionsDropdown.j
 import LanguageSuggestionsDropdown from "../components/LanguageSuggestionsDropdown.jsx";
 import SkillSuggestionsDropdown from "../components/SkillSuggestionsDropdown.jsx";
 
+export const INDUSTRY_SUBDOMAINS = {
+  "IT & Software": [
+    "Software Development",
+    "Data & Analytics",
+    "Infrastructure & Cloud",
+    "Security & Testing",
+    "Design & Product",
+  ],
+  "Banking & Finance": [
+    "Corporate & Investment Banking",
+    "Core Finance & Accounting",
+    "Retail Banking",
+    "Wealth & Asset Management",
+    "Risk & Insurance",
+  ],
+  "Sales & Marketing": [
+    "B2B & Corporate Sales",
+    "Digital Marketing",
+    "Brand & Strategy",
+    "Retail & B2C Sales",
+    "Communications",
+  ],
+  "Healthcare & Pharma": [
+    "Clinical & Medical",
+    "Pharmaceuticals",
+    "Healthcare Administration",
+    "Medical Sales & Support",
+    "Life Sciences",
+  ],
+  "Engineering & Manufacturing": [
+    "Core Engineering",
+    "Production & Plant Operations",
+    "Quality & Process Improvement",
+    "Design & Drafting",
+    "Emerging Sectors",
+  ],
+  "Operations & Logistics": [
+    "Supply Chain & Logistics",
+    "E-commerce & Delivery",
+    "Inventory & Warehousing",
+    "Vendor Management",
+    "Business Operations",
+  ],
+  "Customer Support": [
+    "Voice Operations",
+    "Non-Voice/Digital Support",
+    "Technical Support",
+    "Client Management",
+    "Outsourcing",
+  ],
+  "HR & Admin": [
+    "Talent Acquisition",
+    "Core HR",
+    "Operations & Compliance",
+    "Employee Development",
+    "Administration",
+  ],
+  "Education & EdTech": [
+    "Teaching & Academics",
+    "EdTech Content",
+    "Student Services",
+    "Institutional Operations",
+    "Corporate Training",
+  ],
+};
+
 import {
   MapPin,
   Loader2,
@@ -749,6 +815,65 @@ export default function CreateJob() {
                   }))
                 }
               />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Industry / Sector <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="industry"
+                  value={job.industry}
+                  onChange={(e) => {
+                    setJob((prev) => ({
+                      ...prev,
+                      industry: e.target.value,
+                      subdomain: "",
+                    })); // Reset subdomain when industry changes
+                    if (touched.industry)
+                      validateField("industry", e.target.value);
+                  }}
+                  className={getInputClass("industry")}
+                >
+                  <option value="">Select Industry</option>
+                  {Object.keys(INDUSTRY_SUBDOMAINS).map((ind) => (
+                    <option key={ind} value={ind}>
+                      {ind}
+                    </option>
+                  ))}
+                </select>
+                {touched.industry && errors.industry && (
+                  <p className="text-red-500 text-xs mt-1 font-medium">
+                    {errors.industry}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Subdomain Speciality <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="subdomain"
+                  value={job.subdomain}
+                  onChange={handleChange}
+                  disabled={!job.industry}
+                  className={getInputClass("subdomain")}
+                >
+                  <option value="">Select Subdomain</option>
+                  {job.industry &&
+                    INDUSTRY_SUBDOMAINS[job.industry].map((sub) => (
+                      <option key={sub} value={sub}>
+                        {sub}
+                      </option>
+                    ))}
+                </select>
+                {touched.subdomain && errors.subdomain && (
+                  <p className="text-red-500 text-xs mt-1 font-medium">
+                    {errors.subdomain}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div>
