@@ -1,5 +1,5 @@
 import express from "express";
-import { registerEmployer,loginEmployer,verifyOTP,checkEmployerEligibility,searchCandidatesBySkills, getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl} from "../controllers/employerControllers.js";
+import { registerEmployer,loginEmployer,verifyOTP,checkEmployerEligibility,searchCandidatesBySkills,getMyCandidates, getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl} from "../controllers/employerControllers.js";
 import { getEmployerCreatedJobs } from "../controllers/jobsControllers.js";
 import { body } from 'express-validator';
 import {protect} from "../middleware/authorization.js";
