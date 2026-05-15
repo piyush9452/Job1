@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import {
   FaCode,
@@ -14,137 +15,141 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-// FACT: The 9 Specific Industries mapped perfectly to your blob UI
+// FACT: The static array no longer holds fake counts. It only holds UI configuration.
 const categories = [
+  // ROW 1
   {
     name: "IT & Software",
-    count: "1.2k+ Jobs",
     icon: FaCode,
     color: "from-blue-500 to-cyan-400",
     blob1: "bg-blue-500",
     blob2: "bg-cyan-400",
     shadow: "shadow-blue-500/20",
-    size: "md:col-span-2",
     initX: -100,
-    initY: 0,
+    initY: -100,
+    initScale: 1,
   },
   {
     name: "Banking & Finance",
-    count: "850 Jobs",
     icon: FaChartLine,
     color: "from-emerald-400 to-teal-500",
     blob1: "bg-emerald-400",
     blob2: "bg-teal-500",
     shadow: "shadow-emerald-500/20",
-    size: "md:col-span-1",
-    initX: 100,
-    initY: 0,
+    initX: 0,
+    initY: -100,
+    initScale: 1,
   },
   {
     name: "Sales & Marketing",
-    count: "640 Jobs",
     icon: FaBullhorn,
     color: "from-purple-500 to-pink-500",
     blob1: "bg-purple-500",
     blob2: "bg-pink-500",
     shadow: "shadow-purple-500/20",
-    size: "md:col-span-1",
-    initX: -100,
-    initY: 0,
+    initX: 100,
+    initY: -100,
+    initScale: 1,
   },
+  // ROW 2
   {
     name: "Healthcare & Pharma",
-    count: "420 Jobs",
     icon: FaHeartbeat,
     color: "from-rose-400 to-red-500",
     blob1: "bg-rose-400",
     blob2: "bg-red-500",
     shadow: "shadow-rose-500/20",
-    size: "md:col-span-2",
-    initX: 100,
+    initX: -100,
     initY: 0,
+    initScale: 1,
   },
   {
     name: "Engineering & Manufacturing",
-    count: "310 Jobs",
     icon: FaCogs,
     color: "from-amber-400 to-orange-600",
     blob1: "bg-amber-400",
     blob2: "bg-orange-600",
     shadow: "shadow-amber-500/20",
-    size: "md:col-span-1",
-    initX: -100,
+    initX: 0,
     initY: 0,
+    initScale: 0.5,
   },
   {
     name: "Operations & Logistics",
-    count: "150 Jobs",
     icon: FaTruck,
     color: "from-slate-500 to-slate-700",
     blob1: "bg-slate-500",
     blob2: "bg-slate-700",
     shadow: "shadow-slate-500/20",
-    size: "md:col-span-1",
-    initX: 0,
-    initY: 100,
+    initX: 100,
+    initY: 0,
+    initScale: 1,
   },
+  // ROW 3
   {
     name: "Customer Support",
-    count: "310 Jobs",
     icon: FaHeadset,
     color: "from-indigo-500 to-blue-600",
     blob1: "bg-indigo-500",
     blob2: "bg-blue-600",
     shadow: "shadow-indigo-500/20",
-    size: "md:col-span-1",
     initX: -100,
-    initY: 0,
+    initY: 100,
+    initScale: 1,
   },
   {
     name: "HR & Admin",
-    count: "95 Jobs",
     icon: FaUserTie,
     color: "from-fuchsia-500 to-purple-600",
     blob1: "bg-fuchsia-500",
     blob2: "bg-purple-600",
     shadow: "shadow-fuchsia-500/20",
-    size: "md:col-span-1",
-    initX: 100,
-    initY: 0,
+    initX: 0,
+    initY: 100,
+    initScale: 1,
   },
   {
     name: "Education & EdTech",
-    count: "150 Jobs",
     icon: FaGraduationCap,
     color: "from-yellow-400 to-orange-500",
     blob1: "bg-yellow-400",
     blob2: "bg-orange-500",
     shadow: "shadow-yellow-500/20",
-    size: "md:col-span-1",
-    initX: 0,
-    initY: -100,
+    initX: 100,
+    initY: 100,
+    initScale: 1,
   },
 ];
 
 export default function JobCategories() {
   const navigate = useNavigate();
 
+  // FACT: Added dynamic state for the live database counts
+  const [realCounts, setRealCounts] = useState({});
   const [activeBlobs, setActiveBlobs] = useState({
     b1: "bg-blue-600",
     b2: "bg-indigo-500",
   });
-
   const [twirlingIndex, setTwirlingIndex] = useState(null);
 
   useEffect(() => {
+    // FACT: Fetch the aggregated counts from the database on mount
+    const fetchCategoryCounts = async () => {
+      try {
+        const { data } = await axios.get(
+          "https://jobone-mrpy.onrender.com/jobs/category-counts",
+        );
+        setRealCounts(data);
+      } catch (err) {
+        console.error("Failed to fetch live job counts:", err);
+      }
+    };
+    fetchCategoryCounts();
+
     const triggerRandomTwirl = () => {
       const randomIndex = Math.floor(Math.random() * categories.length);
       setTwirlingIndex(randomIndex);
-
-      setTimeout(() => {
-        setTwirlingIndex(null);
-      }, 1500);
-
+      setTimeout(() => setTwirlingIndex(null), 1500);
       const nextInterval = Math.random() * 5000 + 10;
       setTimeout(triggerRandomTwirl, nextInterval);
     };
@@ -154,7 +159,6 @@ export default function JobCategories() {
   }, []);
 
   const handleCategoryClick = (category) => {
-    // FACT: Updates routing to strictly map to the industry parameter
     navigate(`/jobs?industry=${encodeURIComponent(category)}`);
   };
 
@@ -184,7 +188,6 @@ export default function JobCategories() {
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -215,75 +218,94 @@ export default function JobCategories() {
           </button>
         </motion.div>
 
-        {/* Bento Grid */}
         <div
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
           onMouseLeave={() =>
             setActiveBlobs({ b1: "bg-blue-600", b2: "bg-indigo-500" })
           }
         >
-          {categories.map((cat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: cat.initX, y: cat.initY }}
-              whileInView={{ opacity: 1, x: 0, y: 0 }}
-              viewport={{ once: false, amount: 0.1 }}
-              transition={{
-                type: "spring",
-                stiffness: 100,
-                damping: 20,
-                delay: index * 0.05,
-              }}
-              onClick={() => handleCategoryClick(cat.name)}
-              onMouseEnter={() =>
-                setActiveBlobs({ b1: cat.blob1, b2: cat.blob2 })
-              }
-              whileHover={{ y: -6, scale: 1.02 }}
-              className={`${cat.size} group relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-md p-6 border border-slate-200/80 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.1)] hover:border-slate-300 cursor-pointer transition-colors duration-300`}
-            >
-              <div
-                className={`absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${cat.color} opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-20`}
-              />
+          {categories.map((cat, index) => {
+            // FACT: Dynamically extracting the database count for this exact card
+            // We map "Engineering & Mfg." strictly back to the DB schema string for lookup
+            const lookupName =
+              cat.name === "Engineering & Mfg."
+                ? "Engineering & Manufacturing"
+                : cat.name;
+            const liveCount = realCounts[lookupName] || 0;
+            const countLabel = liveCount === 1 ? "1 Job" : `${liveCount} Jobs`;
 
-              <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                <motion.div
-                  animate={
-                    twirlingIndex === index
-                      ? { y: [0, -15, 0], rotate: [0, 720, 720] }
-                      : { y: 0, rotate: 0 }
-                  }
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
-                  className="w-12 h-12"
-                >
-                  <div
-                    className={`w-full h-full rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg ${cat.shadow} group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300`}
+            return (
+              <motion.div
+                key={index}
+                initial={{
+                  opacity: 0,
+                  x: cat.initX,
+                  y: cat.initY,
+                  scale: cat.initScale,
+                }}
+                whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+                viewport={{ once: false, amount: 0.1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 90,
+                  damping: 15,
+                  delay: index === 4 ? 0.2 : 0,
+                }}
+                onClick={() => handleCategoryClick(lookupName)}
+                onMouseEnter={() =>
+                  setActiveBlobs({ b1: cat.blob1, b2: cat.blob2 })
+                }
+                whileHover={{ y: -6, scale: 1.02 }}
+                className="group relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-md p-6 border border-slate-200/80 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.1)] hover:border-slate-300 cursor-pointer transition-colors duration-300"
+              >
+                <div
+                  className={`absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${cat.color} opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-20`}
+                />
+
+                <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+                  <motion.div
+                    animate={
+                      twirlingIndex === index
+                        ? { y: [0, -15, 0], rotate: [0, 720, 720] }
+                        : { y: 0, rotate: 0 }
+                    }
+                    transition={{ duration: 1.2, ease: "easeInOut" }}
+                    className="w-12 h-12"
                   >
-                    <cat.icon size={18} />
+                    <div
+                      className={`w-full h-full rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg ${cat.shadow} group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300`}
+                    >
+                      <cat.icon size={18} />
+                    </div>
+                  </motion.div>
+
+                  <div className="mt-auto">
+                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                      {cat.name}
+                    </h3>
+                    <p className="text-slate-500 font-medium text-sm mt-1.5 flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span
+                          className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${liveCount > 0 ? "bg-emerald-400" : "bg-slate-400"}`}
+                        ></span>
+                        <span
+                          className={`relative inline-flex rounded-full h-2 w-2 ${liveCount > 0 ? "bg-emerald-500" : "bg-slate-400"}`}
+                        ></span>
+                      </span>
+                      {countLabel}
+                    </p>
                   </div>
-                </motion.div>
-
-                <div className="mt-auto">
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                    {cat.name}
-                  </h3>
-                  <p className="text-slate-500 font-medium text-sm mt-1.5 flex items-center gap-2">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    {cat.count}
-                  </p>
                 </div>
-              </div>
 
-              {/* Diagonal Arrow */}
-              <div className="absolute bottom-5 right-5 opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                <div className="p-2.5 rounded-full bg-slate-50 text-slate-900 border border-slate-200 shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
-                  <FaArrowRight className="-rotate-45" size={12} />
+                {/* Diagonal Arrow */}
+                <div className="absolute bottom-5 right-5 opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  <div className="p-2.5 rounded-full bg-slate-50 text-slate-900 border border-slate-200 shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
+                    <FaArrowRight className="-rotate-45" size={12} />
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

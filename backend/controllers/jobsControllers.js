@@ -238,6 +238,22 @@ export const getJobs = expressAsyncHandler(async (req, res) => {
   });
 });
 
+export const getJobCountsByIndustry = expressAsyncHandler(async (req, res) => {
+  const counts = await Job.aggregate([
+    { $match: { status: "active" } }, // Only count live jobs
+    { $group: { _id: "$industry", count: { $sum: 1 } } }
+  ]);
+
+  // Convert the array into a simple lookup dictionary: { "IT & Software": 15, "HR & Admin": 3 }
+  const countMap = {};
+  counts.forEach(item => {
+    if (item._id) {
+      countMap[item._id] = item.count;
+    }
+  });
+
+  res.status(200).json(countMap);
+});
 
 // FACT: We are using a MongoDB aggregation pipeline to count every ATS stage dynamically.
 export const getEmployerCreatedJobs = expressAsyncHandler(async (req, res) => {

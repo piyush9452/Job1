@@ -1,4 +1,4 @@
-import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob,getEmployerCreatedJobs,getJobApplicants,getSimilarJobs} from "../controllers/jobsControllers.js";
+import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob,getEmployerCreatedJobs,getJobApplicants,getJobCountsByIndustry,getSimilarJobs} from "../controllers/jobsControllers.js";
 import {protect}from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js";
 import express from "express";
@@ -36,5 +36,7 @@ router.patch("/:id",protectEmployer,updateJob);
 router.put("/:id",protectEmployer,updateJob);
 
 router.patch("/:id",protectEmployer,updateJob);
+
+router.get("/category-counts", getJobCountsByIndustry);
 
 export default router;
