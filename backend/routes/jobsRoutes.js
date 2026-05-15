@@ -11,6 +11,8 @@ const router = express.Router();
 
 router.post("/",protectEmployer, createJob);
 
+router.get("/category-counts", getJobCountsByIndustry);
+
 
 router.get("/employerJobs",protectEmployer,getEmployerCreatedJobs);
 
@@ -37,6 +39,5 @@ router.put("/:id",protectEmployer,updateJob);
 
 router.patch("/:id",protectEmployer,updateJob);
 
-router.get("/category-counts", getJobCountsByIndustry);
 
 export default router;
