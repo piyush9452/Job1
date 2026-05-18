@@ -16,10 +16,12 @@ export const handleChatBot = async (req, res) => {
   }
 
   try {
+    // FACT: MUST be awaited to parse the V5 UI format into the AI model format
     const modelMessages = await convertToModelMessages(messages);
 
+    // FACT: MUST NOT be awaited so the stream remains open for Express to pipe
     const result = streamText({
-      model: google('gemini-2.5-flash'),
+      model: google('gemini-2.5-flash'), // You were right, this is the correct model
       messages: modelMessages,
       system: `You are the official AI assistant for the JobOne portal. 
                Your job is to help candidates find jobs. 
@@ -30,10 +32,10 @@ export const handleChatBot = async (req, res) => {
         searchJobs: tool({
           description: 'Search the live MongoDB database for active job postings.',
           parameters: z.object({
-            keyword: z.string().describe('The job title, skill, or industry the user is looking for.'),
+            // FACT: .min(1) forces the AI to extract a real word (like "React") instead of sending an empty string
+            keyword: z.string().min(1).describe('The job title, skill, or industry (e.g., "React", "Software").'),
           }),
           execute: async ({ keyword }) => {
-            // FACT: Defensively force the AI's input into a string to prevent the MongoServerError
             const safeKeyword = keyword ? String(keyword) : "";
             console.log(`[AI TOOL EXECUTED] Searching DB for: ${safeKeyword}`);
             
@@ -62,9 +64,11 @@ export const handleChatBot = async (req, res) => {
           },
         }),
       },
+      // FACT: Gives the AI permission to execute the database search AND write the final message
       maxSteps: 5, 
     });
 
+    // FACT: The correct V5 piping function
     result.pipeUIMessageStreamToResponse(res);
     
   } catch (error) {
