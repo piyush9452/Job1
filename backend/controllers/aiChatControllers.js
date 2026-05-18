@@ -1,4 +1,4 @@
-import { streamText, tool } from 'ai';
+import { streamText, tool, convertToModelMessages, stepCountIs } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import Job from '../models/jobs.js'; 
@@ -16,11 +16,15 @@ export const handleChatBot = async (req, res) => {
   }
 
   try {
-    // streamText returns a result object synchronously — do NOT await it.
-    // Awaiting resolves the underlying Promise and strips the streaming methods like pipeDataStreamToResponse.
+    // AI SDK v5+: The frontend (useChat) sends UIMessage[], which must be
+    // converted to ModelMessage[] before passing to streamText.
+    const modelMessages = await convertToModelMessages(messages);
+
+    // AI SDK v5+: Do NOT await streamText. It returns a result object
+    // synchronously with streaming methods like pipeUIMessageStreamToResponse.
     const result = streamText({
       model: google('gemini-2.5-flash'),
-      messages: messages,
+      messages: modelMessages,
       system: `You are the official AI assistant for the JobOne portal. 
                Your job is to help candidates find jobs. 
                Always be professional, concise, and to the point. 
@@ -50,11 +54,13 @@ export const handleChatBot = async (req, res) => {
           },
         }),
       },
-      maxSteps: 5, 
+      // AI SDK v5+: maxSteps is replaced with stopWhen + stepCountIs
+      stopWhen: stepCountIs(5),
     });
 
-    // result is the synchronous stream object — pipeDataStreamToResponse streams chunks to the React frontend.
-    result.pipeDataStreamToResponse(res);
+    // AI SDK v5+: pipeDataStreamToResponse is REMOVED.
+    // For Express / Node.js, use pipeUIMessageStreamToResponse instead.
+    result.pipeUIMessageStreamToResponse(res);
     
   } catch (error) {
     console.error("Chatbot Error:", error);
