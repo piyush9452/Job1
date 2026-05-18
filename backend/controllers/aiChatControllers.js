@@ -1,14 +1,11 @@
-import { streamText, tool, convertToModelMessages } from 'ai';
+import { streamText, tool } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
-import Job from '../models/jobs.js';
+import Job from '../models/jobs.js'; 
 
-// Initialize the Google provider with your existing key
 const google = createGoogleGenerativeAI({ 
   apiKey: process.env.GEMINI_API_KEY 
 });
-
-
 
 export const handleChatBot = async (req, res) => {
   const { messages } = req.body;
@@ -19,10 +16,10 @@ export const handleChatBot = async (req, res) => {
   }
 
   try {
-    // FACT: streamText is no longer awaited in v5+
+    // FACT: Do NOT use 'await' here. It must remain a synchronous stream wrapper.
     const result = streamText({
       model: google('gemini-2.5-flash'),
-      messages: convertToModelMessages(messages), // FACT: Translates the UI messages to the AI model
+      messages: messages, // FACT: Pass the raw array directly. Do not convert it.
       system: `You are the official AI assistant for the JobOne portal. 
                Your job is to help candidates find jobs. 
                Always be professional, concise, and to the point. 
@@ -55,8 +52,8 @@ export const handleChatBot = async (req, res) => {
       maxSteps: 5, 
     });
 
-    // FACT: This is the critical v5+ change. The old pipe function was deleted and renamed to this:
-    result.pipeUIMessageStreamToResponse(res);
+    // FACT: The standard Express pipe command for the Vercel AI SDK
+    result.pipeDataStreamToResponse(res);
     
   } catch (error) {
     console.error("Chatbot Error:", error);
