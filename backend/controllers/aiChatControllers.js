@@ -32,7 +32,6 @@ export const handleChatBot = async (req, res) => {
             keyword: z.string().describe('The job title, skill, or industry the user is looking for.'),
           }),
           execute: async ({ keyword }) => {
-            console.log(`[AI TOOL EXECUTED] Searching DB for: ${keyword}`);
             
             const jobs = await Job.find({
               status: "active",

@@ -186,7 +186,7 @@ export const updateApplicationStatus = errorHandler(async (req, res) => {
       html: emailHTML,
     });
 
-    console.log(`Notification email successfully sent to ${userEmail}`);
+    
   } catch (emailError) {
     console.error("Critical: Status updated, but email failed to send.", emailError);
   }

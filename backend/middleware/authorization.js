@@ -15,10 +15,10 @@ export const protect = async (req, res, next) => {
 
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded JWT:", decoded);
+      
       // Attach user to request (exclude password)
       req.user = await User.findById(decoded.id).select("-password");
-      console.log("Authorized user:", req.user);
+      
       next();
     } catch (error) {
       res.status(401);
