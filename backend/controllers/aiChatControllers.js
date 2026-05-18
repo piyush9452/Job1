@@ -16,10 +16,10 @@ export const handleChatBot = async (req, res) => {
   }
 
   try {
-    // FACT: Do NOT use 'await' here. It must remain a synchronous stream wrapper.
-    const result = streamText({
+    // FACT: streamText MUST be awaited. Without await, 'result' is just a pending Promise, which causes the crash.
+    const result = await streamText({
       model: google('gemini-2.5-flash'),
-      messages: messages, // FACT: Pass the raw array directly. Do not convert it.
+      messages: messages,
       system: `You are the official AI assistant for the JobOne portal. 
                Your job is to help candidates find jobs. 
                Always be professional, concise, and to the point. 
@@ -32,6 +32,7 @@ export const handleChatBot = async (req, res) => {
             keyword: z.string().describe('The job title, skill, or industry the user is looking for.'),
           }),
           execute: async ({ keyword }) => {
+            console.log(`[AI TOOL EXECUTED] Searching DB for: ${keyword}`);
             
             const jobs = await Job.find({
               status: "active",
@@ -51,7 +52,7 @@ export const handleChatBot = async (req, res) => {
       maxSteps: 5, 
     });
 
-    // FACT: The standard Express pipe command for the Vercel AI SDK
+    // FACT: Now that result is properly awaited, this function exists and will stream to the React frontend.
     result.pipeDataStreamToResponse(res);
     
   } catch (error) {
