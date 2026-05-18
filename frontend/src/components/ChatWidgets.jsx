@@ -1,26 +1,31 @@
 import React, { useState } from "react";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai"; // FACT: Required in SDK v5+
 import { MessageSquare, X, Send, Bot, Loader2 } from "lucide-react";
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
 
-  // FACT: Extracted 'append' and 'setInput' to manually force the chat submission
-  const { messages, input, setInput, append, isLoading } = useChat({
-    api: "https://jobone-if7l.onrender.com/ai/chat",
-    onError: (err) => console.error("Chat Error:", err), // FACT: Logs hidden network errors
+  // FACT: SDK v5 forces you to manage your own input state
+  const [input, setInput] = useState("");
+
+  // FACT: 'sendMessage' and 'status' replace the old 'append' and 'isLoading'
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: "https://jobone-if7l.onrender.com/ai/chat",
+    }),
+    onError: (err) => console.error("Chat Error:", err),
   });
 
-  // FACT: Manual submission handler overrides all browser/SDK form quirks
+  const isLoading = status === "submitted" || status === "streaming";
+
   const handleSend = (e) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    // 1. Send the message to the AI
-    append({ role: "user", content: input });
-
-    // 2. Instantly clear the input box
-    setInput("");
+    if (input.trim() && !isLoading) {
+      // FACT: SDK v5 uses sendMessage({ text: string }) format
+      sendMessage({ text: input });
+      setInput("");
+    }
   };
 
   return (
@@ -45,13 +50,13 @@ export default function ChatWidget() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
-            {messages.length === 0 && (
+            {messages?.length === 0 && (
               <p className="text-center text-xs text-slate-400 mt-10">
                 Type "Find me React jobs" to test the database search.
               </p>
             )}
 
-            {messages.map((m) => (
+            {messages?.map((m) => (
               <div
                 key={m.id}
                 className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
@@ -65,21 +70,31 @@ export default function ChatWidget() {
                 <div
                   className={`p-3 rounded-2xl max-w-[80%] text-sm ${m.role === "user" ? "bg-indigo-600 text-white rounded-br-none" : "bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm"}`}
                 >
-                  {m.toolInvocations &&
-                    m.toolInvocations.map((tool) => (
-                      <div
-                        key={tool.toolCallId}
-                        className="text-xs text-indigo-400 font-mono mb-1 animate-pulse"
-                      >
-                        Searching database...
-                      </div>
-                    ))}
-                  <p className="whitespace-pre-wrap">{m.content}</p>
+                  {/* FACT: SDK v5 uses message.parts instead of message.content */}
+                  {m.parts?.map((part, i) => {
+                    if (part.type === "text") {
+                      return (
+                        <p key={i} className="whitespace-pre-wrap">
+                          {part.text}
+                        </p>
+                      );
+                    } else if (part.type.startsWith("tool-")) {
+                      return (
+                        <div
+                          key={i}
+                          className="text-xs text-indigo-400 font-mono mb-1 animate-pulse"
+                        >
+                          Searching database...
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
                 </div>
               </div>
             ))}
 
-            {isLoading && (
+            {isLoading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex gap-2 justify-start">
                 <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
                   <Bot size={14} className="text-indigo-600" />
@@ -91,7 +106,6 @@ export default function ChatWidget() {
             )}
           </div>
 
-          {/* FACT: Clean, manually controlled form element */}
           <form
             onSubmit={handleSend}
             className="p-3 bg-white border-t border-slate-200 flex gap-2"
@@ -100,7 +114,8 @@ export default function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about jobs..."
-              className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              disabled={isLoading}
+              className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
             />
             <button
               type="submit"

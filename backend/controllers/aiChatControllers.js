@@ -1,4 +1,4 @@
-import { streamText, tool } from 'ai';
+import { streamText, tool, convertToModelMessages } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import Job from '../models/jobs.js'; // Ensure this path is correct
@@ -11,16 +11,10 @@ const google = createGoogleGenerativeAI({
 export const handleChatBot = async (req, res) => {
   const { messages } = req.body;
 
-  // FACT: If express.json() is missing from server.js, req.body is empty and this prevents a silent crash.
-  if (!messages || !Array.isArray(messages)) {
-    console.error("CRITICAL ERROR: No messages received. Is express.json() enabled in server.js?");
-    return res.status(400).json({ error: "Invalid request payload. Missing messages array." });
-  }
-
   try {
     const result = await streamText({
       model: google('gemini-2.5-flash'),
-      messages,
+      messages: convertToModelMessages(messages),
       system: `You are the official AI assistant for the JobOne portal. 
                Your job is to help candidates find jobs. 
                Always be professional, concise, and to the point. 
