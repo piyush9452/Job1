@@ -16,8 +16,9 @@ export const handleChatBot = async (req, res) => {
   }
 
   try {
-    // FACT: streamText MUST be awaited. Without await, 'result' is just a pending Promise, which causes the crash.
-    const result = await streamText({
+    // streamText returns a result object synchronously — do NOT await it.
+    // Awaiting resolves the underlying Promise and strips the streaming methods like pipeDataStreamToResponse.
+    const result = streamText({
       model: google('gemini-2.5-flash'),
       messages: messages,
       system: `You are the official AI assistant for the JobOne portal. 
@@ -52,7 +53,7 @@ export const handleChatBot = async (req, res) => {
       maxSteps: 5, 
     });
 
-    // FACT: Now that result is properly awaited, this function exists and will stream to the React frontend.
+    // result is the synchronous stream object — pipeDataStreamToResponse streams chunks to the React frontend.
     result.pipeDataStreamToResponse(res);
     
   } catch (error) {
