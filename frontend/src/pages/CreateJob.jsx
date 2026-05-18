@@ -603,7 +603,6 @@ export default function CreateJob() {
       const token = storedData ? JSON.parse(storedData).token : null;
       if (!token) return alert("No token found. Please log in again.");
 
-      const combinedDescription = `<h3>Job Summary</h3>${jobSummary}<h3>Key Responsibilities</h3>${keyResponsibilities}`;
 
       const parsedMin = isUnpaid
         ? 0

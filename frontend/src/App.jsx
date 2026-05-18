@@ -5,8 +5,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
-import Candidates from "./pages/EmployerCandidateSearch"
-import MyCandidates from "./pages/EmployerMyCandidates"
+import Candidates from "./pages/EmployerCandidateSearch";
+import MyCandidates from "./pages/EmployerMyCandidates";
 // --- PUBLIC PAGES ---
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -44,6 +44,7 @@ import JobApplicants from "./pages/JobApplicants";
 import GlobalNotificationPopup from "./components/GlobalNotificationPopup";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
+import ChatWidget from "./components/ChatWidgets";
 
 import AuthHome from "./routes/AuthHome";
 import TestLocation from "./pages/TestLocation";
@@ -53,7 +54,8 @@ function App() {
   return (
     <Router>
       <Navbar />
-      <GlobalNotificationPopup />
+      <GlobalNotificationPopup />'
+      <ChatWidget />
       <div className="w-[100vw] h-[50px]"></div>
       <Routes>
         {/* ================= PUBLIC ROUTES ================= */}
@@ -67,10 +69,7 @@ function App() {
           path="/employerregisteroption"
           element={<EmployerRegisterOption />}
         />
-        <Route
-          path="/my-candidates"
-          element={<MyCandidates />}
-        />
+        <Route path="/my-candidates" element={<MyCandidates />} />
 
         <Route path="/admin/employer/:id" element={<EmployerAdminView />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
