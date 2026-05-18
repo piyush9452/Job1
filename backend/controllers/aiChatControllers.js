@@ -33,16 +33,17 @@ export const handleChatBot = async (req, res) => {
             keyword: z.string().describe('The job title, skill, or industry the user is looking for.'),
           }),
           execute: async ({ keyword }) => {
-            console.log(`[AI TOOL EXECUTED] Searching DB for: ${keyword}`);
+            // FACT: Defensively force the AI's input into a string to prevent the MongoServerError
+            const safeKeyword = keyword ? String(keyword) : "";
+            console.log(`[AI TOOL EXECUTED] Searching DB for: ${safeKeyword}`);
             
             try {
-              // FACT: .lean() forces Mongoose to return pure JSON, preventing AI SDK serialization crashes
               const jobs = await Job.find({
                 status: "active",
                 $or: [
-                  { title: { $regex: keyword, $options: 'i' } },
-                  { skillsRequired: { $regex: keyword, $options: 'i' } },
-                  { industry: { $regex: keyword, $options: 'i' } }
+                  { title: { $regex: safeKeyword, $options: 'i' } },
+                  { skillsRequired: { $regex: safeKeyword, $options: 'i' } },
+                  { industry: { $regex: safeKeyword, $options: 'i' } }
                 ]
               })
               .select("title postedByCompany location salaryMin salaryMax mode")
@@ -61,7 +62,6 @@ export const handleChatBot = async (req, res) => {
           },
         }),
       },
-      // FACT: maxSteps is the stable parameter to allow the AI to loop back after reading the tool data
       maxSteps: 5, 
     });
 
