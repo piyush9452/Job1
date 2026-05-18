@@ -19,7 +19,17 @@ export default function GlobalNotificationPopup() {
     const fetchUnreadApplications = async () => {
       try {
         const storedUser = localStorage.getItem("userInfo");
-        if (!storedUser) return;
+        const storedEmployer = localStorage.getItem("employerInfo");
+
+        // FACT: Safety gate added to prevent unauthenticated 401 exceptions on public pages
+        if (!storedUser && !storedEmployer) {
+          return;
+        }
+
+        // If it's an employer logged in, skip fetching seeker notifications entirely
+        if (!storedUser && storedEmployer) {
+          return;
+        }
 
         const userInfo = JSON.parse(storedUser);
         const { token, id } = userInfo;
@@ -146,33 +156,35 @@ export default function GlobalNotificationPopup() {
 
             {/* Toast Body */}
             <div className="p-4">
-                <div className="mb-3">
-                    {/* Job Title */}
-                    <p className="text-sm font-extrabold text-slate-900 leading-tight truncate">
-                        {app.job?.title || "Job Title Unavailable"}
-                    </p>
+              <div className="mb-3">
+                {/* Job Title */}
+                <p className="text-sm font-extrabold text-slate-900 leading-tight truncate">
+                  {app.job?.title || "Job Title Unavailable"}
+                </p>
 
-                    {/* Company */}
-                    <p className="text-xs text-slate-500 font-medium">
-                        {app.job?.postedByCompany || "Company"}
-                    </p>
+                {/* Company */}
+                <p className="text-xs text-slate-500 font-medium">
+                  {app.job?.postedByCompany || "Company"}
+                </p>
 
-                    {/* Location + Mode */}
-                    <p className="text-[11px] text-slate-400 mt-1">
-                        📍 {app.job?.mode === "Work from Home"
-                        ? "Remote"
-                        : (typeof app.job?.location === "object"
+                {/* Location + Mode */}
+                <p className="text-[11px] text-slate-400 mt-1">
+                  📍{" "}
+                  {app.job?.mode === "Work from Home"
+                    ? "Remote"
+                    : (typeof app.job?.location === "object"
                         ? app.job?.location?.address
                         : app.job?.location) || "Office"}
-                    </p>
+                </p>
 
-                    {/* Salary */}
-                    <p className="text-[11px] font-bold text-emerald-600 mt-1">
-                        ₹ {app.job?.salaryAmount
-                        ? app.job.salaryAmount.toLocaleString()
-                        : "TBD"}
-                    </p>
-                </div>
+                {/* Salary */}
+                <p className="text-[11px] font-bold text-emerald-600 mt-1">
+                  ₹{" "}
+                  {app.job?.salaryAmount
+                    ? app.job.salaryAmount.toLocaleString()
+                    : "TBD"}
+                </p>
+              </div>
 
               <div className="mb-3">{getStatusBadge(app.status)}</div>
 

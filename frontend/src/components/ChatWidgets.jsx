@@ -1,19 +1,30 @@
 import React, { useState } from "react";
-import { useChat } from "ai/react";
-import { MessageSquare, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
+import { MessageSquare, X, Send, Bot, Loader2 } from "lucide-react";
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
 
-  // FACT: useChat handles the entire conversation array and API streaming automatically
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
-      api: "https://jobone-if7l.onrender.com/ai/chat", // Update if your route is different
-    });
+  // FACT: Extracted 'append' and 'setInput' to manually force the chat submission
+  const { messages, input, setInput, append, isLoading } = useChat({
+    api: "https://jobone-if7l.onrender.com/ai/chat",
+    onError: (err) => console.error("Chat Error:", err), // FACT: Logs hidden network errors
+  });
+
+  // FACT: Manual submission handler overrides all browser/SDK form quirks
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    // 1. Send the message to the AI
+    append({ role: "user", content: input });
+
+    // 2. Instantly clear the input box
+    setInput("");
+  };
 
   return (
     <>
-      {/* Floating Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 p-4 bg-indigo-600 text-white rounded-full shadow-2xl hover:bg-indigo-700 hover:scale-105 transition-all z-50"
@@ -21,10 +32,8 @@ export default function ChatWidget() {
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
       </button>
 
-      {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 w-[350px] h-[500px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
-          {/* Header */}
           <div className="bg-indigo-600 p-4 text-white flex items-center gap-3">
             <Bot size={24} />
             <div>
@@ -35,7 +44,6 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
             {messages.length === 0 && (
               <p className="text-center text-xs text-slate-400 mt-10">
@@ -57,7 +65,6 @@ export default function ChatWidget() {
                 <div
                   className={`p-3 rounded-2xl max-w-[80%] text-sm ${m.role === "user" ? "bg-indigo-600 text-white rounded-br-none" : "bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm"}`}
                 >
-                  {/* Tool Call Visibility (Optional: shows user that the AI is searching the DB) */}
                   {m.toolInvocations &&
                     m.toolInvocations.map((tool) => (
                       <div
@@ -71,6 +78,7 @@ export default function ChatWidget() {
                 </div>
               </div>
             ))}
+
             {isLoading && (
               <div className="flex gap-2 justify-start">
                 <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
@@ -83,14 +91,14 @@ export default function ChatWidget() {
             )}
           </div>
 
-          {/* Input Area */}
+          {/* FACT: Clean, manually controlled form element */}
           <form
-            onSubmit={handleSubmit}
+            onSubmit={handleSend}
             className="p-3 bg-white border-t border-slate-200 flex gap-2"
           >
             <input
               value={input}
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about jobs..."
               className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             />
