@@ -1,75 +1,89 @@
-import { streamText, tool } from 'ai';
+import { streamText, tool, convertToModelMessages, stepCountIs } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
-import Job from '../models/jobs.js'; 
+import Job from '../models/jobs.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const google = createGoogleGenerativeAI({ 
-  apiKey: process.env.GEMINI_API_KEY 
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 export const handleChatBot = async (req, res) => {
   const { messages } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
-    console.error("CRITICAL ERROR: No messages received.");
-    return res.status(400).json({ error: "Invalid request payload." });
+    return res.status(400).json({ error: 'Invalid request payload.' });
   }
 
   try {
+    const uiMessages = messages.map((msg) => ({
+      ...msg,
+      id: msg.id || Math.random().toString(36).substring(7),
+      parts: msg.parts || [{ type: 'text', text: msg.content || '' }],
+    }));
+
+    const modelMessages = await convertToModelMessages(uiMessages);
+
     const result = streamText({
-      // FACT: Using the exact model you verified.
-      model: google('gemini-2.5-flash'), 
-      messages: messages, 
-      system: `You are the official AI assistant for the JobOne portal. 
-               Your job is to help candidates find jobs. 
-               Always be professional, concise, and to the point. 
-               If someone asks for jobs, ALWAYS use the searchJobs tool to check the live database. Do not invent jobs.
-               CRITICAL INSTRUCTION: You MUST extract a specific search keyword (like "React") and pass it to the searchJobs tool. NEVER leave the keyword blank.`,
+      model: google('gemini-2.5-flash'),
+      messages: modelMessages,
+      // FACT: Explicitly separating the "data lookup" and "response generation" phases.
+      system: `You are the JobOne Assistant. 
+               1. When the user asks for jobs, call 'searchJobs'. 
+               2. The tool will give you job data. 
+               3. DO NOT output the raw data. Read it, understand it, and write a friendly, helpful text response to the user summarizing the top results.`,
       tools: {
         searchJobs: tool({
-          description: 'Search the live MongoDB database for active job postings.',
+          description: 'Search for jobs.',
           parameters: z.object({
-            keyword: z.string({
-              required_error: "Keyword is strictly required to search the database",
-            }).min(1).describe('The job title, skill, or industry (e.g., "React", "Software").'),
+            keyword: z.string().describe('The job keyword.'),
           }),
           execute: async ({ keyword }) => {
-            const safeKeyword = keyword ? String(keyword) : "";
-            console.log(`[AI TOOL EXECUTED] Searching DB for: ${safeKeyword}`);
-            
+            const safeKeyword = keyword || 'React';
             try {
               const jobs = await Job.find({
-                status: "active",
+                status: 'active',
                 $or: [
                   { title: { $regex: safeKeyword, $options: 'i' } },
                   { skillsRequired: { $regex: safeKeyword, $options: 'i' } },
-                  { industry: { $regex: safeKeyword, $options: 'i' } }
-                ]
-              })
-              .select("title postedByCompany location salaryMin salaryMax mode")
-              .limit(5)
-              .lean(); 
+                  { industry: { $regex: safeKeyword, $options: 'i' } },
+                ],
+              }).limit(3).lean(); // Reduced to 3 to keep the context clean
 
-              if (!jobs || jobs.length === 0) {
-                return { message: "No active jobs found matching that keyword." };
-              }
-
-              return jobs; 
+              // FACT: Truncate descriptions so the AI doesn't get overwhelmed and stop.
+              return jobs.map((job) => ({
+                title: job.title,
+                company: job.postedByCompany,
+                description: (job.description || "").substring(0, 100) + "...",
+                mode: job.mode
+              }));
             } catch (err) {
-              console.error("[DB ERROR]:", err);
-              return { error: "Failed to fetch jobs from the database." };
+              return { error: 'Database error' };
             }
           },
         }),
       },
-      maxSteps: 5, 
+      stopWhen: stepCountIs(5),
     });
 
-    // FACT: This is the ONLY piping function that exists in AI SDK v5 to stream back to the UI.
-    result.pipeUIMessageStreamToResponse(res);
-    
+    // ── THE ROBUST MANUAL BRIDGE ──────────────────────────────────
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Manually iterate over the stream parts to avoid 'toDataStream' crashes
+    for await (const chunk of result.fullStream) {
+      res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+
   } catch (error) {
-    console.error("Chatbot Error:", error);
-    res.status(500).json({ error: "Failed to process chat" });
+    console.error('Chatbot Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to process chat' });
+    }
   }
 };
