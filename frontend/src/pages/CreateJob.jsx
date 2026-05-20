@@ -210,24 +210,30 @@ export default function CreateJob() {
   }, []);
 
   useEffect(() => {
-    let heartbeatInterval; // We will use this to keep the token alive/checked
+    let isMounted = true; // Prevents state updates on unmounted component
 
     const checkEligibility = async () => {
       try {
         const storedData = localStorage.getItem("employerInfo");
-        if (!storedData) return navigate("/login");
-        const { token } = JSON.parse(storedData);
-        if (!token) return navigate("/login");
+        if (!storedData) {
+          navigate("/login");
+          return;
+        }
 
-        // FACT: Hit the new Light API instead of the full profile
+        const { token } = JSON.parse(storedData);
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
         const { data } = await axios.get(
-          `https://jobone-mrpy.onrender.com/employer/check-eligibility`,
+          `https://jobone-if7l.onrender.com/employer/check-eligibility`, // FACT: Ensure this URL matches your backend
           { headers: { Authorization: `Bearer ${token}` } },
         );
 
-        if (data.access === "blocked") {
-          setBlockMessage(data.message);
-          setPageAccess("blocked");
+        if (data.isFrozen) {
+          alert("Your account has been frozen by the admin.");
+          navigate("/employerdashboard");
         } else if (data.access === "incomplete") {
           setMissingItems(data.missingItems);
           setBlockMessage(data.message);
@@ -235,28 +241,39 @@ export default function CreateJob() {
         } else {
           setPageAccess("granted");
         }
+
+        if (isMounted) {
+          if (data.access === "blocked") {
+            setBlockMessage(data.message);
+            setPageAccess("blocked");
+          } else if (data.access === "incomplete") {
+            setMissingItems(data.missingItems);
+            setBlockMessage(data.message);
+            setPageAccess("incomplete");
+          } else {
+            setPageAccess("granted");
+          }
+        }
       } catch (err) {
         console.error("Eligibility check failed:", err);
-        // If it's a 401 Unauthorized, the token is dead
-        if (err.response && err.response.status === 401) {
-          alert("Your session has expired. Please log in again.");
-          localStorage.removeItem("employerInfo");
-          navigate("/login");
+        if (isMounted) {
+          setPageAccess("granted"); // Force fail-safe to prevent infinite loading if API is down
+          if (err.response?.status === 401) {
+            localStorage.removeItem("employerInfo");
+            navigate("/login");
+          }
         }
       }
     };
 
-    // 1. Check immediately on page load
     checkEligibility();
 
-    // 2. THE HEARTBEAT: Check silently every 5 minutes (300000 ms)
-    // If their token dies while they are typing, this will kick them out BEFORE they hit submit and get confused.
-    heartbeatInterval = setInterval(() => {
-      checkEligibility();
-    }, 300000);
+    const heartbeatInterval = setInterval(checkEligibility, 300000);
 
-    // Cleanup interval when they leave the page
-    return () => clearInterval(heartbeatInterval);
+    return () => {
+      isMounted = false;
+      clearInterval(heartbeatInterval);
+    };
   }, [navigate]);
 
   useEffect(() => {
@@ -602,7 +619,6 @@ export default function CreateJob() {
       const storedData = localStorage.getItem("employerInfo");
       const token = storedData ? JSON.parse(storedData).token : null;
       if (!token) return alert("No token found. Please log in again.");
-
 
       const parsedMin = isUnpaid
         ? 0

@@ -108,9 +108,9 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
 // FACT: Lightweight Eligibility Check API
 // ==========================================
 export const checkEmployerEligibility = expressAsyncHandler(async (req, res) => {
-  // 1. Only select the exact fields needed for verification. Ignore massive arrays.
+  // 1. Fetch employer with ALL necessary fields for checking
   const employer = await Employer.findById(req.employerId).select(
-    'isApproved phone location officeLocation industry description aadharCard panCard employerType companyName natureOfBusiness gstForm tradeLicense educationDocuments'
+    'isApproved isFrozen phone location officeLocation industry description aadharCard panCard employerType companyName natureOfBusiness gstForm tradeLicense educationDocuments'
   );
 
   if (!employer) {
@@ -118,29 +118,34 @@ export const checkEmployerEligibility = expressAsyncHandler(async (req, res) => 
     throw new Error("Employer not found");
   }
 
-  // 2. Admin Approval Check
-  if (employer.isApproved === "pending") {
+  // 2. FACT: Primary Lock - If frozen, access is instantly denied regardless of anything else.
+  if (employer.isFrozen) {
     return res.status(200).json({ 
+      isFrozen: true,
       access: "blocked", 
-      message: "Your account is currently under review by the administration. You will be able to post jobs once approved." 
-    });
-  }
-  
-  if (employer.isApproved === "rejected") {
-    return res.status(200).json({ 
-      access: "blocked", 
-      message: "Your account has been rejected by the administration. You do not have permission to post jobs." 
+      message: "Your account has been frozen by the administration. Please contact support." 
     });
   }
 
-  // 3. Document & Profile Check
+  // 3. Admin Approval Check
+  if (employer.isApproved === "pending" || employer.isApproved === "rejected") {
+    return res.status(200).json({ 
+      isFrozen: false,
+      access: "blocked", 
+      message: employer.isApproved === "pending" 
+        ? "Your account is under review. You will be able to post jobs once approved." 
+        : "Your account has been rejected. You do not have permission to post jobs." 
+    });
+  }
+
+  // 4. Document & Profile Completeness Check
   let missing = [];
   const baseFields = ["phone", "industry", "description", "aadharCard", "panCard"];
+  
   baseFields.forEach((field) => {
     if (!employer[field] || String(employer[field]).trim() === "") missing.push(field);
   });
 
-  // Check location (either string location or officeLocation object)
   if (!employer.location && (!employer.officeLocation || !employer.officeLocation.coordinates)) {
     missing.push("location");
   }
@@ -157,19 +162,19 @@ export const checkEmployerEligibility = expressAsyncHandler(async (req, res) => 
     });
   }
 
+  // 5. Final Result
   if (missing.length > 0) {
     return res.status(200).json({ 
+      isFrozen: false,
       access: "incomplete", 
       missingItems: missing,
       message: "You must complete your profile and upload all required verification documents before you can post a job."
     });
   }
 
-  // 4. All Clear
-  res.status(200).json({ access: "granted" });
+  // All checks passed
+  res.status(200).json({ isFrozen: false, access: "granted" });
 });
-
-
 
 export const verifyOTP = expressAsyncHandler(async (req, res) => {
   const { email, otp } = req.body;
