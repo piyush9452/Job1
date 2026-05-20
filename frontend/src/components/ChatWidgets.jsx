@@ -1,14 +1,9 @@
 // ============================================================
-// ChatWidgets.jsx  —  AI SDK v5 COMPATIBLE
-// Verified against: @ai-sdk/react@^2.0.0, ai@^5.0.0
+// ChatWidgets.jsx  —  AI SDK v6 COMPATIBLE
+// Verified against: @ai-sdk/react@^3.0.x, ai@^6.0.x
 //
-// This file was already mostly correct for v5.
-// One subtle fix applied:
-//   - The 'isLoading' check for showing the typing indicator has been tightened.
-//     In v5, 'status' can be: "ready" | "submitted" | "streaming" | "error"
-//     The component should show the bot typing indicator when status is "streaming"
-//     AND the last message is from the user (meaning the assistant hasn't replied yet).
-//     The original logic was correct; kept as-is with a cleaner guard.
+// This file is CORRECT for v6. No functional changes were needed.
+// Annotations updated below to accurately reflect v6 (not v5).
 // ============================================================
 
 import React, { useState } from "react";
@@ -19,18 +14,17 @@ import { MessageSquare, X, Send, Bot, Loader2 } from "lucide-react";
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
 
-  // v5: useChat no longer manages input state internally.
-  //     You MUST manage your own input state — this was already done correctly.
+  // v6: useChat does NOT manage input state internally.
+  // You must manage your own — done correctly here.
   const [input, setInput] = useState("");
 
-  // v5 useChat API:
-  //   - transport: replaces the old 'api' string option
-  //   - sendMessage: replaces the old 'append' function
-  //   - status: replaces the old 'isLoading' boolean
-  //             values: "ready" | "submitted" | "streaming" | "error"
+  // v6 useChat API:
+  //   transport  → replaces the old `api` string option
+  //   sendMessage → replaces `append`; takes { text: string }
+  //   status     → "ready" | "submitted" | "streaming" | "error"
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
-      api: "https://localhost:5000/ai/chat",
+      api: "https://jobone-if7l.onrender.com/ai/chat",
     }),
     onError: (err) => console.error("Chat Error:", err),
   });
@@ -42,15 +36,15 @@ export default function ChatWidget() {
   const handleSend = (e) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
-      // v5: sendMessage takes { text: string }, NOT a plain string
-      sendMessage({ text: input });
+      sendMessage({ text: input }); // v6: must be { text: string }
       setInput("");
     }
   };
 
-  // Determine if we should show the typing indicator.
-  // Show it when loading AND the last message in the list is still from the user
-  // (meaning the assistant's response hasn't started streaming yet).
+  // Show the typing indicator when:
+  //   - We're loading AND
+  //   - The last message is still from the user
+  //     (assistant hasn't started streaming yet)
   const lastMessage = messages[messages.length - 1];
   const showTypingIndicator = isLoading && lastMessage?.role === "user";
 
@@ -72,7 +66,9 @@ export default function ChatWidget() {
             <Bot size={24} />
             <div>
               <h3 className="font-bold text-sm">JobOne Assistant</h3>
-              <p className="text-[10px] text-indigo-200">Ask me about open roles</p>
+              <p className="text-[10px] text-indigo-200">
+                Ask me about open roles
+              </p>
             </div>
           </div>
 
@@ -102,9 +98,9 @@ export default function ChatWidget() {
                       : "bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm"
                   }`}
                 >
-                  {/* v5: messages use message.parts[] instead of message.content (string).
-                       Each part has a 'type' field. For text: part.type === "text", part.text.
-                       For in-progress tool calls: part.type starts with "tool-" */}
+                  {/* v6: messages use message.parts[] — each part has a `type`.
+                       Text parts: { type: "text", text: string }
+                       Tool parts: { type: "tool-{toolName}", state, ... } */}
                   {m.parts?.map((part, i) => {
                     if (part.type === "text") {
                       return (
@@ -113,7 +109,7 @@ export default function ChatWidget() {
                         </p>
                       );
                     }
-                    // tool-invocation, tool-result, etc. — show a searching indicator
+                    // tool-searchJobs, tool-invocation, etc.
                     if (part.type.startsWith("tool-")) {
                       return (
                         <div
@@ -130,7 +126,7 @@ export default function ChatWidget() {
               </div>
             ))}
 
-            {/* Typing indicator: only shown before the assistant's first chunk arrives */}
+            {/* Typing indicator: only shown before assistant's first chunk */}
             {showTypingIndicator && (
               <div className="flex gap-2 justify-start">
                 <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">

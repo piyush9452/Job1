@@ -13,7 +13,7 @@ const employerSchema = new mongoose.Schema({
     enum: ["company", "individual"], 
     default: "company" 
   },
-  
+ isFrozen: { type: Boolean, default: false },
   natureOfBusiness: { 
     type: String, 
     enum: ["Proprietorship", "Partnership", "Trust/NGO", "Public LTD", "Private LTD", "LLP", "ERP", ""],

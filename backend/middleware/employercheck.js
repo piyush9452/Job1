@@ -4,28 +4,28 @@ import Employer from '../models/employer.js';
 
 export const protectEmployer = expressAsyncHandler(async (req, res, next) => {
   let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
-      // FIX 1: Token is now assigned
       token = req.headers.authorization.split(' ')[1];
-
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.employerId = decoded.employer.id;
-      next(); // Continue only if token is valid
+      
+      // FACT: We MUST fetch the employer to check if they are frozen
+      const employer = await Employer.findById(decoded.employer.id);
+      
+      if (!employer) {
+        return res.status(401).json({ message: 'Not authorized, employer not found' });
+      }
+      
+      // FACT: Operational lock for Employers
+      if (employer.isFrozen) {
+        return res.status(403).json({ message: 'Account Suspended: Your employer account has been frozen by the administration.' });
+      }
 
+      req.employerId = employer._id;
+      next(); 
     } catch (error) {
-      // Token is invalid or expired
-      console.error(error);
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
-
-  // FIX 2: This check now catches requests with NO token
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
-  }
+  if (!token) return res.status(401).json({ message: 'Not authorized, no token' });
 });

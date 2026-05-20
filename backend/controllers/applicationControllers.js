@@ -4,6 +4,7 @@ import Employer from "../models/employer.js";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
 import sendEmail from "../utils/sendEmail.js";
+import { logActivity } from '../utils/activitytrigger.js';
 
 export const createApplication = errorHandler(async (req, res) => {
   // FACT: Extract the new screeningAnswers array
@@ -54,23 +55,18 @@ export const createApplication = errorHandler(async (req, res) => {
     jobHost: job.postedBy,
     appliedBy: userId,
     applicantMessage: message || "", 
-    screeningAnswers: screeningAnswers || [], // <-- SAVED HERE
+    screeningAnswers: screeningAnswers || [], 
   });
 
   job.applicants.push(userId);
   await job.save();
 
-  await User.findByIdAndUpdate(
-    userId,
-    { $addToSet: { appliedJobs: jobId } }, 
-    { new: true }
-  );
+  await User.findByIdAndUpdate(userId, { $addToSet: { appliedJobs: jobId } }, { new: true });
 
-  res.status(201).json({
-    success: true,
-    message: "Application submitted successfully",
-    application,
-  });
+  // FACT: Log the application event for the Jobseeker
+  await logActivity(userId, 'apply', jobId).catch(e => console.error("Audit log failed", e));
+
+  res.status(201).json({ success: true, message: "Application submitted successfully", application });
 });
 export const allApplicationFromUser = errorHandler(async (req, res) => {
   const userId = req.user._id;
@@ -154,10 +150,12 @@ export const updateApplicationStatus = errorHandler(async (req, res) => {
 
   application.status = status;
   if (employerMessage !== undefined) application.employerMessage = employerMessage;
-  if (meetingLink !== undefined) application.meetingLink = meetingLink; // <-- SAVE IT
+  if (meetingLink !== undefined) application.meetingLink = meetingLink; 
   application.applicantHasSeen = false;
   await application.save();
 
+  // FACT: Log that the employer interacted with the candidate
+  await logActivity(req.employerId, 'message', application.appliedBy._id).catch(e => console.error("Audit log failed", e));
   try {
     const userEmail = application.appliedBy.email;
     const userName = application.appliedBy.name;
@@ -191,10 +189,7 @@ export const updateApplicationStatus = errorHandler(async (req, res) => {
     console.error("Critical: Status updated, but email failed to send.", emailError);
   }
 
-  res.status(200).json({
-    message: "Status updated successfully and email triggered.",
-    application,
-  });
+  res.status(200).json({ message: "Status updated successfully", application });
 });
 
 export const getJobApplications = errorHandler(async (req, res) => {

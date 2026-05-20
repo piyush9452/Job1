@@ -45,7 +45,8 @@ const userSchema = new mongoose.Schema({
     duration: { type: String },
     description: { type: String }
   }],
-
+  
+  isFrozen: { type: Boolean, default: false }, // The "freeze" toggle
   createdJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }], 
   appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }], 
   createdAt: { type: Date, default: Date.now },

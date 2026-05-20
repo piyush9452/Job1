@@ -235,3 +235,46 @@ export const exportSingleEmployerToExcel = expressAsyncHandler(async (req, res) 
   
   res.send(excelBuffer);
 });
+
+export const freezeUser = expressAsyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { freeze } = req.body; // true to freeze, false to unfreeze
+
+  const user = await User.findById(id);
+  if (!user) return res.status(404).json({ message: "Jobseeker not found" });
+
+  user.isFrozen = freeze;
+  await user.save();
+  
+  res.status(200).json({ message: `Jobseeker account is now ${freeze ? 'frozen' : 'active'}` });
+});
+
+export const freezeEmployer = expressAsyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { freeze } = req.body; 
+
+  const employer = await Employer.findById(id);
+  if (!employer) return res.status(404).json({ message: "Employer not found" });
+
+  employer.isFrozen = freeze;
+  await employer.save();
+  
+  res.status(200).json({ message: `Employer account is now ${freeze ? 'frozen' : 'active'}` });
+});
+
+
+export const searchJobseekers = expressAsyncHandler(async (req, res) => {
+  const { q } = req.query;
+  // Search by name or email
+  const query = q ? { $or: [{ name: { $regex: q, $options: 'i' } }, { email: { $regex: q, $options: 'i' } }] } : {};
+  const users = await User.find(query).select('name email phone isFrozen createdAt').limit(20);
+  res.status(200).json(users);
+});
+
+export const searchEmployers = expressAsyncHandler(async (req, res) => {
+  const { q } = req.query;
+  // Search by company name, contact name, or email
+  const query = q ? { $or: [{ companyName: { $regex: q, $options: 'i' } }, { name: { $regex: q, $options: 'i' } }, { email: { $regex: q, $options: 'i' } }] } : {};
+  const employers = await Employer.find(query).select('companyName name email phone isApproved isFrozen createdAt').limit(20);
+  res.status(200).json(employers);
+});
