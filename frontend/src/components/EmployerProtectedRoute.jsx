@@ -8,7 +8,6 @@ const EmployerProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     const verifyStatus = async () => {
-      // 1. If no token, redirect immediately
       if (!storedData) {
         setIsAuthorized("unauthorized");
         return;
@@ -17,24 +16,33 @@ const EmployerProtectedRoute = ({ children }) => {
       try {
         const { token } = JSON.parse(storedData);
 
-        // 2. USE THE CORRECT URL (mrpy)
+        // 1. We expect a response here.
         const { data } = await axios.get(
           "https://jobone-mrpy.onrender.com/employer/check-eligibility",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
 
-        // 3. Logic based on the response structure you shared
-        if (data.isFrozen || data.access === "blocked") {
-          alert(data.message || "Your account access is restricted.");
-          setIsAuthorized("unauthorized");
+        // 2. Logic: The API returned 200, so we check the access field.
+        if (data.access === "blocked") {
+          // CHANGE: Do NOT redirect to login. Just let them in.
+          // The CreateJob page itself will handle the "Posting Disabled" warning.
+          setIsAuthorized("authorized");
         } else {
           setIsAuthorized("authorized");
         }
       } catch (err) {
-        console.error("Auth check failed:", err);
-        setIsAuthorized("unauthorized");
+        // 3. FACT: Distinguish between being logged out (401) and being banned (403)
+        const status = err.response?.status;
+
+        if (status === 403) {
+          // Backend middleware blocked the request (likely frozen)
+          alert(err.response.data.message || "Access Forbidden.");
+          setIsAuthorized("unauthorized");
+        } else {
+          // 401 Unauthorized or other errors (token expired, server down)
+          localStorage.removeItem("employerInfo"); // Clean up dead token
+          setIsAuthorized("unauthorized");
+        }
       }
     };
     verifyStatus();
@@ -47,6 +55,7 @@ const EmployerProtectedRoute = ({ children }) => {
       </div>
     );
   if (isAuthorized === "unauthorized") return <Navigate to="/login" />;
+
   return children;
 };
 export default EmployerProtectedRoute;

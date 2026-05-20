@@ -8,6 +8,19 @@ import jwt from "jsonwebtoken";
 
 
 export const createJob = expressAsyncHandler(async (req, res) => {
+  const employer = await Employer.findById(req.employerId);
+  if (!employer) throw new Error('Employer not found');
+
+  // FACT: Enforce freeze at the controller level
+  if (employer.isFrozen) {
+    res.status(403);
+    throw new Error("Your account is frozen. You cannot post new jobs.");
+  }
+
+  if (employer.isApproved !== "approved") {
+    res.status(403);
+    throw new Error("Your account is pending admin approval.");
+  }
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400);
@@ -318,6 +331,12 @@ export const jobCreatedByUser = expressAsyncHandler(async (req, res) => {
 export const updateJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
+  const employer = await Employer.findById(req.employerId);
+  // FACT: Block updates if frozen
+  if (employer.isFrozen) {
+    res.status(403);
+    throw new Error("Your account is frozen. You cannot edit jobs.");
+  }
   
   if (!job) return res.status(404).json({ message: "Job not found" });
 
@@ -355,6 +374,12 @@ export const updateJob = expressAsyncHandler(async (req, res) => {
 export const deleteJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
+  const employer = await Employer.findById(req.employerId);
+  // FACT: Block deletions if frozen
+  if (employer.isFrozen) {
+    res.status(403);
+    throw new Error("Your account is frozen. You cannot delete jobs.");
+  }
   
   if (!job) return res.status(404).json({ message: "Job not found" });
 

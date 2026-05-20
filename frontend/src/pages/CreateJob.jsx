@@ -168,6 +168,7 @@ export default function CreateJob() {
   const [blockMessage, setBlockMessage] = useState("");
   const [missingItems, setMissingItems] = useState([]);
   const currencyRef = useRef(null);
+  const [isPostingDisabled, setIsPostingDisabled] = useState(false);
 
   const flagUrl = (iso) => `https://flagcdn.com/20x15/${iso}.png`;
 
@@ -232,8 +233,7 @@ export default function CreateJob() {
         );
 
         if (data.isFrozen) {
-          alert("Your account has been frozen by the admin.");
-          navigate("/employerdashboard");
+          setIsPostingDisabled(true); // Just disable the button, don't kick user out
         } else if (data.access === "incomplete") {
           setMissingItems(data.missingItems);
           setBlockMessage(data.message);
