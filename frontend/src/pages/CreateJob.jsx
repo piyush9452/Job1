@@ -211,68 +211,66 @@ export default function CreateJob() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true; // Prevents state updates on unmounted component
+    let isMounted = true;
 
     const checkEligibility = async () => {
       try {
         const storedData = localStorage.getItem("employerInfo");
-        if (!storedData) {
-          navigate("/login");
-          return;
-        }
+        if (!storedData) return navigate("/login");
 
         const { token } = JSON.parse(storedData);
-        if (!token) {
-          navigate("/login");
+
+        const { data } = await axios.get(
+          "https://jobone-mrpy.onrender.com/employer/check-eligibility",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!isMounted) return;
+
+        if (data.isFrozen) {
+          setIsPostingDisabled(true);
+          setBlockMessage("Your account is frozen. Posting new jobs is disabled.");
+          setPageAccess("granted"); // Allow page load
           return;
         }
 
-        const { data } = await axios.get(
-          `https://jobone-if7l.onrender.com/employer/check-eligibility`, // FACT: Ensure this URL matches your backend
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        if (data.access === "blocked") {
+          setBlockMessage(data.message);
+          setPageAccess("blocked"); // Kick out
+          return;
+        }
 
-        if (data.isFrozen) {
-          setIsPostingDisabled(true); // Just disable the button, don't kick user out
-        } else if (data.access === "incomplete") {
+        if (data.access === "incomplete") {
           setMissingItems(data.missingItems);
           setBlockMessage(data.message);
           setPageAccess("incomplete");
-        } else {
-          setPageAccess("granted");
+          return;
         }
 
-        if (isMounted) {
-          if (data.access === "blocked") {
-            setBlockMessage(data.message);
-            setPageAccess("blocked");
-          } else if (data.access === "incomplete") {
-            setMissingItems(data.missingItems);
-            setBlockMessage(data.message);
-            setPageAccess("incomplete");
-          } else {
-            setPageAccess("granted");
-          }
-        }
+        setIsPostingDisabled(false);
+        setPageAccess("granted");
       } catch (err) {
         console.error("Eligibility check failed:", err);
-        if (isMounted) {
-          setPageAccess("granted"); // Force fail-safe to prevent infinite loading if API is down
-          if (err.response?.status === 401) {
-            localStorage.removeItem("employerInfo");
-            navigate("/login");
-          }
+        if (!isMounted) return;
+        
+        // --- THIS FIX STOPS THE LOADING LOOP ---
+        if (err.response?.status === 401) {
+          localStorage.removeItem("employerInfo");
+          navigate("/login");
+        } else {
+          // If server error, show a message instead of spinning forever
+          setBlockMessage("Server error. Please try again later.");
+          setPageAccess("blocked"); 
         }
       }
     };
 
     checkEligibility();
-
-    const heartbeatInterval = setInterval(checkEligibility, 300000);
+    const interval = setInterval(checkEligibility, 300000); // 5 min heartbeat
 
     return () => {
       isMounted = false;
-      clearInterval(heartbeatInterval);
+      clearInterval(interval);
     };
   }, [navigate]);
 
@@ -776,6 +774,12 @@ export default function CreateJob() {
 
   return (
     <div className="flex flex-col py-20 md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
+      {isPostingDisabled && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl mb-6 font-bold flex items-center gap-3">
+          <AlertTriangle size={20} />
+          {blockMessage}
+        </div>
+      )}
       <div className="w-full md:w-1/2 bg-white p-8 rounded-2xl shadow-lg border border-gray-100 overflow-y-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-gray-800">
@@ -1915,13 +1919,14 @@ export default function CreateJob() {
               </button>
               <button
                 onClick={() => setShowConfirm(true)}
-                disabled={loading}
-                className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-blue-300 font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
+                disabled={loading || isPostingDisabled} // <--- THIS DISABLES THE BUTTON
+                className={`px-8 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2 
+    ${isPostingDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"}`}
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={18} />
-                ) : null}{" "}
-                Post Job
+                ) : null}
+                {isPostingDisabled ? "Posting Disabled" : "Post Job"}
               </button>
             </div>
           </div>
