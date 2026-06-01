@@ -557,9 +557,22 @@ export default function Jobs() {
     //     )}
     //   </AnimatePresence>
     // </div>
-    <div>
-      {" "}
-      <h1> Temporarily Unavailable</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4 text-center">
+      <div className="bg-white p-10 rounded-3xl shadow-xl max-w-lg border border-slate-200">
+        <h1 className="text-3xl font-extrabold text-slate-900 mb-4">
+          Temporarily Unavailable
+        </h1>
+        <p className="text-slate-600 text-base mb-8">
+          The Find Jobs section is currently closed for maintenance and
+          upgrades. Please check back later.
+        </p>
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all"
+        >
+          Return to Home
+        </button>
+      </div>
     </div>
   );
 }

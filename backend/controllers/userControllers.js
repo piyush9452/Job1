@@ -329,3 +329,53 @@ export const getDownloadableResumeUrl = expressAsyncHandler(async (req, res) => 
   const url = await getSignedUrl(client, command, { expiresIn: 300 });
   res.status(200).json({ downloadableUrl: url });
 });
+
+export const forgotPasswordUser = expressAsyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found with this email");
+  }
+
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Clear any existing OTPs for password reset to prevent spam
+  await UserOTP.deleteMany({ userId: user._id });
+
+  await UserOTP.create({
+    userId: user._id,
+    otp: otpCode,
+  });
+
+  await sendEmail({
+    email: user.email,
+    subject: 'Password Reset Request - Job Portal',
+    message: `Your password reset code is: ${otpCode}. It expires in 10 minutes. If you did not request this, please ignore this email.`,
+  });
+
+  res.status(200).json({ message: "Password reset OTP sent to your email." });
+});
+
+export const resetPasswordUser = expressAsyncHandler(async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const otpRecord = await UserOTP.findOne({ userId: user._id, otp: otp });
+  if (!otpRecord) {
+    res.status(400);
+    throw new Error("Invalid or expired OTP");
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  await UserOTP.deleteOne({ _id: otpRecord._id });
+
+  res.status(200).json({ message: "Password reset successful. You can now log in." });
+});

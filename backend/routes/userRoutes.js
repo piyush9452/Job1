@@ -1,7 +1,8 @@
 import express from "express";
 import { 
   createUser, loginUser, updateUser, userDetails, verifyUserOTP, googleLogin,
-  getResumeUploadUrl, saveResumeKey, getViewableResumeUrl, getDownloadableResumeUrl
+  getResumeUploadUrl, saveResumeKey, getViewableResumeUrl, getDownloadableResumeUrl,
+  forgotPasswordUser, resetPasswordUser
 } from "../controllers/userControllers.js";
 
 const router = express.Router();
@@ -13,6 +14,8 @@ router.post("/verifyotp", verifyUserOTP);
 router.post("/google-login", googleLogin);
 router.patch("/:id", updateUser);
 router.get("/:id", userDetails);
+router.post("/forgot-password", forgotPasswordUser);
+router.post("/reset-password", resetPasswordUser);
 
 // FACT: New S3 Resume Endpoints
 router.post("/:id/resume/upload-url", getResumeUploadUrl);

@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { GoogleLogin } from "@react-oauth/google"; // Import Google Component
-import login from "../assets/login.jpg";
-import NetworkBackground from "../components/NetworkBackground";
+import { GoogleLogin } from "@react-oauth/google";
+import { FaUserTie, FaBuilding } from "react-icons/fa";
 import BackgroundJoin from "../components/BackgroundJoin";
 
 export default function Login() {
@@ -12,9 +11,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // Added loading state
+  const [loading, setLoading] = useState(false);
 
-  // --- GOOGLE LOGIN HANDLER ---
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const endpoint =
@@ -26,32 +24,19 @@ export default function Login() {
         token: credentialResponse.credential,
       });
 
-      // ---------------------------------------------------------
-      // EMPLOYER LOGIC
-      // ---------------------------------------------------------
       if (activeTab === "employer") {
-        // 1. Strict LocalStorage Logic
         localStorage.setItem("employerToken", data.token);
         localStorage.setItem("employerInfo", JSON.stringify(data));
-        console.log("Employer Data Saved:", data);
 
-        // 2. Check Profile Completion
         if (data.isProfileComplete === false) {
           navigate("/employereditprofile", { state: { showWarning: true } });
         } else {
           navigate("/employerdashboard");
         }
-      }
-      // ---------------------------------------------------------
-      // USER LOGIC
-      // ---------------------------------------------------------
-      else {
-        // 1. Strict LocalStorage Logic
+      } else {
         localStorage.setItem("userToken", data.token);
         localStorage.setItem("userInfo", JSON.stringify(data));
-        console.log("User Data Saved:", data);
 
-        // 2. Check Profile Completion
         if (data.isProfileComplete === false) {
           navigate("/editprofile", { state: { showWarning: true } });
         } else {
@@ -64,10 +49,11 @@ export default function Login() {
     }
   };
 
-  // --- MANUAL LOGIN HANDLER ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
+
     try {
       const endpoint =
         activeTab === "employer"
@@ -75,7 +61,6 @@ export default function Login() {
           : "https://jobone-mrpy.onrender.com/user/login";
 
       const { data } = await axios.post(endpoint, { email, password });
-      console.log("Manual Login Data:", data);
 
       if (activeTab === "employer") {
         localStorage.setItem("employerToken", data.token);
@@ -94,120 +79,148 @@ export default function Login() {
   };
 
   return (
-    <div
-      className="relative flex items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat px-4"
-      style={{ backgroundColor: `transparent` }}
-    >
-      <BackgroundJoin radius={50} force={-1} />
-      <div className="w-full max-w-sm bg-white shadow-xl rounded-2xl p-6">
-        {/* Tabs */}
-        <div className="flex justify-around border-b mb-5">
-          <button
-            className={`pb-2 font-medium text-sm ${
-              activeTab === "user"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500"
-            }`}
-            onClick={() => setActiveTab("user")}
-          >
-            Jobseeker
-          </button>
-          <button
-            className={`pb-2 font-medium text-sm ${
-              activeTab === "employer"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500"
-            }`}
-            onClick={() => setActiveTab("employer")}
-          >
-            Employer
-          </button>
+    // FACT: Replaced 100dvh with min-h-screen to prevent the desktop band issue.
+    // Removed unnecessary w-full that conflicts with Windows scrollbars.
+    <div className="relative flex flex-col justify-center items-center min-h-screen bg-slate-950 font-sans p-4 sm:p-8 overflow-x-hidden">
+      {/* FACT: The background is pinned directly to the screen viewport */}
+      <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
+        <div className="opacity-50">
+          <BackgroundJoin />
         </div>
+      </div>
 
-        {/* --- GOOGLE LOGIN BUTTON --- */}
-        <div className="flex justify-center w-full mb-4">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => setError("Google Login Failed")}
-            theme="outline"
-            size="large"
-            width="320" // Adjusts width to fit container
-            text="continue_with"
-          />
-        </div>
+      <div className="relative z-10 w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl mt-8 mb-8">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex items-center my-4">
-          <hr className="flex-grow border-gray-300" />
-          <span className="mx-2 text-gray-400 text-sm">OR</span>
-          <hr className="flex-grow border-gray-300" />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <p className="text-red-500 text-sm text-center mb-3">{error}</p>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Email</label>
-            <input
-              type="email"
-              placeholder="john@example.com"
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+        <div className="relative z-10">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-extrabold text-white mb-2">
+              Welcome Back
+            </h2>
+            <p className="text-slate-400 text-sm">
+              Sign in to continue your journey.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Password</label>
-            <input
-              type="password"
-              placeholder="enter password"
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <div className="text-right mt-1">
-              <Link
-                to="/forgot-password"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Forgot password?
-              </Link>
+          <div className="flex bg-white/5 rounded-xl p-1 mb-6 border border-white/10">
+            <button
+              onClick={() => {
+                setActiveTab("user");
+                setError("");
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                activeTab === "user"
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <FaUserTie /> Jobseeker
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("employer");
+                setError("");
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                activeTab === "employer"
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <FaBuilding /> Employer
+            </button>
+          </div>
+
+          {error && (
+            <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs p-3 rounded-xl mb-4 text-center">
+              {error}
             </div>
+          )}
+
+          <div className="flex justify-center w-full mb-2">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Google Login Failed")}
+              theme="filled_black"
+              size="large"
+              text="continue_with"
+            />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition disabled:bg-blue-400"
-          >
-            {loading
-              ? "Logging in..."
-              : activeTab === "employer"
-                ? "Login as Employer"
-                : "Login"}
-          </button>
-        </form>
+          <div className="flex items-center my-6">
+            <hr className="flex-grow border-white/10" />
+            <span className="mx-4 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+              OR
+            </span>
+            <hr className="flex-grow border-white/10" />
+          </div>
 
-        {/* Register Links */}
-        <p className="text-center text-gray-600 text-sm mt-4">
-          New to Job1? Register{" "}
-          <Link to="/userregister" className="text-blue-600 hover:underline">
-            (Jobseeker
-          </Link>{" "}
-          /{" "}
-          <Link
-            to="/employerregister"
-            className="text-blue-600 hover:underline"
-          >
-            Employer)
-          </Link>
-        </p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <input
+                type="email"
+                placeholder="Email Address"
+                className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm rounded-xl p-3.5 outline-none focus:border-blue-500 focus:bg-white/10 transition-colors"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm rounded-xl p-3.5 outline-none focus:border-blue-500 focus:bg-white/10 transition-colors"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <div className="text-right mt-2">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3.5 rounded-xl text-white font-bold text-sm mt-2 transition-all shadow-lg ${
+                activeTab === "user"
+                  ? "bg-blue-600 hover:bg-blue-500 shadow-blue-600/30"
+                  : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30"
+              } disabled:opacity-50`}
+            >
+              {loading
+                ? "Authenticating..."
+                : activeTab === "employer"
+                  ? "Sign In as Employer"
+                  : "Sign In"}
+            </button>
+          </form>
+
+          <p className="text-center text-slate-400 text-sm mt-6">
+            New to Job1? Register{" "}
+            <Link
+              to="/userregister"
+              className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+            >
+              Jobseeker
+            </Link>{" "}
+            <span className="text-slate-600 mx-1">/</span>{" "}
+            <Link
+              to="/employerregister"
+              className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+            >
+              Employer
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -49,6 +49,7 @@ import ChatWidget from "./components/ChatWidgets";
 import AuthHome from "./routes/AuthHome";
 import TestLocation from "./pages/TestLocation";
 import JobAdminView from "./pages/JobAdminView";
+import ForgotPassword from "./pages/ForgotPassword";
 
 function App() {
   return (
@@ -61,6 +62,7 @@ function App() {
         {/* ================= PUBLIC ROUTES ================= */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/userregister" element={<UserRegister />} />
         <Route path="/employerregister" element={<EmployerRegister />} />

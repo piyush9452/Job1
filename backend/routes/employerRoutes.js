@@ -1,5 +1,5 @@
 import express from "express";
-import { registerEmployer,loginEmployer,verifyOTP,checkEmployerEligibility,searchCandidatesBySkills,getMyCandidates, getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl} from "../controllers/employerControllers.js";
+import { registerEmployer,loginEmployer,verifyOTP,checkEmployerEligibility,searchCandidatesBySkills,getMyCandidates, getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl, forgotPasswordEmployer, resetPasswordEmployer} from "../controllers/employerControllers.js";
 import { getEmployerCreatedJobs } from "../controllers/jobsControllers.js";
 import { body } from 'express-validator';
 import {protect} from "../middleware/authorization.js";
@@ -21,6 +21,9 @@ router.post("/register",rules, registerEmployer);
 router.post("/verifyotp", verifyOTP);
 
 router.post("/login", loginEmployer);
+
+router.post("/forgot-password", forgotPasswordEmployer);
+router.post("/reset-password", resetPasswordEmployer);
 
 router.post("/updateProfile",protectEmployer,updateEmployerProfile)
 

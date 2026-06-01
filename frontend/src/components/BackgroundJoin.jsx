@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 
-const NetworkBackground = () => {
+const BackgroundJoin = () => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -8,8 +8,13 @@ const NetworkBackground = () => {
     const ctx = canvas.getContext("2d");
     let animationFrameId;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const resizeCanvas = () => {
+      // FACT: Using clientWidth/clientHeight ignores the Windows scrollbar.
+      // This permanently stops the horizontal scroll blowout on PCs.
+      canvas.width = document.documentElement.clientWidth;
+      canvas.height = document.documentElement.clientHeight;
+    };
+    resizeCanvas();
 
     let particles = [];
     let mouse = { x: -1000, y: -1000 };
@@ -27,7 +32,7 @@ const NetworkBackground = () => {
           y: Math.random() * canvas.height,
           vx: (Math.random() - 0.5) * 0.8,
           vy: (Math.random() - 0.5) * 0.8,
-          radius: 6, // Reverted to standard size
+          radius: 6,
         });
       }
     };
@@ -39,8 +44,8 @@ const NetworkBackground = () => {
     };
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      resizeCanvas();
+      initParticles();
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -49,8 +54,7 @@ const NetworkBackground = () => {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Update & Draw Particles (Solid Style)
-      particles.forEach((p) => {
+      particles.forEach((p, index) => {
         p.x += p.vx;
         p.y += p.vy;
 
@@ -59,47 +63,28 @@ const NetworkBackground = () => {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        // CHANGED: Brighter Blue to pop against the Dark Navy edges
-        ctx.fillStyle = "#60a5fa";
+        ctx.fillStyle = "rgba(96, 165, 250, 0.8)";
         ctx.fill();
-      });
 
-      // 2. Connections
-      ctx.lineWidth = 1;
-
-      particles.forEach((p1) => {
-        // Find nearest neighbors
-        const distances = particles
-          .filter((p2) => p2 !== p1)
-          .map((p2) => ({
-            p: p2,
-            dist: Math.hypot(p1.x - p2.x, p1.y - p2.y),
-          }))
-          .sort((a, b) => a.dist - b.dist)
-          .slice(0, 6);
-
-        distances.forEach((d) => {
-          if (d.dist < connectionDistance) {
+        for (let j = index; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < connectionDistance) {
             ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(d.p.x, d.p.y);
-
-            const alpha = 1 - d.dist / connectionDistance;
-            // Line color: Matching the particle blue
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            const alpha = 1 - dist / connectionDistance;
             ctx.strokeStyle = `rgba(96, 165, 250, ${alpha})`;
             ctx.stroke();
           }
-        });
+        }
 
-        // Mouse Connections
-        const distToMouse = Math.hypot(p1.x - mouse.x, p1.y - mouse.y);
+        const distToMouse = Math.hypot(p.x - mouse.x, p.y - mouse.y);
         if (distToMouse < mouseDistance) {
           ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
+          ctx.moveTo(p.x, p.y);
           ctx.lineTo(mouse.x, mouse.y);
-
           const alpha = 1 - distToMouse / mouseDistance;
-          // Mouse line: White/Cyan mix to show interaction clearly
           ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx.stroke();
         }
@@ -120,19 +105,17 @@ const NetworkBackground = () => {
     <canvas
       ref={canvasRef}
       style={{
+        display: "block",
         position: "fixed",
         top: 0,
         left: 0,
-        width: "100%",
-        height: "100%",
+        width: "100vw",
+        height: "100vh",
+        pointerEvents: "none",
         zIndex: -1,
-        // CHANGED: Gradient from Light Blue (Center) to Navy (Edges)
-        // #3b82f6 (Bright Blue) -> #172554 (Deep Navy)
-        background:
-          "radial-gradient(circle at center, #3b82f6 0%, #0f172a 100%)",
       }}
     />
   );
 };
 
-export default NetworkBackground;
+export default BackgroundJoin;
