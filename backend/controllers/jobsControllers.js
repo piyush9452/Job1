@@ -27,11 +27,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     throw new Error(errors.array()[0].msg);
   }
 
-  const employer = await Employer.findById(req.employerId);
-  if (!employer) {
-    res.status(404);
-    throw new Error('Employer not found');
-  }
+  // Duplicate employer check removed
 
   // FACT: The Ultimate Backend Lock.
   // Even if a user bypasses your React frontend using Postman, the server will instantly reject the job creation.
