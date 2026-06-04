@@ -77,7 +77,7 @@ export default function Home() {
     const fetchFeatured = async () => {
       try {
         const { data } = await axios.get(
-          "https://jobone-mrpy.onrender.com/jobs"
+          "https://jobone-mrpy.onrender.com/jobs?limit=100"
         );
         const allJobs = data.data || data || [];
 
@@ -198,9 +198,17 @@ export default function Home() {
                   <div
                     key={job._id}
                     onClick={() => setSelectedJob(job)}
-                    className="bg-white p-6 rounded-3xl border border-indigo-100 shadow-sm hover:shadow-xl hover:border-indigo-300 transition-all cursor-pointer group flex flex-col h-full relative overflow-hidden"
+                    className={`bg-white p-6 rounded-3xl border shadow-sm hover:shadow-xl transition-all cursor-pointer group flex flex-col h-full relative overflow-hidden ${
+                      job.matchScore > 70
+                        ? "border-amber-400 hover:border-amber-500 shadow-amber-100/50"
+                        : "border-indigo-100 hover:border-indigo-300"
+                    }`}
                   >
-                    <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-bl-xl shadow-sm">
+                    <div className={`absolute top-0 right-0 text-[10px] font-extrabold px-3 py-1.5 rounded-bl-xl shadow-sm ${
+                      job.matchScore > 70
+                        ? "bg-gradient-to-r from-amber-300 to-yellow-500 text-amber-950"
+                        : "bg-indigo-600 text-white"
+                    }`}>
                       {job.matchScore}% Match
                     </div>
                     <div className="flex items-start justify-between mb-4 mt-2">

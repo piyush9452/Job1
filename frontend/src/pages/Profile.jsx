@@ -168,9 +168,23 @@ const Profile = () => {
               >
                 <Edit size={18} /> Edit Profile
               </button>
-              {profile.resume && (
+              {(profile.resume || profile.resumeFileKey) && (
                 <button
-                  onClick={() => window.open(profile.resume, "_blank")}
+                  onClick={async () => {
+                    if (profile.resume) {
+                      window.open(profile.resume, "_blank");
+                    } else if (profile.resumeFileKey) {
+                      try {
+                        const { data } = await axios.get(`https://jobone-mrpy.onrender.com/user/${profile._id}/resume/view`);
+                        if (data.viewableUrl) {
+                          window.open(data.viewableUrl, "_blank");
+                        }
+                      } catch (e) {
+                        console.error(e);
+                        alert("Failed to load resume");
+                      }
+                    }
+                  }}
                   className="w-full md:w-auto px-6 py-3 bg-slate-800 text-white border border-slate-700 rounded-xl font-bold hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
                 >
                   <FileText size={18} className="text-blue-400" /> View Resume

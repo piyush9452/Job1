@@ -50,6 +50,7 @@ import AuthHome from "./routes/AuthHome";
 import TestLocation from "./pages/TestLocation";
 import JobAdminView from "./pages/JobAdminView";
 import ForgotPassword from "./pages/ForgotPassword";
+import RecommendedJobs from "./pages/RecommendedJobs";
 
 function App() {
   return (
@@ -210,6 +211,9 @@ function App() {
           }
         />
 
+          <Route path="/recommended-jobs" element={<RecommendedJobs />} />
+
+          {/* Fallback */}
         {/* MISC */}
         <Route
           path="/about"
