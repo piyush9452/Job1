@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle, XCircle, FileText, UploadCloud, Eye, Download, AlertTriangle } from "lucide-react";
 
 const API_BASE = "https://jobone-mrpy.onrender.com/employer";
@@ -20,6 +21,7 @@ const DOCUMENT_CONFIG = [
 ];
 
 export default function EmployerDocumentManager() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -86,6 +88,15 @@ export default function EmployerDocumentManager() {
         {requiredDocs.map((doc) => (
           <DocumentUploader key={doc.field} doc={doc} profile={profile} onRefresh={fetchProfile} />
         ))}
+      </div>
+
+      <div className="mt-8 flex justify-end">
+        <button 
+          onClick={() => navigate('/employerdashboard')}
+          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg flex items-center gap-2"
+        >
+          <CheckCircle size={20} /> Save Changes & Return
+        </button>
       </div>
     </div>
   );

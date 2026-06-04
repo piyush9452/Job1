@@ -181,7 +181,7 @@ export default function VideoSection() {
               </div>
 
               <h2 className="text-4xl md:text-6xl lg:text-[72px] font-extrabold text-white tracking-tight leading-[1.05] mb-5">
-                How JOB1 helps you
+                How JOBONE helps you
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-violet-400 to-indigo-400">
                   grow faster.

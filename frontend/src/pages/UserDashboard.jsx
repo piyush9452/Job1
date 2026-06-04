@@ -33,15 +33,49 @@ import JobDetailsModal from "../components/JobDetailsModal"; // Import Modal
 
 export default function Home() {
   const [featuredJobs, setFeaturedJobs] = useState([]);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null); // State for Modal
   const navigate = useNavigate();
 
-  // --- FETCH FEATURED JOBS ---
+  // --- FETCH FEATURED & RECOMMENDED JOBS ---
   useEffect(() => {
+    const fetchRecommendations = async (allJobsList) => {
+      try {
+        const stored = localStorage.getItem("userInfo");
+        if (!stored) return;
+        const token = JSON.parse(stored)?.token;
+        if (!token) return;
+
+        setLoadingRecommendations(true);
+        const { data } = await axios.get("https://jobone-if7l.onrender.com/ai/recommend-jobs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (data && data.recommendedJobs) {
+          const richRecommendations = data.recommendedJobs.map(aiJob => {
+            const fullJob = allJobsList.find(j => j._id === aiJob.jobId);
+            return {
+              ...fullJob,
+              matchScore: aiJob.matchScore,
+              reason: aiJob.reason,
+              _id: aiJob.jobId,
+              title: fullJob?.title || aiJob.title
+            };
+          }).filter(j => j.postedByCompany || j.postedByName); // Ensure we found the full job
+
+          setRecommendedJobs(richRecommendations);
+        }
+      } catch (err) {
+        console.error("Failed to fetch recommendations", err);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+
     const fetchFeatured = async () => {
       try {
-        // Use your existing API
         const { data } = await axios.get(
           "https://jobone-mrpy.onrender.com/jobs"
         );
@@ -49,6 +83,9 @@ export default function Home() {
 
         // Take the first 6 jobs as "Featured"
         setFeaturedJobs(allJobs.slice(0, 6));
+        
+        // Fetch recommendations asynchronously
+        fetchRecommendations(allJobs);
       } catch (err) {
         console.error("Failed to load featured jobs", err);
       } finally {
@@ -60,6 +97,7 @@ export default function Home() {
 
   // Helper to safely get location string
   const getLocationStr = (job) => {
+    if (!job) return "Remote";
     if (typeof job.location === "object")
       return job.location.address || "Remote";
     return job.location || "Remote";
@@ -134,6 +172,80 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* RECOMMENDED JOBS (AI MATCHED) */}
+        {loadingRecommendations ? (
+          <section className="py-16 px-4 sm:px-6 bg-indigo-50/50 border-y border-indigo-100 flex justify-center items-center">
+             <div className="flex items-center gap-2 text-indigo-600 font-bold">
+               <Sparkles size={20} className="animate-pulse" /> Generating AI Recommendations...
+             </div>
+          </section>
+        ) : recommendedJobs.length > 0 ? (
+          <section className="py-16 px-4 sm:px-6 bg-indigo-50 border-y border-indigo-100">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-10">
+                <span className="text-indigo-600 font-bold text-xs uppercase tracking-wider bg-white border border-indigo-100 px-3 py-1 rounded-full flex items-center gap-2 w-fit shadow-sm">
+                  <Sparkles size={12} className="text-indigo-500" /> AI Matched For You
+                </span>
+                <h2 className="text-3xl font-bold text-slate-900 mt-3">
+                  Recommended Jobs
+                </h2>
+                <p className="text-slate-600 mt-2">Personalized matches based on your skills and profile experience.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recommendedJobs.map((job) => (
+                  <div
+                    key={job._id}
+                    onClick={() => setSelectedJob(job)}
+                    className="bg-white p-6 rounded-3xl border border-indigo-100 shadow-sm hover:shadow-xl hover:border-indigo-300 transition-all cursor-pointer group flex flex-col h-full relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-bl-xl shadow-sm">
+                      {job.matchScore}% Match
+                    </div>
+                    <div className="flex items-start justify-between mb-4 mt-2">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-xl font-bold text-indigo-600 border border-indigo-100 shadow-inner">
+                        {(job.postedByCompany || job.postedByName || "C").charAt(0)}
+                      </div>
+                      <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-lg uppercase tracking-wide border border-slate-200 mt-1">
+                        {Array.isArray(job.jobType) ? job.jobType.join(", ") : job.jobType}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-extrabold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                      {job.title}
+                    </h3>
+                    <p className="text-sm text-slate-500 font-bold mb-4">
+                      {job.postedByCompany || job.postedByName || "Company Confidential"}
+                    </p>
+
+                    <div className="p-3.5 bg-indigo-50/50 rounded-xl mb-5 border border-indigo-50/80">
+                      <p className="text-xs font-bold text-indigo-800 leading-snug">
+                        <Sparkles size={12} className="inline mr-1 text-indigo-500" />
+                        {job.reason}
+                      </p>
+                    </div>
+
+                    <div className="mt-auto space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 font-bold">
+                        <MapPin size={16} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{getLocationStr(job)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-slate-600 font-bold">
+                        <IndianRupee size={16} className="text-slate-400 shrink-0" />
+                        <span>
+                          {job.salaryAmount === 0 || (job.salaryMin === 0 && job.salaryMax === 0) 
+                            ? "Unpaid"
+                            : job.salaryAmount?.toLocaleString() || job.salaryMin?.toLocaleString() || job.salary?.toLocaleString() || "TBD"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {/* 5. FEATURED JOBS (REAL DATA) */}
         <section className="py-20 px-4 sm:px-6 bg-slate-50">
@@ -226,7 +338,7 @@ export default function Home() {
                 to="/"
                 className="text-2xl font-bold text-white tracking-tight"
               >
-                Job1 Portal
+                JOBONE Portal
               </Link>
               <p className="text-sm leading-relaxed text-slate-400">
                 Connecting talent with opportunity.
@@ -235,7 +347,7 @@ export default function Home() {
             {/* ... (Keep your footer links as is) ... */}
           </div>
           <div className="pt-8 text-center text-xs text-slate-500">
-            &copy; {new Date().getFullYear()} Job1 Portal. All rights reserved.
+            &copy; {new Date().getFullYear()} JOBONE Portal. All rights reserved.
           </div>
         </div>
       </footer>

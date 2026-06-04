@@ -17,7 +17,7 @@ export default function Footer() {
         {/* Brand & Socials */}
         <div className="space-y-6">
           <h2 className="text-2xl font-extrabold text-white tracking-tight">
-            Job1<span className="text-blue-500">Portal</span>
+            JOBONE<span className="text-blue-500">Portal</span>
           </h2>
           <p className="text-sm leading-relaxed max-w-xs font-medium">
             Connecting elite talent with tomorrow's leading companies. The most
@@ -132,7 +132,7 @@ export default function Footer() {
           </div>
           <div className="flex items-center space-x-3 text-sm font-medium">
             <FaEnvelope className="text-blue-500" />
-            <span>support@job1.com</span>
+            <span>support@jobone.com</span>
           </div>
           <div className="flex items-start space-x-3 text-sm font-medium mt-2">
             <FaMapMarkerAlt className="text-blue-500 mt-1 shrink-0" />
@@ -147,7 +147,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="max-w-6xl mx-auto px-6 border-t border-slate-800/80 pt-8 flex flex-col md:flex-row items-center justify-between text-xs font-medium">
-        <p>© {new Date().getFullYear()} Job1 Portal. All Rights Reserved.</p>
+        <p>© {new Date().getFullYear()} JOBONE Portal. All Rights Reserved.</p>
         <p className="mt-2 md:mt-0 opacity-60">
           Engineered by Simtrak Solutions.
         </p>

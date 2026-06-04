@@ -6,7 +6,7 @@ export default function About() {
     <div className="container mx-auto px-6 text-center">
         <h3 className="text-3xl font-bold text-blue-700 mb-6">About Us</h3>
         <p className="text-gray-700 max-w-3xl mx-auto">
-            Job1 Portal is dedicated to bridging the gap between job seekers and recruiters.
+            JOBONE Portal is dedicated to bridging the gap between job seekers and recruiters.
             With innovative tools and a user-friendly platform, we aim to make hiring and job
             searching easier and more effective for everyone.
         </p>

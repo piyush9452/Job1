@@ -18,6 +18,7 @@ import {
   GraduationCap,
   Languages,
   HelpCircle,
+  EyeOff,
 } from "lucide-react";
 
 export default function JobAdminView() {
@@ -59,7 +60,7 @@ export default function JobAdminView() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       alert(
-        `Job successfully ${status === "active" ? "approved" : "rejected"}!`,
+        `Job successfully ${status === "active" ? "approved" : status === "hidden" ? "hidden" : "rejected"}!`,
       );
       navigate("/admin/dashboard");
     } catch (err) {
@@ -154,6 +155,15 @@ export default function JobAdminView() {
                 >
                   <XCircle size={18} /> Reject Job
                 </button>
+                {job.status !== "hidden" && (
+                  <button
+                    onClick={() => handleStatusChange("hidden")}
+                    disabled={actionLoading}
+                    className="w-full mt-2 bg-slate-100 text-slate-700 border border-slate-200 py-3 rounded-xl font-bold hover:bg-slate-200 transition flex items-center justify-center gap-2"
+                  >
+                    <EyeOff size={18} /> Hide Job
+                  </button>
+                )}
               </div>
             </div>
 

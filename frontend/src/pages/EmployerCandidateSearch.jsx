@@ -209,7 +209,9 @@ export default function Candidates() {
                     <img
                       src={
                         candidate.profilePicture ||
-                        "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                        (candidate.gender === "Female" 
+                          ? "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+                          : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png")
                       }
                       alt={candidate.name}
                       className="w-16 h-16 rounded-full object-cover border border-slate-100 shrink-0"

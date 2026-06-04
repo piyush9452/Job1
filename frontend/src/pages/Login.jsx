@@ -205,7 +205,7 @@ export default function Login() {
           </form>
 
           <p className="text-center text-slate-400 text-sm mt-6">
-            New to Job1? Register{" "}
+            New to JOBONE? Register{" "}
             <Link
               to="/userregister"
               className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"

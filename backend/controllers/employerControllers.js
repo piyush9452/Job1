@@ -43,11 +43,16 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
 
   const { name, email, password, phone, companyName } = req.body;
 
-  // 2. Check existence (Same as before)
   const existingEmployer = await Employer.findOne({ email });
   if (existingEmployer) {
     res.status(400);
     throw new Error('Employer with this email already exists');
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    res.status(400);
+    throw new Error('This email is already registered as a Jobseeker.');
   }
 
   // 3. Hash password (Same as before)
@@ -456,8 +461,16 @@ export const continueWithGoogle = expressAsyncHandler(async (req, res) => {
   });
   const { email, name, picture, sub: googleId } = ticket.getPayload();
 
-  // 2. Check if email exists in DB
-  const employer = await Employer.findOne({ email });
+  // 2. Check if employer exists
+  let employer = await Employer.findOne({ email });
+
+  if (!employer) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(400);
+      throw new Error('This email is already registered as a Jobseeker.');
+    }
+  }
 
   if (employer) {
     // --- SCENARIO A: USER EXISTS ---
@@ -511,6 +524,14 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
     const { email, name, picture, sub: googleId } = ticket.getPayload();
 
     let employer = await Employer.findOne({ email });
+
+    if (!employer) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(400);
+        throw new Error('This email is already registered as a Jobseeker.');
+      }
+    }
 
     if (employer) {
       // --- EXISTING EMPLOYER ---

@@ -152,11 +152,17 @@ export default function EmployerDashboard() {
                 label="Find Candidates"
                 onClick={() => navigate("/candidates")}
               />
-              {/* FACT: Historical Applicants replacing Settings */}
+              {/* FACT: Historical Applicants */}
               <NavItem
                 icon={<Users size={20} />}
                 label="My Candidates"
                 onClick={() => navigate("/my-candidates")}
+              />
+              {/* FACT: Settings restored */}
+              <NavItem
+                icon={<Settings size={20} />}
+                label="Settings"
+                onClick={() => navigate("/employerprofile")}
               />
             </>
           )}

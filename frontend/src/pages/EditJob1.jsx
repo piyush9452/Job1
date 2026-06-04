@@ -179,10 +179,10 @@ export default function EditJob() {
           mode: d.mode?.length ? d.mode : ["Work from office"],
           salaryMin: isCurrentlyUnpaid
             ? ""
-            : d.salaryMin || d.salaryAmount || "",
+            : d.salaryMin ?? d.salaryAmount ?? "",
           salaryMax: isCurrentlyUnpaid
             ? ""
-            : d.salaryMax || d.salaryAmount || "",
+            : d.salaryMax ?? d.salaryAmount ?? "",
           salaryFrequency: d.salaryFrequency || "Month",
           salaryCurrency: d.salaryCurrency || "INR",
           incentives: Array.isArray(d.incentives) ? d.incentives : [],
@@ -671,7 +671,7 @@ export default function EditJob() {
                 type="number"
                 placeholder="Min Salary"
                 disabled={isUnpaid}
-                value={job.salaryMin}
+                value={job.salaryMin ?? ""}
                 onChange={(e) =>
                   setJob((prev) => ({ ...prev, salaryMin: e.target.value }))
                 }
@@ -682,7 +682,7 @@ export default function EditJob() {
                 type="number"
                 placeholder="Max Salary"
                 disabled={isUnpaid}
-                value={job.salaryMax}
+                value={job.salaryMax ?? ""}
                 onChange={(e) =>
                   setJob((prev) => ({ ...prev, salaryMax: e.target.value }))
                 }
@@ -1283,6 +1283,29 @@ export default function EditJob() {
             >
               Add
             </button>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {[
+              "What is your notice period?",
+              "What are your salary expectations?",
+              "Are you willing to relocate for this role?",
+              "Do you require visa sponsorship?",
+              "How many years of relevant experience do you have?",
+              "Are you comfortable working in the specified shifts?"
+            ].map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => {
+                  if (!job.screeningQuestions.includes(q)) {
+                     setJob(prev => ({ ...prev, screeningQuestions: [...prev.screeningQuestions, q] }));
+                  }
+                }}
+                className="text-[11px] font-bold bg-white border border-purple-200 text-purple-700 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors shadow-sm"
+              >
+                + Add: {q}
+              </button>
+            ))}
           </div>
           {job.screeningQuestions.length > 0 && (
             <ul className="space-y-2 mt-4">

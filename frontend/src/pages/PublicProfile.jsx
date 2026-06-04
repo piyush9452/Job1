@@ -286,7 +286,9 @@ export default function PublicProfile() {
               <img
                 src={
                   profile.profilePicture ||
-                  "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                  (profile.gender === "Female" 
+                    ? "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+                    : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png")
                 }
                 alt="User"
                 className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-slate-50 shadow-sm"
@@ -311,11 +313,11 @@ export default function PublicProfile() {
                 </div>
               </div>
 
-              {profile.resume && (
+              {profile.resume ? (
                 <button
                   onClick={handleDownloadResume}
                   disabled={isDownloading}
-                  className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-colors disabled:opacity-70"
+                  className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-colors disabled:opacity-70 shadow-sm"
                 >
                   {isDownloading ? (
                     <Loader2 size={18} className="animate-spin" />
@@ -324,6 +326,11 @@ export default function PublicProfile() {
                   )}
                   {isDownloading ? "Downloading..." : "Download Resume"}
                 </button>
+              ) : (
+                <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-xl text-center">
+                  <p className="text-sm font-bold text-orange-800">No Resume Uploaded</p>
+                  <p className="text-xs font-medium text-orange-600 mt-1">This candidate has not uploaded a resume yet.</p>
+                </div>
               )}
             </div>
 

@@ -447,7 +447,9 @@ export default function JobApplicants() {
                             <img
                               src={
                                 candidate.profilePicture ||
-                                "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                                (candidate.gender === "Female" 
+                                  ? "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+                                  : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png")
                               }
                               alt="Avatar"
                               className="w-10 h-10 rounded-full object-cover border border-slate-200"

@@ -56,7 +56,8 @@ const VerifyOTP = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              disabled={!!initialEmail}
+              className={`w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none ${initialEmail ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
             />
           </div>
 

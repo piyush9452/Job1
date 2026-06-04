@@ -87,7 +87,7 @@ const JobSchema = new mongoose.Schema({
   expiringAt: { type: Date }, 
   status: { 
     type: String, 
-    enum: ["pending_approval", "active", "inactive", "closed", "deadline passed", "rejected"], 
+    enum: ["pending_approval", "active", "inactive", "closed", "deadline passed", "rejected", "hidden"], 
     default: "pending_approval" 
   },
   

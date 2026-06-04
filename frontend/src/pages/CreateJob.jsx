@@ -1127,27 +1127,27 @@ export default function CreateJob() {
                   )}
                 </div>
 
-                <div className="flex-1 flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-3 w-full">
                   <input
                     type="number"
-                    placeholder="Min"
+                    placeholder="Min Salary"
                     disabled={isUnpaid}
-                    value={job.salaryMin || ""}
+                    value={job.salaryMin ?? ""}
                     onChange={(e) =>
                       setJob((prev) => ({ ...prev, salaryMin: e.target.value }))
                     }
-                    className="w-full p-2.5 border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300 disabled:bg-green-100/50"
+                    className="w-full p-3 border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300 disabled:bg-green-100/50 font-bold"
                   />
                   <span className="text-green-600 font-bold">-</span>
                   <input
                     type="number"
-                    placeholder="Max"
+                    placeholder="Max Salary"
                     disabled={isUnpaid}
-                    value={job.salaryMax}
+                    value={job.salaryMax ?? ""}
                     onChange={(e) =>
                       setJob((prev) => ({ ...prev, salaryMax: e.target.value }))
                     }
-                    className="w-full p-2.5 border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300 disabled:bg-green-100/50"
+                    className="w-full p-3 border border-green-200 rounded-xl outline-none focus:ring-2 focus:ring-green-300 disabled:bg-green-100/50 font-bold"
                   />
                 </div>
 
@@ -1293,10 +1293,33 @@ export default function CreateJob() {
                 <button
                   type="button"
                   onClick={handleAddQuestion}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-purple-700"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-purple-700 shadow-sm"
                 >
                   Add
                 </button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {[
+                  "What is your notice period?",
+                  "What are your salary expectations?",
+                  "Are you willing to relocate for this role?",
+                  "Do you require visa sponsorship?",
+                  "How many years of relevant experience do you have?",
+                  "Are you comfortable working in the specified shifts?"
+                ].map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => {
+                      if (!job.screeningQuestions.includes(q)) {
+                         setJob(prev => ({ ...prev, screeningQuestions: [...prev.screeningQuestions, q] }));
+                      }
+                    }}
+                    className="text-[11px] font-bold bg-white border border-purple-200 text-purple-700 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors"
+                  >
+                    + Add: {q}
+                  </button>
+                ))}
               </div>
               {job.screeningQuestions.length > 0 && (
                 <ul className="space-y-2 mt-4">

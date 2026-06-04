@@ -115,7 +115,9 @@ const Profile = () => {
               <img
                 src={
                   profile.profilePicture ||
-                  "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                  (profile.gender === "Female"
+                    ? "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+                    : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png")
                 }
                 alt="Profile"
                 className="w-32 h-32 md:w-40 md:h-40 rounded-3xl object-cover border-2 border-white/10 shadow-2xl bg-slate-800"

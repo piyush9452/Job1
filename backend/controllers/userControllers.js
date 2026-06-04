@@ -1,4 +1,5 @@
 import User from "../models/users.js";
+import Employer from "../models/employer.js";
 import jwt from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
 import { OAuth2Client } from 'google-auth-library';
@@ -40,6 +41,12 @@ export const createUser = expressAsyncHandler(async (req, res) => {
   if (existingUser) {
     res.status(400);
     throw new Error("User already exists");
+  }
+
+  const existingEmployer = await Employer.findOne({ email });
+  if (existingEmployer) {
+    res.status(400);
+    throw new Error("This email is already registered as an Employer.");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -195,6 +202,14 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
 
     // 2. Check if user exists
     let user = await User.findOne({ email });
+
+    if (!user) {
+      const existingEmployer = await Employer.findOne({ email });
+      if (existingEmployer) {
+        res.status(400);
+        throw new Error("This email is already registered as an Employer.");
+      }
+    }
 
     if (user) {
       // --- SCENARIO 1: EXISTING USER (LOGIN) ---

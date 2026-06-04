@@ -48,6 +48,7 @@ export default function EmployerEditProfile() {
     .filter((w) => w.length > 0).length;
   // FACT: Adjusted minimum word count based on tester feedback.
   const MIN_WORDS = 50;
+  const MAX_WORDS = 200;
 
   useEffect(() => {
     if (location.state?.showWarning) setShowPopup(true);
@@ -108,6 +109,12 @@ export default function EmployerEditProfile() {
     if (wordCount < MIN_WORDS) {
       alert(
         `Description must be at least ${MIN_WORDS} words. You currently have ${wordCount}.`,
+      );
+      return;
+    }
+    if (wordCount > MAX_WORDS) {
+      alert(
+        `Description cannot exceed ${MAX_WORDS} words. You currently have ${wordCount}.`,
       );
       return;
     }
@@ -403,18 +410,20 @@ export default function EmployerEditProfile() {
                 <FileText size={16} className="text-blue-500" /> About Details{" "}
                 <span className="text-red-500">*</span>
               </label>
-              <span
-                className={`text-xs font-bold px-2 py-1 rounded-md ${wordCount >= MIN_WORDS ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}
-              >
-                {wordCount} / {MIN_WORDS} words min
-              </span>
+              <div className="flex justify-between items-center mt-2 mb-2">
+                <span
+                  className={`text-xs font-bold px-2 py-1 rounded-md ${wordCount >= MIN_WORDS && wordCount <= MAX_WORDS ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}
+                >
+                  {wordCount} / {MAX_WORDS} words max (min {MIN_WORDS})
+                </span>
+              </div>
             </div>
             <textarea
               name="description"
               value={form.description}
               onChange={onChange}
-              className={`w-full p-4 border rounded-xl focus:ring-2 outline-none h-48 resize-y transition leading-relaxed ${wordCount >= MIN_WORDS ? "border-slate-200 focus:border-blue-500 focus:ring-blue-100" : "border-red-300 focus:border-red-500 focus:ring-red-100"}`}
-              placeholder={`Provide a detailed description (minimum ${MIN_WORDS} words)...`}
+              className={`w-full p-4 border rounded-xl focus:ring-2 outline-none h-48 resize-y transition leading-relaxed ${wordCount >= MIN_WORDS && wordCount <= MAX_WORDS ? "border-slate-200 focus:border-blue-500 focus:ring-blue-100" : "border-red-300 focus:border-red-500 focus:ring-red-100"}`}
+              placeholder={`Provide a detailed description (${MIN_WORDS}-${MAX_WORDS} words)...`}
               required
             />
           </div>

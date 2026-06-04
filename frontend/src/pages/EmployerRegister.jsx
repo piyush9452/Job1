@@ -83,7 +83,7 @@ const EmployerRegister = () => {
             setLoading(false);
 
             // Redirect to Employer Dashboard after successful registration
-            setTimeout(() => navigate("/employerotp"), 1500);
+            setTimeout(() => navigate("/employerotp", { state: { email: formData.email } }), 1500);
         } catch (err) {
             setLoading(false);
             setError(
@@ -99,7 +99,7 @@ const EmployerRegister = () => {
             {/* LEFT SECTION: Animated background + heading */}
             <div className="relative flex flex-col justify-center items-center overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 text-white p-10">
                 <div className="absolute top-6 left-8 z-20 text-3xl font-bold tracking-wide cursor-pointer">
-                    Job1
+                    JOBONE
                 </div>
                 {/* Floating shapes */}
                 <motion.div
