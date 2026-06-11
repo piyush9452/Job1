@@ -41,12 +41,7 @@ export default function AdminDashboard() {
     const parsedAdmin = JSON.parse(storedAdmin);
     setAdminRole(parsedAdmin.role);
 
-    const searchParams = new URLSearchParams(location.search);
-    const tabParam = searchParams.get("tab");
-
-    if (tabParam) {
-      setActiveTab(tabParam);
-    } else if (parsedAdmin.role === "jobseekerAdmin") {
+    if (parsedAdmin.role === "jobseekerAdmin") {
       setActiveTab("allJobseekers");
     } else {
       setActiveTab("pendingJobs");
@@ -54,6 +49,15 @@ export default function AdminDashboard() {
 
     fetchInitialData(parsedAdmin);
   }, [navigate]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get("tab");
+
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   // ─── API CALLS ──────────────────────────────────────────────────────────
 
