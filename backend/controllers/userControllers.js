@@ -8,8 +8,7 @@ import UserOTP from '../models/userVerification.js';
 import sendEmail from '../utils/emailVerification.js';
 import { validationResult } from 'express-validator';
 
-import { getS3Client } from "../config/s3Config.js";
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Application from "../models/applications.js";
 import crypto from 'crypto';
@@ -27,6 +26,7 @@ const getS3Client = () => {
   }
   return s3Client;
 };
+
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 

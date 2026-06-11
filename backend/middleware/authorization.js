@@ -57,7 +57,7 @@ export const restrictTo = (...roles) => {
   };
 };
 
-import Employer from "../models/employers.js";
+import Employer from "../models/employer.js";
 
 // FACT: Middleware that allows either a User or an Employer
 export const protectAny = async (req, res, next) => {

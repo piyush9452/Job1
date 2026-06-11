@@ -8,7 +8,6 @@ import jwt from "jsonwebtoken";
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { S3Client } from '@aws-sdk/client-s3';
-import { S3Client } from '@aws-sdk/client-s3';
 import Employer from '../models/employer.js';
 import expressAsyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
@@ -103,6 +102,21 @@ export const createAdmin = expressAsyncHandler(async (req, res) => {
 export const getPendingEmployers = errorHandler(async (req, res) => {
   const employers = await Employer.find({ isApproved: "pending" }).select("-password");
   res.json(employers);
+});
+
+// @desc    Get all employers (for admin view)
+// @route   GET /api/admin/employers
+export const getAllEmployersForAdmin = errorHandler(async (req, res) => {
+  const employers = await Employer.find({}).select("-password").sort({ createdAt: -1 });
+  res.json(employers);
+});
+
+// @desc    Get all jobseekers (for admin view)
+// @route   GET /api/admin/users
+export const getAllJobseekersForAdmin = errorHandler(async (req, res) => {
+  const { default: User } = await import('../models/user.js');
+  const users = await User.find({}).select("-password").sort({ createdAt: -1 });
+  res.json(users);
 });
 
 // @desc    Get all pending jobs
