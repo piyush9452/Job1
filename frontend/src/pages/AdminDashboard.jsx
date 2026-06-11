@@ -292,7 +292,7 @@ export default function AdminDashboard() {
                     <div key={job._id} className="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center gap-4 shadow-sm hover:shadow-md transition">
                       <div>
                         <h3 className="font-bold text-lg text-slate-800">{job.title}</h3>
-                        <p className="text-sm text-slate-500 mt-1">{job.postedByCompany} • {job.location}</p>
+                        <p className="text-sm text-slate-500 mt-1">{job.postedByCompany} • {typeof job.location === 'object' ? job.location?.address : job.location}</p>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => window.open(`/admin/job/${job._id}`, "_blank")} className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-sm font-bold transition">View Details</button>
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
                     <div key={job._id} className="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center gap-4 shadow-sm hover:shadow-md transition">
                       <div>
                         <h3 className="font-bold text-lg text-slate-800">{job.title}</h3>
-                        <p className="text-sm text-slate-500 mt-1">{job.postedByCompany} • {job.location}</p>
+                        <p className="text-sm text-slate-500 mt-1">{job.postedByCompany} • {typeof job.location === 'object' ? job.location?.address : job.location}</p>
                         <span className={`inline-block mt-2 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${job.status === 'active' ? 'bg-emerald-100 text-emerald-700' : job.status === 'pending_approval' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'}`}>
                           {job.status.replace("_", " ")}
                         </span>

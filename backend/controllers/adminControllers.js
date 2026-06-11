@@ -114,7 +114,7 @@ export const getAllEmployersForAdmin = errorHandler(async (req, res) => {
 // @desc    Get all jobseekers (for admin view)
 // @route   GET /api/admin/users
 export const getAllJobseekersForAdmin = errorHandler(async (req, res) => {
-  const { default: User } = await import('../models/user.js');
+  const { default: User } = await import('../models/users.js');
   const users = await User.find({}).select("-password").sort({ createdAt: -1 });
   res.json(users);
 });
@@ -154,7 +154,7 @@ export const getEmployerJobsWithApplications = errorHandler(async (req, res) => 
 // @route   GET /api/admin/users/:id/applications
 export const getJobseekerApplicationsForAdmin = errorHandler(async (req, res) => {
   const { default: Application } = await import('../models/applications.js');
-  const { default: User } = await import('../models/user.js');
+  const { default: User } = await import('../models/users.js');
 
   const user = await User.findById(req.params.id).select("-password");
   if (!user) {
