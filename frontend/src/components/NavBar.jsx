@@ -11,9 +11,11 @@ import {
   Briefcase,
   Sparkles,
   Building,
+  Download,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LogoJobOne from "./LogoJobOne";
+import axios from "axios";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,10 +37,13 @@ export default function Navbar() {
   // --- 1. DETERMINE ROLE ---
   const userInfo = localStorage.getItem("userInfo");
   const employerInfo = localStorage.getItem("employerInfo");
+  const adminInfo = localStorage.getItem("adminInfo");
 
   let activeRole = "guest";
 
-  if (userInfo && !employerInfo) {
+  if (adminInfo && location.pathname.startsWith("/admin")) {
+    activeRole = "admin";
+  } else if (userInfo && !employerInfo) {
     activeRole = "user";
   } else if (!userInfo && employerInfo) {
     activeRole = "employer";
@@ -52,6 +57,26 @@ export default function Navbar() {
 
   const isUser = activeRole === "user";
   const isEmployer = activeRole === "employer";
+  const isAdmin = activeRole === "admin";
+
+  const handleExportDB = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("adminInfo")).token;
+      const response = await axios.get("https://jobone-mrpy.onrender.com/admin/export", {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "JobOne_DB_Export.xlsx");
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      console.error("Error exporting DB", error);
+      alert("Failed to export DB. Please try again.");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("userToken");
@@ -134,20 +159,31 @@ export default function Navbar() {
 
         {/* --- DESKTOP MENU --- */}
         <div className="hidden md:flex items-center space-x-8">
-          <NavLink to="/">Home</NavLink>
+          {!isAdmin && <NavLink to="/">Home</NavLink>}
 
           {activeRole === "guest" && (
             <>
-              {/* <NavLink to="/jobs">Find Jobs</NavLink> */}
               <NavLink to="/employerregister">Post a Job</NavLink>
             </>
           )}
 
-          {/* {isUser && <NavLink to="/jobs">Find Jobs</NavLink>} */}
           {isEmployer && <NavLink to="/createjob">Post a Job</NavLink>}
 
+          {isAdmin && (
+            <button
+              onClick={handleExportDB}
+              className={`px-5 py-2.5 flex items-center gap-2 rounded-full font-bold transition-all text-sm ${
+                scrolled
+                  ? "bg-emerald-600 text-white shadow-[0_4px_14px_rgba(5,150,105,0.3)] hover:shadow-[0_6px_20px_rgba(5,150,105,0.4)] hover:bg-emerald-500 hover:-translate-y-0.5"
+                  : "bg-emerald-500 text-white shadow-[0_4px_14px_rgba(16,185,129,0.3)] hover:bg-emerald-400 hover:-translate-y-0.5"
+              }`}
+            >
+              <Download size={16} /> Export DB to Excel
+            </button>
+          )}
+
           {/* Profile Dropdown / Login Button */}
-          {activeRole !== "guest" ? (
+          {activeRole !== "guest" && !isAdmin ? (
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -242,7 +278,7 @@ export default function Navbar() {
                 )}
               </AnimatePresence>
             </div>
-          ) : (
+          ) : activeRole === "guest" ? (
             <div className="flex items-center gap-4">
               <Link
                 to="/login"
@@ -262,7 +298,7 @@ export default function Navbar() {
                 <span className="text-lg leading-none mb-0.5">›</span>
               </button>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* --- MOBILE HAMBURGER --- */}
@@ -291,23 +327,30 @@ export default function Navbar() {
             className="md:hidden absolute w-full left-0 top-[100%] bg-white/90 backdrop-blur-3xl backdrop-saturate-200 border-b border-slate-200/50 shadow-2xl py-6 px-6 flex flex-col space-y-5"
           >
             {/* Note: Mobile menu text is always dark since the dropdown background is white/glass */}
-            <Link
-              to="/"
-              className="text-slate-700 font-bold text-lg hover:text-blue-600"
-              onClick={() => setMenuOpen(false)}
-            >
-              Home
-            </Link>
+            {!isAdmin && (
+              <Link
+                to="/"
+                className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                onClick={() => setMenuOpen(false)}
+              >
+                Home
+              </Link>
+            )}
+
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  handleExportDB();
+                  setMenuOpen(false);
+                }}
+                className="w-full py-3 bg-emerald-600 text-white rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-colors"
+              >
+                <Download size={20} /> Export DB to Excel
+              </button>
+            )}
 
             {activeRole === "guest" && (
               <>
-                {/* <Link
-                  to="/jobs"
-                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Find Jobs
-                </Link> */}
                 <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
                   <Link
                     to="/login"
@@ -362,13 +405,6 @@ export default function Navbar() {
 
             {isUser && (
               <>
-                {/* <Link
-                  to="/jobs"
-                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Find Jobs
-                </Link> */}
                 <Link
                   to="/userdashboard"
                   className="text-slate-700 font-bold text-lg hover:text-blue-600"
