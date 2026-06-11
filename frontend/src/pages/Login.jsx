@@ -40,7 +40,7 @@ export default function Login() {
         if (data.isProfileComplete === false) {
           navigate("/editprofile", { state: { showWarning: true } });
         } else {
-          navigate("/");
+          navigate("/userdashboard");
         }
       }
     } catch (err) {
@@ -69,7 +69,7 @@ export default function Login() {
       } else {
         localStorage.setItem("userToken", data.token);
         localStorage.setItem("userInfo", JSON.stringify(data));
-        navigate("/");
+        navigate("/userdashboard");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");

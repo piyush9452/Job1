@@ -11,7 +11,8 @@ import {
   exportDataToExcel,
   exportSingleEmployerToExcel,
   freezeUser,
-  freezeEmployer,searchJobseekers,searchEmployers
+  freezeEmployer,searchJobseekers,searchEmployers,
+  createAdmin, getAllJobsForAdmin, getEmployerJobsWithApplications, getJobseekerApplicationsForAdmin
 } from "../controllers/adminControllers.js";
 import { protectAdmin, restrictTo } from "../middleware/authorization.js";
 
@@ -19,9 +20,15 @@ const router = express.Router();
 
 router.post("/login", authAdmin);
 
+// Super Admin Only Route
+router.post("/create-admin", protectAdmin, restrictTo("superAdmin"), createAdmin);
+
 // Protected Global Admin Routes
 router.get("/employers/pending", protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getPendingEmployers);
 router.get("/jobs/pending", protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getPendingJobs);
+router.get("/jobs", protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getAllJobsForAdmin);
+router.get("/employers/:id/jobs", protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getEmployerJobsWithApplications);
+router.get("/users/:id/applications", protectAdmin, restrictTo('superAdmin', 'jobseekerAdmin'), getJobseekerApplicationsForAdmin);
 router.patch("/employers/:id/review", protectAdmin, restrictTo('superAdmin', 'employerAdmin'), reviewEmployer);
 router.patch("/jobs/:id/review", protectAdmin, restrictTo('superAdmin', 'employerAdmin'), reviewJob);
 router.get('/employers/:id', protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getEmployerDetailsForAdmin);

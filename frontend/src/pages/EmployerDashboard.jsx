@@ -25,16 +25,12 @@ export default function EmployerDashboard() {
   // FACT: Added approval status state to lock the dashboard
   const [approvalStatus, setApprovalStatus] = useState("pending");
 
-  // Dynamic Stats
-  const activeListings = jobs.filter((j) => j.status === "active").length;
-  const totalApplicants = jobs.reduce(
-    (sum, job) => sum + (job.stats?.total || 0),
-    0,
-  );
-  const totalHired = jobs.reduce(
-    (sum, job) => sum + (job.stats?.hired || 0),
-    0,
-  );
+  const [metrics, setMetrics] = useState({
+    totalJobs: 0,
+    activeJobs: 0,
+    totalApplications: 0,
+    totalViews: 0
+  });
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -71,6 +67,12 @@ export default function EmployerDashboard() {
         );
 
         setJobs(Array.isArray(data) ? data : data.jobs || []);
+
+        const metricsRes = await axios.get(
+          `https://jobone-mrpy.onrender.com/jobs/metrics`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        setMetrics(metricsRes.data);
       } catch (err) {
         console.error("API Error:", err);
         if (err.response?.status === 401) navigate("/login");
@@ -247,20 +249,25 @@ export default function EmployerDashboard() {
           /* FACT: The Normal Approved Dashboard */
           <>
             {/* Quick Stats Grid */}
-            <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-4">
+              <StatCard
+                label="Total Jobs Posted"
+                value={metrics.totalJobs}
+                color="indigo"
+              />
               <StatCard
                 label="Active Listings"
-                value={activeListings}
+                value={metrics.activeJobs}
                 color="blue"
               />
               <StatCard
                 label="Total Applicants"
-                value={totalApplicants}
+                value={metrics.totalApplications}
                 color="purple"
               />
               <StatCard
-                label="Total Hired"
-                value={totalHired}
+                label="Total Job Views"
+                value={metrics.totalViews}
                 color="emerald"
               />
             </div>

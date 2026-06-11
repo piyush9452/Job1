@@ -6,6 +6,8 @@ const RecommendedJobs = () => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const JOBS_PER_PAGE = 6;
 
     const fetchRecommendedJobs = async () => {
         try {
@@ -54,8 +56,9 @@ const RecommendedJobs = () => {
             {jobs.length === 0 ? (
                 <p>No recommendations found. Upload your resume first.</p>
             ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {jobs.map((job, index) => (
+                <>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {jobs.slice(0, currentPage * JOBS_PER_PAGE).map((job, index) => (
                         <motion.div
                             key={job.jobId || index}
                             initial={{ opacity: 0, y: 20 }}
@@ -92,7 +95,19 @@ const RecommendedJobs = () => {
                             </div>
                         </motion.div>
                     ))}
-                </div>
+                    </div>
+
+                    {jobs.length > currentPage * JOBS_PER_PAGE && (
+                        <div className="flex justify-center mt-8">
+                            <button
+                                onClick={() => setCurrentPage(prev => prev + 1)}
+                                className="bg-indigo-600 text-white font-medium px-8 py-3 rounded-full shadow-md hover:bg-indigo-700 transition"
+                            >
+                                Load More Recommendations
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

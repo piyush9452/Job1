@@ -167,7 +167,7 @@ export default function Home() {
             </div>
             <div className="bg-white rounded-3xl p-1.5 shadow-2xl relative z-0">
               <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                <JobsAroundMe />
+                <JobsAroundMe onJobClick={setSelectedJob} />
               </div>
             </div>
           </div>

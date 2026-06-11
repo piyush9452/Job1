@@ -8,8 +8,10 @@ import jwt from "jsonwebtoken";
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { S3Client } from '@aws-sdk/client-s3';
+import { S3Client } from '@aws-sdk/client-s3';
 import Employer from '../models/employer.js';
 import expressAsyncHandler from "express-async-handler";
+import bcrypt from "bcrypt";
 
 // Helper to get S3 Client (duplicate this if it's not already in this file)
 const getS3Client = () => {
@@ -70,6 +72,32 @@ export const authAdmin = errorHandler(async (req, res) => {
   }
 });
 
+// @desc    Create a new admin
+// @route   POST /api/admin/create-admin
+// @access  Super Admin
+export const createAdmin = expressAsyncHandler(async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  if (!['jobseekerAdmin', 'employerAdmin'].includes(role)) {
+    res.status(400);
+    throw new Error('Invalid role. Must be jobseekerAdmin or employerAdmin');
+  }
+
+  const existingAdmin = await Admin.findOne({ email });
+  if (existingAdmin) {
+    res.status(400);
+    throw new Error('Admin already exists');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newAdmin = new Admin({
+    name, email, password: hashedPassword, role
+  });
+
+  await newAdmin.save();
+  res.status(201).json({ message: "Admin created successfully", admin: { name, email, role } });
+});
+
 // @desc    Get all pending employers
 // @route   GET /api/admin/employers/pending
 export const getPendingEmployers = errorHandler(async (req, res) => {
@@ -84,10 +112,57 @@ export const getPendingJobs = errorHandler(async (req, res) => {
   res.json(jobs);
 });
 
+// @desc    Get ALL jobs (for admin view)
+// @route   GET /api/admin/jobs
+export const getAllJobsForAdmin = errorHandler(async (req, res) => {
+  const jobs = await Job.find({}).populate("postedBy", "name email companyName").sort({ createdAt: -1 });
+  res.json(jobs);
+});
+
+// @desc    Get jobs created by a specific employer along with their applications
+// @route   GET /api/admin/employers/:id/jobs
+export const getEmployerJobsWithApplications = errorHandler(async (req, res) => {
+  const jobs = await Job.find({ postedBy: req.params.id }).sort({ createdAt: -1 });
+  
+  // Also get applications for each job to give the admin a full view
+  const jobsWithApps = await Promise.all(
+    jobs.map(async (job) => {
+      const { default: Application } = await import('../models/applications.js');
+      const applications = await Application.find({ job: job._id }).populate('appliedBy', 'name email phone');
+      return { ...job.toObject(), applications };
+    })
+  );
+
+  res.json(jobsWithApps);
+});
+
+// @desc    Get all applications made by a specific jobseeker
+// @route   GET /api/admin/users/:id/applications
+export const getJobseekerApplicationsForAdmin = errorHandler(async (req, res) => {
+  const { default: Application } = await import('../models/applications.js');
+  const { default: User } = await import('../models/user.js');
+
+  const user = await User.findById(req.params.id).select("-password");
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const applications = await Application.find({ appliedBy: req.params.id })
+    .populate("job", "title location status companyName")
+    .sort({ appliedAt: -1 });
+
+  res.json({ user, applications });
+});
+
 // @desc    Approve or Reject an Employer
 // @route   PATCH /api/admin/employers/:id/review
 export const reviewEmployer = errorHandler(async (req, res) => {
   const { status } = req.body; // must be "approved" or "rejected"
+  if (!["approved", "rejected"].includes(status)) {
+    res.status(400);
+    throw new Error("Invalid status. Must be 'approved' or 'rejected'.");
+  }
   const employer = await Employer.findById(req.params.id);
 
   if (!employer) {
@@ -105,6 +180,10 @@ export const reviewEmployer = errorHandler(async (req, res) => {
 // @route   PATCH /api/admin/jobs/:id/review
 export const reviewJob = errorHandler(async (req, res) => {
   const { status } = req.body; // must be "active" or "rejected"
+  if (!["active", "rejected"].includes(status)) {
+    res.status(400);
+    throw new Error("Invalid status. Must be 'active' or 'rejected'.");
+  }
   const job = await Job.findById(req.params.id);
 
   if (!job) {

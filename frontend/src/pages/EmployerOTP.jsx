@@ -15,6 +15,19 @@ const VerifyOTP = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const handleResend = async () => {
+    try {
+      setLoading(true);
+      await axios.post("https://jobone-mrpy.onrender.com/employer/resend-otp", { email });
+      setMessage("✅ A new OTP has been sent to your email!");
+      setOtp("");
+    } catch (err) {
+      setMessage(err.response?.data?.message || "❌ Failed to resend OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -29,7 +42,6 @@ const VerifyOTP = () => {
       // Save token in localStorage
       localStorage.setItem("employerToken", res.data.token);
       localStorage.setItem("employerInfo", JSON.stringify(res.data));
-      console.log(res.data.token);
 
       setMessage("✅ Verification successful! Redirecting...");
       setTimeout(() => navigate("/employereditprofile"), 1500);
@@ -90,7 +102,7 @@ const VerifyOTP = () => {
         <p className="text-center text-gray-500 mt-4 text-sm">
           Didn’t receive the code?{" "}
           <button
-            onClick={() => alert("Resend OTP logic can be added later")}
+            onClick={handleResend}
             className="text-indigo-600 font-medium"
           >
             Resend

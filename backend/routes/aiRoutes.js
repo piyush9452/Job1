@@ -25,7 +25,7 @@ router.get("/recommend-jobs", protect, recommendJobs);
 
 
 // Note: Ensure your Express app has express.json() middleware enabled
-router.post("/chat", handleChatBot);
+router.post("/chat", protect, handleChatBot);
 
 
 export default router;

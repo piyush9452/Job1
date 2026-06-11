@@ -221,11 +221,43 @@ export const verifyOTP = expressAsyncHandler(async (req, res) => {
   // 6. Send Response
   // CRITICAL: Sending 'employerId' allows frontend to save { token, id } structure
   res.status(200).json({ 
-      message: "Account verified successfully!", 
+      message: "Account verified!", 
       token,
-      employerId: employer._id,
-      email: employer.email 
+      employerId: employer._id 
   });
+});
+
+export const resendOTP = expressAsyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400); throw new Error("Email is required");
+  }
+
+  const employer = await Employer.findOne({ email });
+  if (!employer) {
+    res.status(404); throw new Error("Employer not found");
+  }
+  if (employer.isVerified) {
+    res.status(400); throw new Error("Employer is already verified");
+  }
+
+  // Delete existing OTP
+  await OTP.deleteMany({ employerId: employer._id });
+
+  // Create new OTP
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  await OTP.create({
+    employerId: employer._id,
+    otp: otpCode,
+  });
+
+  await sendEmail({
+    email: employer.email,
+    subject: 'Your New Verification Code',
+    message: `Your new verification code is: ${otpCode}. It expires in 10 minutes.`,
+  });
+
+  res.status(200).json({ message: "OTP resent successfully" });
 });
 
 
@@ -523,15 +555,14 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
     });
     const { email, name, picture, sub: googleId } = ticket.getPayload();
 
-    let employer = await Employer.findOne({ email });
-
-    if (!employer) {
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        res.status(400);
-        throw new Error('This email is already registered as a Jobseeker.');
-      }
+    // 2. Unconditionally check for User collision
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(400);
+      throw new Error('This email is already registered as a Jobseeker.');
     }
+
+    let employer = await Employer.findOne({ email });
 
     if (employer) {
       // --- EXISTING EMPLOYER ---
@@ -619,8 +650,9 @@ export const searchCandidatesBySkills = expressAsyncHandler(async (req, res) => 
   // 2. Clean the input into an array of lowercase search terms
   const searchSkills = skills.split(",").map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
   
-  // 3. Create Regex to pull anyone with AT LEAST ONE match from the DB
-  const skillRegexArray = searchSkills.map(s => new RegExp(s, "i"));
+  // SECURITY: Escape regex to prevent ReDoS
+  const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const skillRegexArray = searchSkills.map(s => new RegExp(escapeRegex(s), "i"));
 
   const matchedUsers = await User.find({
     skills: { $in: skillRegexArray },

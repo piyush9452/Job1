@@ -8,8 +8,10 @@ import UserOTP from '../models/userVerification.js';
 import sendEmail from '../utils/emailVerification.js';
 import { validationResult } from 'express-validator';
 
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { getS3Client } from "../config/s3Config.js";
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import Application from "../models/applications.js";
 import crypto from 'crypto';
 
 let s3Client;
@@ -89,39 +91,69 @@ export const createUser = expressAsyncHandler(async (req, res) => {
 
 export const verifyUserOTP = expressAsyncHandler(async (req, res) => {
   const { email, otp } = req.body;
+  if (!email || !otp) {
+    res.status(400); throw new Error("Email and OTP are required");
+  }
 
   const user = await User.findOne({ email });
   if (!user) {
-    res.status(404);
-    throw new Error("User not found");
+    res.status(404); throw new Error("User not found");
   }
 
-  const otpRecord = await UserOTP.findOne({
-    userId: user._id,
-    otp: otp,
-  });
+  const userOTP = await UserOTP.findOne({ userId: user._id });
+  if (!userOTP) {
+    res.status(400); throw new Error("OTP expired or invalid");
+  }
 
-  if (!otpRecord) {
-    res.status(400);
-    throw new Error("Invalid or expired OTP.");
+  if (userOTP.otp !== otp) {
+    res.status(400); throw new Error("Invalid OTP");
   }
 
   user.isVerified = true;
   await user.save();
+  await UserOTP.deleteOne({ userId: user._id });
 
-  await UserOTP.deleteOne({ _id: otpRecord._id });
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
 
-  const token = jwt.sign(
-    { id: user._id }, 
-    process.env.JWT_SECRET, 
-    { expiresIn: '5h' }
-  );
-  
-  res.status(200).json({ 
-      message: "Account verified!", 
-      token,
-      userId: user._id 
+  res.status(200).json({
+    message: "Email verified successfully",
+    token,
+    user: { id: user._id, name: user.name, email: user.email },
+    isProfileComplete: false
   });
+});
+
+export const resendUserOTP = expressAsyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400); throw new Error("Email is required");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(404); throw new Error("User not found");
+  }
+  if (user.isVerified) {
+    res.status(400); throw new Error("User is already verified");
+  }
+
+  // Delete existing OTP
+  await UserOTP.deleteMany({ userId: user._id });
+
+  // Create new OTP
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  await UserOTP.create({
+    userId: user._id,
+    otp: otpCode,
+  });
+
+  await sendEmail({
+    email: user.email,
+    subject: 'Your New Verification Code',
+    message: `Your new verification code is: ${otpCode}. It expires in 10 minutes.`,
+  });
+
+  res.status(200).json({ message: "OTP resent successfully" });
 });
 
 
@@ -200,16 +232,15 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
     
     const { email, name, picture } = ticket.getPayload();
 
-    // 2. Check if user exists
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      const existingEmployer = await Employer.findOne({ email });
-      if (existingEmployer) {
-        res.status(400);
-        throw new Error("This email is already registered as an Employer.");
-      }
+    // 2. Unconditionally check for Employer collision
+    const existingEmployer = await Employer.findOne({ email });
+    if (existingEmployer) {
+      res.status(400);
+      throw new Error("This email is already registered as an Employer.");
     }
+
+    // 3. Check if user exists
+    let user = await User.findOne({ email });
 
     if (user) {
       // --- SCENARIO 1: EXISTING USER (LOGIN) ---
@@ -321,6 +352,17 @@ export const getViewableResumeUrl = expressAsyncHandler(async (req, res) => {
     res.status(404); throw new Error("No resume file uploaded for this user");
   }
 
+  // SECURITY: Enforce strict resume access
+  if (req.employerId) {
+    // Employers can view any candidate's resume
+  } else if (req.user) {
+    if (req.user._id.toString() !== req.params.id.toString()) {
+       res.status(403); throw new Error("Forbidden: You can only view your own resume.");
+    }
+  } else {
+    res.status(401); throw new Error("Not authorized");
+  }
+
   const command = new GetObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: user.resumeFileKey });
   const url = await getSignedUrl(client, command, { expiresIn: 3600 }); // 1 hour access for recruiters
 
@@ -333,6 +375,17 @@ export const getDownloadableResumeUrl = expressAsyncHandler(async (req, res) => 
 
   if (!user || !user.resumeFileKey) {
     res.status(404); throw new Error("No resume file uploaded for this user");
+  }
+
+  // SECURITY: Enforce strict resume access
+  if (req.employerId) {
+    // Employers can download any candidate's resume
+  } else if (req.user) {
+    if (req.user._id.toString() !== req.params.id.toString()) {
+       res.status(403); throw new Error("Forbidden: You can only download your own resume.");
+    }
+  } else {
+    res.status(401); throw new Error("Not authorized");
   }
 
   const command = new GetObjectCommand({

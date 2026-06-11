@@ -41,6 +41,7 @@ export default function EmployerAdminView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [employer, setEmployer] = useState(null);
+  const [employerJobs, setEmployerJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -55,13 +56,18 @@ export default function EmployerAdminView() {
   const fetchEmployerData = async () => {
     try {
       const token = JSON.parse(localStorage.getItem("adminInfo")).token;
-      const { data } = await axios.get(
-        `https://jobone-mrpy.onrender.com/admin/employers/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      setEmployer(data);
+      const [{ data: empData }, { data: jobsData }] = await Promise.all([
+        axios.get(
+          `https://jobone-mrpy.onrender.com/admin/employers/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        ),
+        axios.get(
+          `https://jobone-mrpy.onrender.com/admin/employers/${id}/jobs`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        ).catch(() => ({ data: [] }))
+      ]);
+      setEmployer(empData);
+      setEmployerJobs(jobsData);
     } catch (err) {
       alert("Failed to load employer data.");
       navigate("/admin/dashboard");
@@ -270,7 +276,7 @@ export default function EmployerAdminView() {
             </div>
           </div>
 
-          {/* Right Column: Documents */}
+          {/* Right Column: Documents and Jobs */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
               <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -355,6 +361,38 @@ export default function EmployerAdminView() {
                 )}
               </div>
             )}
+
+            {/* Jobs Section */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <Building className="text-indigo-600" /> Jobs Posted ({employerJobs.length})
+              </h2>
+              {employerJobs.length === 0 ? (
+                <p className="text-slate-500 text-sm">No jobs posted yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {employerJobs.map((job) => (
+                    <div key={job._id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-bold text-slate-800 text-lg">{job.title}</h3>
+                          <p className="text-sm text-slate-500">{job.location} • Status: {job.status}</p>
+                          <p className="text-sm font-semibold text-indigo-600 mt-2">
+                            Total Applications: {job.applications?.length || 0}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => window.open(`/admin/job/${job._id}`, "_blank")}
+                          className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg text-sm font-bold"
+                        >
+                          View Job Details
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
