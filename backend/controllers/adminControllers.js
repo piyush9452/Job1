@@ -8,7 +8,6 @@ import jwt from "jsonwebtoken";
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { S3Client } from '@aws-sdk/client-s3';
-import { S3Client } from '@aws-sdk/client-s3';
 import Employer from '../models/employer.js';
 import expressAsyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
@@ -105,6 +104,21 @@ export const getPendingEmployers = errorHandler(async (req, res) => {
   res.json(employers);
 });
 
+// @desc    Get all employers (for admin view)
+// @route   GET /api/admin/employers
+export const getAllEmployersForAdmin = errorHandler(async (req, res) => {
+  const employers = await Employer.find({}).select("-password").sort({ createdAt: -1 });
+  res.json(employers);
+});
+
+// @desc    Get all jobseekers (for admin view)
+// @route   GET /api/admin/users
+export const getAllJobseekersForAdmin = errorHandler(async (req, res) => {
+  const { default: User } = await import('../models/users.js');
+  const users = await User.find({}).select("-password").sort({ createdAt: -1 });
+  res.json(users);
+});
+
 // @desc    Get all pending jobs
 // @route   GET /api/admin/jobs/pending
 export const getPendingJobs = errorHandler(async (req, res) => {
@@ -140,7 +154,7 @@ export const getEmployerJobsWithApplications = errorHandler(async (req, res) => 
 // @route   GET /api/admin/users/:id/applications
 export const getJobseekerApplicationsForAdmin = errorHandler(async (req, res) => {
   const { default: Application } = await import('../models/applications.js');
-  const { default: User } = await import('../models/user.js');
+  const { default: User } = await import('../models/users.js');
 
   const user = await User.findById(req.params.id).select("-password");
   if (!user) {
@@ -206,15 +220,26 @@ export const getJobForAdmin = expressAsyncHandler(async (req, res) => {
   res.status(200).json(job);
 });
 
-// @desc    Export Profile Data to Excel
-// @route   GET /api/admin/export
-export const exportDataToExcel = expressAsyncHandler(async (req, res) => {
-  // 1. Fetch ONLY Users (Jobseekers) and Employers
-  const users = await User.find({}).select('-password -__v').lean();
-  const employers = await Employer.find({}).select('-password -__v').lean();
+// Excel Formatting Helpers
+const formatJobsForExcel = (jobs) => {
+  return jobs.map(job => ({
+    "Job ID": job._id.toString(),
+    "Title": job.title || "N/A",
+    "Company": job.postedByCompany || "N/A",
+    "Status": job.status ? job.status.toUpperCase() : "N/A",
+    "Location": typeof job.location === 'object' ? job.location?.address : (job.location || "N/A"),
+    "Salary": job.salary || "N/A",
+    "Job Type": job.jobType || "N/A",
+    "Industry": job.industry || "N/A",
+    "Subdomain": job.subdomain || "N/A",
+    "Experience Required": job.experienceLevel || "N/A",
+    "Total Applications": job.applications ? job.applications.length : 0,
+    "Posted On": new Date(job.createdAt).toLocaleDateString()
+  }));
+};
 
-  // 2. Format Jobseeker Profiles cleanly
-  const formattedJobseekers = users.map(user => ({
+const formatJobseekersForExcel = (users) => {
+  return users.map(user => ({
     "Account ID": user._id.toString(),
     "Full Name": user.name || "N/A",
     "Email": user.email,
@@ -228,9 +253,10 @@ export const exportDataToExcel = expressAsyncHandler(async (req, res) => {
     "About/Description": user.description || "N/A",
     "Registered On": new Date(user.createdAt).toLocaleDateString()
   }));
+};
 
-  // 3. Format Employer Profiles cleanly
-  const formattedEmployers = employers.map(emp => ({
+const formatEmployersForExcel = (employers) => {
+  return employers.map(emp => ({
     "Account ID": emp._id.toString(),
     "Contact Person": emp.name || "N/A",
     "Email": emp.email,
@@ -242,29 +268,63 @@ export const exportDataToExcel = expressAsyncHandler(async (req, res) => {
     "Industry": emp.industry || "N/A",
     "Location": emp.location || "N/A",
     "Website": emp.companyWebsite || "N/A",
-    "Approval Status": emp.isApproved.toUpperCase(),
+    "Approval Status": emp.isApproved ? emp.isApproved.toUpperCase() : "N/A",
     "Account Verified": emp.isVerified ? "Yes" : "No",
     "Profile Complete": emp.isProfileComplete ? "Yes" : "No",
     "About/Description": emp.description || "N/A",
     "Registered On": new Date(emp.createdAt).toLocaleDateString()
   }));
+};
 
-  // 4. Create Excel Workbook
+// @desc    Export Complete Data to Excel (SuperAdmin)
+// @route   GET /api/admin/export/all
+export const exportDataToExcel = expressAsyncHandler(async (req, res) => {
+  const { default: User } = await import('../models/users.js');
+  const users = await User.find({}).select('-password -__v').lean();
+  const employers = await Employer.find({}).select('-password -__v').lean();
+  const jobs = await Job.find({}).lean();
+
   const workbook = xlsx.utils.book_new();
-  
-  const wsUsers = xlsx.utils.json_to_sheet(formattedJobseekers);
-  const wsEmployers = xlsx.utils.json_to_sheet(formattedEmployers);
+  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatJobseekersForExcel(users)), "Jobseeker Profiles");
+  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatEmployersForExcel(employers)), "Employer Profiles");
+  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatJobsForExcel(jobs)), "All Jobs");
 
-  // 5. Append targeted profile sheets
-  xlsx.utils.book_append_sheet(workbook, wsUsers, "Jobseeker Profiles");
-  xlsx.utils.book_append_sheet(workbook, wsEmployers, "Employer Profiles");
-
-  // 6. Generate Buffer and send
   const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-
-  res.setHeader('Content-Disposition', 'attachment; filename="Platform_Profiles_Extraction.xlsx"');
+  res.setHeader('Content-Disposition', 'attachment; filename="Platform_Complete_DB.xlsx"');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  
+  res.send(excelBuffer);
+});
+
+// @desc    Export Employers & Jobs to Excel (EmployerAdmin)
+// @route   GET /api/admin/export/employers
+export const exportEmployersDataToExcel = expressAsyncHandler(async (req, res) => {
+  const employers = await Employer.find({}).select('-password -__v').lean();
+  const jobs = await Job.find({}).lean();
+
+  const workbook = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatEmployersForExcel(employers)), "Employer Profiles");
+  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatJobsForExcel(jobs)), "All Jobs");
+
+  const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', 'attachment; filename="Platform_Employers_Jobs.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(excelBuffer);
+});
+
+// @desc    Export Jobseekers & Jobs to Excel (JobseekerAdmin)
+// @route   GET /api/admin/export/jobseekers
+export const exportJobseekersDataToExcel = expressAsyncHandler(async (req, res) => {
+  const { default: User } = await import('../models/users.js');
+  const users = await User.find({}).select('-password -__v').lean();
+  const jobs = await Job.find({}).lean();
+
+  const workbook = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatJobseekersForExcel(users)), "Jobseeker Profiles");
+  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatJobsForExcel(jobs)), "All Jobs");
+
+  const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', 'attachment; filename="Platform_Jobseekers_Jobs.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.send(excelBuffer);
 });
 
@@ -354,6 +414,14 @@ export const searchEmployers = expressAsyncHandler(async (req, res) => {
   const { q } = req.query;
   // Search by company name, contact name, or email
   const query = q ? { $or: [{ companyName: { $regex: q, $options: 'i' } }, { name: { $regex: q, $options: 'i' } }, { email: { $regex: q, $options: 'i' } }] } : {};
-  const employers = await Employer.find(query).select('companyName name email phone isApproved isFrozen createdAt').limit(20);
+  const employers = await Employer.find(query).select('name email companyName isFrozen createdAt').limit(20);
   res.status(200).json(employers);
+});
+
+export const getAdminDashboardStats = expressAsyncHandler(async (req, res) => {
+  const { default: User } = await import('../models/users.js');
+  const totalJobs = await Job.countDocuments();
+  const totalJobseekers = await User.countDocuments();
+  const totalEmployers = await Employer.countDocuments();
+  res.json({ jobs: totalJobs, jobseekers: totalJobseekers, employers: totalEmployers });
 });
