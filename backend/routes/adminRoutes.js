@@ -13,7 +13,8 @@ import {
   freezeUser,
   freezeEmployer,searchJobseekers,searchEmployers,
   createAdmin, getAllJobsForAdmin, getEmployerJobsWithApplications, getJobseekerApplicationsForAdmin,
-  getAllEmployersForAdmin, getAllJobseekersForAdmin
+  getAllEmployersForAdmin, getAllJobseekersForAdmin,
+  exportEmployersDataToExcel, exportJobseekersDataToExcel, getAdminDashboardStats
 } from "../controllers/adminControllers.js";
 import { protectAdmin, restrictTo } from "../middleware/authorization.js";
 
@@ -37,7 +38,13 @@ router.patch("/jobs/:id/review", protectAdmin, restrictTo('superAdmin', 'employe
 router.get('/employers/:id', protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getEmployerDetailsForAdmin);
 router.get('/employers/:id/document', protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getAdminViewableDocumentUrl);
 router.get('/jobs/:id', protectAdmin, getJobForAdmin);
-router.get('/export', protectAdmin, restrictTo('superAdmin'), exportDataToExcel);
+
+// Dashboard & Export Routes
+router.get('/stats', protectAdmin, getAdminDashboardStats);
+router.get('/export/all', protectAdmin, restrictTo('superAdmin'), exportDataToExcel);
+router.get('/export/employers', protectAdmin, restrictTo('superAdmin', 'employerAdmin'), exportEmployersDataToExcel);
+router.get('/export/jobseekers', protectAdmin, restrictTo('superAdmin', 'jobseekerAdmin'), exportJobseekersDataToExcel);
+
 router.get('/employers/:id/export', protectAdmin, restrictTo('superAdmin', 'employerAdmin'), exportSingleEmployerToExcel);
 
 // FACT: Strict RBAC Route Freezing. 

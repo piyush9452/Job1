@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Loader2, CheckCircle, XCircle, Building2, Briefcase,
   ShieldAlert, ExternalLink, Download, Search, Snowflake,
@@ -29,8 +29,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("");
   const [adminRole, setAdminRole] = useState(null);
+  const [dbStats, setDbStats] = useState({ jobs: 0, jobseekers: 0, employers: 0 });
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const storedAdmin = localStorage.getItem("adminInfo");
@@ -39,7 +41,12 @@ export default function AdminDashboard() {
     const parsedAdmin = JSON.parse(storedAdmin);
     setAdminRole(parsedAdmin.role);
 
-    if (parsedAdmin.role === "jobseekerAdmin") {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get("tab");
+
+    if (tabParam) {
+      setActiveTab(tabParam);
+    } else if (parsedAdmin.role === "jobseekerAdmin") {
       setActiveTab("allJobseekers");
     } else {
       setActiveTab("pendingJobs");
@@ -54,6 +61,9 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const headers = { Authorization: `Bearer ${admin.token}` };
+
+      const statsRes = await axios.get("https://jobone-mrpy.onrender.com/admin/stats", { headers }).catch(() => ({ data: { jobs: 0, jobseekers: 0, employers: 0 } }));
+      setDbStats(statsRes.data);
 
       if (admin.role === "superAdmin" || admin.role === "employerAdmin") {
         const [pJobsRes, aJobsRes, pEmpRes, aEmpRes] = await Promise.all([
@@ -169,22 +179,35 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleExportProfiles = async () => {
+  const handleExportCustom = async (type) => {
     try {
       const token = JSON.parse(localStorage.getItem("adminInfo")).token;
-      const response = await axios.get("https://jobone-mrpy.onrender.com/admin/export", {
+      let url = "";
+      let filename = "";
+      if (type === "all") {
+        url = "https://jobone-mrpy.onrender.com/admin/export/all";
+        filename = "Platform_Complete_DB.xlsx";
+      } else if (type === "employers") {
+        url = "https://jobone-mrpy.onrender.com/admin/export/employers";
+        filename = "Platform_Employers_Jobs.xlsx";
+      } else if (type === "jobseekers") {
+        url = "https://jobone-mrpy.onrender.com/admin/export/jobseekers";
+        filename = "Platform_Jobseekers_Jobs.xlsx";
+      }
+
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: "blob",
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const objectUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "Platform_Profiles_Extraction.xlsx");
+      link.href = objectUrl;
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (err) {
-      alert("Failed to extract profiles.");
+      alert("Failed to extract data. You may not have permission.");
     }
   };
 
@@ -258,15 +281,11 @@ export default function AdminDashboard() {
           )}
         </div>
 
+          <p className="text-xs font-black uppercase text-slate-400 tracking-widest pl-4 mb-2 mt-8">Database</p>
+          <SidebarItem id="exportDB" icon={Download} label="Database Export" />
+        </div>
+
         <div className="p-4 border-t border-slate-100 space-y-2">
-          {adminRole === "superAdmin" && (
-            <button
-              onClick={handleExportProfiles}
-              className="w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition"
-            >
-              <Download size={18} /> Export DB Data
-            </button>
-          )}
           <button
             onClick={() => { localStorage.removeItem("adminInfo"); navigate("/admin/login"); }}
             className="w-full bg-slate-900 text-white hover:bg-slate-800 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-lg shadow-slate-200"
@@ -279,6 +298,72 @@ export default function AdminDashboard() {
       {/* ─── MAIN CONTENT AREA ──────────────────────────────────────────────────────── */}
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto h-screen bg-slate-50/50">
         <div className="max-w-5xl mx-auto space-y-6">
+
+          {/* EXPORT DB VIEW */}
+          {activeTab === "exportDB" && (
+            <div>
+              <h2 className="text-2xl font-black text-slate-800 mb-2 flex items-center gap-2"><Download className="text-emerald-600"/> Database Export</h2>
+              <p className="text-slate-500 mb-8 font-medium">Extract data safely based on your administrative privileges.</p>
+              
+              {/* Stats Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                  <Briefcase size={32} className="text-blue-500 mb-3" />
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Total Jobs</p>
+                  <p className="text-4xl font-black text-slate-800">{dbStats.jobs}</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                  <Users size={32} className="text-indigo-500 mb-3" />
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Total Jobseekers</p>
+                  <p className="text-4xl font-black text-slate-800">{dbStats.jobseekers}</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                  <Building2 size={32} className="text-rose-500 mb-3" />
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Total Employers</p>
+                  <p className="text-4xl font-black text-slate-800">{dbStats.employers}</p>
+                </div>
+              </div>
+
+              {/* Export Options */}
+              <div className="space-y-4">
+                {adminRole === "superAdmin" && (
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                      <h3 className="font-bold text-lg text-emerald-900">Complete Database Backup</h3>
+                      <p className="text-emerald-700 text-sm mt-1">Export all Jobs, Employers, and Jobseekers into a multi-sheet Excel file.</p>
+                    </div>
+                    <button onClick={() => handleExportCustom("all")} className="shrink-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition flex items-center gap-2">
+                      <Download size={18} /> Export Full DB
+                    </button>
+                  </div>
+                )}
+
+                {(adminRole === "superAdmin" || adminRole === "employerAdmin") && (
+                  <div className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm hover:shadow-md transition">
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-800">Employers & Jobs Data</h3>
+                      <p className="text-slate-500 text-sm mt-1">Export a detailed list of all registered employers and posted jobs.</p>
+                    </div>
+                    <button onClick={() => handleExportCustom("employers")} className="shrink-0 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md transition flex items-center gap-2">
+                      <Download size={18} /> Export Employers Data
+                    </button>
+                  </div>
+                )}
+
+                {(adminRole === "superAdmin" || adminRole === "jobseekerAdmin") && (
+                  <div className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm hover:shadow-md transition">
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-800">Jobseekers & Jobs Data</h3>
+                      <p className="text-slate-500 text-sm mt-1">Export a detailed list of all registered jobseekers and available jobs.</p>
+                    </div>
+                    <button onClick={() => handleExportCustom("jobseekers")} className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-200 transition flex items-center gap-2">
+                      <Download size={18} /> Export Jobseekers Data
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* PENDING JOBS */}
           {activeTab === "pendingJobs" && canManageEmployers && (

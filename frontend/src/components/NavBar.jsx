@@ -59,23 +59,9 @@ export default function Navbar() {
   const isEmployer = activeRole === "employer";
   const isAdmin = activeRole === "admin";
 
-  const handleExportDB = async () => {
-    try {
-      const token = JSON.parse(localStorage.getItem("adminInfo")).token;
-      const response = await axios.get("https://jobone-mrpy.onrender.com/admin/export", {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "JobOne_DB_Export.xlsx");
-      document.body.appendChild(link);
-      link.click();
-    } catch (error) {
-      console.error("Error exporting DB", error);
-      alert("Failed to export DB. Please try again.");
-    }
+  const handleExportDB = () => {
+    navigate("/admin/dashboard?tab=exportDB");
+    setMenuOpen(false);
   };
 
   const handleLogout = () => {
