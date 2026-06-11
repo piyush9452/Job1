@@ -3,7 +3,8 @@ import Job from "../models/jobs.js";
 import User from "../models/users.js";
 import mongoose from "mongoose";
 import { validationResult } from "express-validator";
-import Employer from "../models/employer.js"; // Adjust path as needed
+import Employer from "../models/employer.js";
+import Application from "../models/applications.js";
 import jwt from "jsonwebtoken";
 
 
@@ -341,6 +342,10 @@ export const updateJob = expressAsyncHandler(async (req, res) => {
   }
 
   let updateData = { ...req.body };
+  // SECURITY: Prevent IDOR/Tampering
+  delete updateData.status;
+  delete updateData.postedBy;
+  delete updateData._id;
 
   // FACT: Handle the "Same as Office Location" logic for edits
   if (updateData.useOfficeLocation) {
@@ -370,29 +375,52 @@ export const updateJob = expressAsyncHandler(async (req, res) => {
 export const deleteJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
   const job = await Job.findById(id);
-  const employer = await Employer.findById(req.employerId);
-  // FACT: Block deletions if frozen
-  if (employer.isFrozen) {
-    res.status(403);
-    throw new Error("Your account is frozen. You cannot delete jobs.");
+
+  if (!req.admin) {
+    return res.status(403).json({ message: "Only administrators can delete jobs." });
   }
   
   if (!job) return res.status(404).json({ message: "Job not found" });
 
-  // FIX: Use req.employerId, NOT req.user._id
-  if (job.postedBy.toString() !== req.employerId.toString()) {
-    return res.status(403).json({ message: "Not authorized to delete this job" });
-  }
+  // Cascade delete all applications associated with this job
+  await Application.deleteMany({ job: id });
 
   await Job.deleteOne({ _id: id });
 
-  // FIX: You must also update the EMPLOYER model, not the User model
-  // Import Employer at the top of your file if not already imported
-  await Employer.findByIdAndUpdate(req.employerId, {
-    $pull: { createdJobs: id },
-  });
+  // Remove job from employer's createdJobs array
+  if (job.postedBy) {
+    await Employer.findByIdAndUpdate(job.postedBy, {
+      $pull: { createdJobs: id },
+    });
+  }
 
-  res.status(200).json({ message: "Job deleted successfully" });
+  res.status(200).json({ message: "Job deleted successfully and all associated applications removed" });
+});
+
+export const getEmployerMetrics = expressAsyncHandler(async (req, res) => {
+  const employerId = req.employerId;
+
+  // Total Jobs Posted
+  const totalJobsCount = await Job.countDocuments({ postedBy: employerId });
+
+  // Active Jobs
+  const activeJobsCount = await Job.countDocuments({ postedBy: employerId, status: "active" });
+
+  // Applications Received (Aggregate over all employer's jobs)
+  const employerJobs = await Job.find({ postedBy: employerId }).select('_id views');
+  const jobIds = employerJobs.map(job => job._id);
+  
+  const totalApplications = await Application.countDocuments({ job: { $in: jobIds } });
+
+  // Total Job Views
+  const totalViews = employerJobs.reduce((sum, job) => sum + (job.views || 0), 0);
+
+  res.status(200).json({
+    totalJobs: totalJobsCount,
+    activeJobs: activeJobsCount,
+    totalApplications,
+    totalViews
+  });
 });
 
 

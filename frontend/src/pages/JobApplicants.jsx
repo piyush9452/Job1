@@ -26,7 +26,9 @@ export default function JobApplicants() {
 
   // FACT: Read the URL search parameters to check if we should filter
   const [searchParams, setSearchParams] = useSearchParams();
-  const filterStatus = searchParams.get("status");
+  const initialStatus = searchParams.get("status") || "all";
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,10 +81,14 @@ export default function JobApplicants() {
     fetchApplicants();
   }, [id, navigate]);
 
-  // FACT: Dynamically filter the applicants based on the URL parameter
-  const displayApplicants = filterStatus
-    ? applicants.filter((app) => app.status === filterStatus)
-    : applicants;
+  // FACT: Dynamically filter the applicants based on Search Query and Status
+  const displayApplicants = applicants.filter((app) => {
+    const candidate = app.appliedBy || app.applicant;
+    const candidateName = candidate?.name?.toLowerCase() || "";
+    const matchesSearch = candidateName.includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleSelectAll = () => {
     if (selectedApps.length === displayApplicants.length) setSelectedApps([]);
@@ -250,27 +256,41 @@ export default function JobApplicants() {
               Applicants for {jobTitle}
             </h1>
 
-            {/* Clear Filter UI */}
-            {filterStatus && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 border border-indigo-200">
-                  Filtered by: {filterStatus.toUpperCase()}
-                  <button
-                    onClick={() => {
-                      searchParams.delete("status");
-                      setSearchParams(searchParams);
-                    }}
-                    className="hover:bg-indigo-200 p-1 rounded-md transition-colors"
-                    title="Clear Filter"
-                  >
-                    <FilterX size={14} />
-                  </button>
-                </span>
-              </div>
-            )}
+            {/* Unified Filter UI */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+              <input
+                type="text"
+                placeholder="Search by candidate name..."
+                className="flex-1 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <select
+                className="bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-700"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  if (e.target.value === "all") {
+                    searchParams.delete("status");
+                  } else {
+                    searchParams.set("status", e.target.value);
+                  }
+                  setSearchParams(searchParams);
+                }}
+              >
+                <option value="all">All Statuses</option>
+                <option value="applied">Applied</option>
+                <option value="shortlisted">Shortlisted</option>
+                <option value="Interview Scheduled">Interview Scheduled</option>
+                <option value="Interview Conducted">Interview Conducted</option>
+                <option value="Assignment Scheduled">Assignment Scheduled</option>
+                <option value="hired">Hired</option>
+                <option value="NCTT">Not a Fit (NCTT)</option>
+              </select>
+            </div>
           </div>
           <div className="bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm text-sm font-bold text-slate-600">
-            {filterStatus ? "Filtered" : "Total"} Candidates:{" "}
+            Filtered Candidates:{" "}
             <span className="text-indigo-600 text-lg ml-1">
               {displayApplicants.length}
             </span>

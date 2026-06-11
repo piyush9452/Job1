@@ -1,20 +1,29 @@
-import { createJob, getJob, getJobs, jobCreatedByUser,deleteJob,updateJob,getEmployerCreatedJobs,getJobApplicants,getJobCountsByIndustry,getSimilarJobs} from "../controllers/jobsControllers.js";
-import {protect}from "../middleware/authorization.js";
+import { 
+  createJob, getJob, getJobs, getJobApplicants, getEmployerCreatedJobs, 
+  updateJob, deleteJob, getEmployerMetrics, jobCreatedByUser, getJobCountsByIndustry, getSimilarJobs 
+} from "../controllers/jobsControllers.js";
+import { protect, protectAdmin } from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js";
 import express from "express";
-
+import { body } from "express-validator";
 
 const router = express.Router();
 
 
-
-
-router.post("/",protectEmployer, createJob);
+router.post("/", protectEmployer, [
+  body("title").notEmpty().withMessage("Job title is required"),
+  body("industry").notEmpty().withMessage("Industry is required"),
+  body("subdomain").notEmpty().withMessage("Subdomain is required")
+], createJob);
 
 router.get("/category-counts", getJobCountsByIndustry);
 
 
-router.get("/employerJobs",protectEmployer,getEmployerCreatedJobs);
+// Get employer created jobs (with detailed application stats)
+router.get("/employer-jobs", protectEmployer, getEmployerCreatedJobs);
+
+// Get Employer Metrics (Total jobs, active, views, etc)
+router.get("/metrics", protectEmployer, getEmployerMetrics);
 
 // jobs created by a specific employer changed now the path has been changed to employer
 router.get("/employer/:id",protectEmployer, jobCreatedByUser);
@@ -27,11 +36,9 @@ router.get("/:id/similar", getSimilarJobs);
 
 router.get("/:id", getJob);
 
-router.get("/userApplied/:id",protect,);
-
 router.get("/:id/applicants", protectEmployer, getJobApplicants);
 
-router.delete("/:id",protectEmployer,deleteJob);
+router.delete("/:id", protectAdmin, deleteJob);
 
 router.patch("/:id",protectEmployer,updateJob);
 

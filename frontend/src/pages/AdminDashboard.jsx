@@ -17,6 +17,7 @@ import {
 
 export default function AdminDashboard() {
   const [pendingJobs, setPendingJobs] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
   const [pendingEmployers, setPendingEmployers] = useState([]);
 
   // Search States
@@ -27,6 +28,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("");
   const [adminRole, setAdminRole] = useState(null);
+
+  // Create Admin States
+  const [newAdminName, setNewAdminName] = useState("");
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [newAdminRole, setNewAdminRole] = useState("employerAdmin");
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
 
   const navigate = useNavigate();
 
@@ -56,9 +64,14 @@ export default function AdminDashboard() {
 
       // Only fetch pending data if the admin is allowed to see employers/jobs
       if (admin.role === "superAdmin" || admin.role === "employerAdmin") {
-        const [jobsRes, employersRes] = await Promise.all([
+        const [jobsRes, allJobsRes, employersRes] = await Promise.all([
           axios
             .get("https://jobone-mrpy.onrender.com/admin/jobs/pending", {
+              headers,
+            })
+            .catch(() => ({ data: [] })),
+          axios
+            .get("https://jobone-mrpy.onrender.com/admin/jobs", {
               headers,
             })
             .catch(() => ({ data: [] })),
@@ -69,6 +82,7 @@ export default function AdminDashboard() {
             .catch(() => ({ data: [] })),
         ]);
         setPendingJobs(jobsRes.data);
+        setAllJobs(allJobsRes.data);
         setPendingEmployers(employersRes.data);
       }
     } catch (err) {
@@ -136,6 +150,32 @@ export default function AdminDashboard() {
       );
     } catch (err) {
       alert(err.response?.data?.message || "Failed to update freeze status.");
+    }
+  };
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    setIsCreatingAdmin(true);
+    try {
+      const token = JSON.parse(localStorage.getItem("adminInfo")).token;
+      await axios.post(
+        "https://jobone-mrpy.onrender.com/admin/create-admin",
+        {
+          name: newAdminName,
+          email: newAdminEmail,
+          password: newAdminPassword,
+          role: newAdminRole,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Admin created successfully!");
+      setNewAdminName("");
+      setNewAdminEmail("");
+      setNewAdminPassword("");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to create admin.");
+    } finally {
+      setIsCreatingAdmin(false);
     }
   };
 
@@ -254,6 +294,15 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={() => {
+                  setActiveTab("allJobs");
+                  setSearchResults([]);
+                }}
+                className={`pb-4 px-4 font-extrabold text-sm flex items-center gap-2 border-b-2 whitespace-nowrap ${activeTab === "allJobs" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+              >
+                <Briefcase size={18} /> All Jobs ({allJobs.length})
+              </button>
+              <button
+                onClick={() => {
                   setActiveTab("employers");
                   setSearchResults([]);
                 }}
@@ -284,6 +333,17 @@ export default function AdminDashboard() {
               className={`pb-4 px-4 font-extrabold text-sm flex items-center gap-2 border-b-2 whitespace-nowrap ${activeTab === "searchJobseekers" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
             >
               <Search size={18} /> Search & Freeze Jobseekers
+            </button>
+          )}
+          {adminRole === "superAdmin" && (
+            <button
+              onClick={() => {
+                setActiveTab("manageAdmins");
+                setSearchResults([]);
+              }}
+              className={`pb-4 px-4 font-extrabold text-sm flex items-center gap-2 border-b-2 whitespace-nowrap ${activeTab === "manageAdmins" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+            >
+              <ShieldAlert size={18} /> Manage Admins
             </button>
           )}
         </div>
@@ -327,6 +387,39 @@ export default function AdminDashboard() {
                       className="px-4 py-2 bg-rose-50 text-rose-700 rounded-lg text-sm font-bold"
                     >
                       Reject
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* ALL JOBS */}
+        {activeTab === "allJobs" && canManageEmployers && (
+          <div className="space-y-4">
+            {allJobs.length === 0 ? (
+              <p className="text-slate-500 p-4">No jobs on the platform yet.</p>
+            ) : (
+              allJobs.map((job) => (
+                <div
+                  key={job._id}
+                  className="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center gap-4"
+                >
+                  <div>
+                    <h3 className="font-bold text-lg">{job.title}</h3>
+                    <p className="text-sm text-slate-500">
+                      {job.postedByCompany} • Status: <span className="font-bold">{job.status}</span>
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() =>
+                        window.open(`/admin/job/${job._id}`, "_blank")
+                      }
+                      className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold"
+                    >
+                      View Details
                     </button>
                   </div>
                 </div>
@@ -442,7 +535,7 @@ export default function AdminDashboard() {
                         window.open(
                           activeTab === "searchEmployers"
                             ? `/admin/employer/${result._id}`
-                            : `/profile/${result._id}`,
+                            : `/admin/user/${result._id}`,
                           "_blank",
                         )
                       }
@@ -478,6 +571,66 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* FACT: MANAGE ADMINS PANEL (Super Admin Only) */}
+        {activeTab === "manageAdmins" && adminRole === "superAdmin" && (
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
+              <ShieldAlert className="text-indigo-600" size={24} /> Create Sub-Admin
+            </h2>
+            <form onSubmit={handleCreateAdmin} className="space-y-4 max-w-md">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newAdminName}
+                  onChange={(e) => setNewAdminName(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={newAdminPassword}
+                  onChange={(e) => setNewAdminPassword(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Role</label>
+                <select
+                  value={newAdminRole}
+                  onChange={(e) => setNewAdminRole(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="employerAdmin">Employer Admin</option>
+                  <option value="jobseekerAdmin">Jobseeker Admin</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                disabled={isCreatingAdmin}
+                className="w-full bg-indigo-600 text-white p-3 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors mt-6"
+              >
+                {isCreatingAdmin ? <Loader2 className="animate-spin" size={18} /> : null}
+                Create Admin Account
+              </button>
+            </form>
           </div>
         )}
       </div>

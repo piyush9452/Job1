@@ -45,7 +45,7 @@ function RecenterMap({ lat, lng }) {
   return null;
 }
 
-export default function JobsAroundMe() {
+export default function JobsAroundMe({ onJobClick }) {
   const [userLocation, setUserLocation] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -179,7 +179,7 @@ export default function JobsAroundMe() {
                           ₹{job.salary}
                         </p>
                         <button
-                          onClick={() => navigate(`/job/${job._id}`)}
+                          onClick={() => onJobClick ? onJobClick(job) : navigate(`/job/${job._id}`)}
                           className="text-xs text-white bg-blue-600 px-2 py-1 rounded mt-2 w-full"
                         >
                           View Job
@@ -211,31 +211,45 @@ export default function JobsAroundMe() {
             No jobs found within 50km. Try searching a different area.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {jobs.map((job) => (
               <div
                 key={job._id}
-                onClick={() => navigate(`/job/${job._id}`)}
-                className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition cursor-pointer group"
+                onClick={() => onJobClick ? onJobClick(job) : navigate(`/job/${job._id}`)}
+                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all cursor-pointer group flex flex-col h-full relative overflow-hidden"
               >
-                <h4 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors truncate">
-                  {job.title}
-                </h4>
-                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1 mb-3">
-                  <MapPin size={12} />
-                  <span className="truncate">
-                    {typeof job.location === "object"
-                      ? job.location.address
-                      : job.location}
+                <div className="flex items-start justify-between mb-4 mt-2">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-xl font-bold text-slate-400 border border-slate-100 shadow-inner">
+                    {(job.postedByCompany || job.postedByName || "C").charAt(0)}
+                  </div>
+                  <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-lg uppercase tracking-wide border border-slate-200 mt-1">
+                    {Array.isArray(job.jobType) ? job.jobType.join(", ") : job.jobType}
                   </span>
                 </div>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium capitalize">
-                    {job.jobType}
-                  </span>
-                  <div className="flex items-center gap-1 text-sm font-bold text-gray-900">
-                    <IndianRupee size={14} className="text-gray-400" />
-                    {job.salary ? job.salary.toLocaleString() : "N/A"}
+
+                <h3 className="text-lg font-extrabold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
+                  {job.title}
+                </h3>
+                <p className="text-sm text-slate-500 font-bold mb-4">
+                  {job.postedByCompany || job.postedByName || "Company Confidential"}
+                </p>
+
+                <div className="mt-auto space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-slate-600 font-bold">
+                    <MapPin size={16} className="text-slate-400 shrink-0" />
+                    <span className="truncate">
+                      {typeof job.location === "object"
+                        ? job.location.address
+                        : job.location}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-600 font-bold">
+                    <IndianRupee size={16} className="text-slate-400 shrink-0" />
+                    <span>
+                      {job.salaryAmount === 0 || (job.salaryMin === 0 && job.salaryMax === 0) 
+                        ? "Unpaid"
+                        : job.salaryAmount?.toLocaleString() || job.salaryMin?.toLocaleString() || job.salary?.toLocaleString() || "TBD"}
+                    </span>
                   </div>
                 </div>
               </div>

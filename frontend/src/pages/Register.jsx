@@ -1,15 +1,34 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
+import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 import login from "../assets/login.jpg";
 
 
 const RegisterOption = () => {
     const navigate = useNavigate();
 
-    const handleGoogleSignup = () => {
-        // You can replace this alert with actual Google Auth (Firebase or backend route)
-        alert("Google signup coming soon!");
+    const [error, setError] = React.useState("");
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            const { data } = await axios.post("https://jobone-mrpy.onrender.com/user/google-login", {
+                token: credentialResponse.credential,
+            });
+
+            localStorage.setItem("userToken", data.token);
+            localStorage.setItem("userInfo", JSON.stringify(data));
+
+            if (data.isProfileComplete === false) {
+                navigate("/editprofile", { state: { showWarning: true } });
+            } else {
+                navigate("/userdashboard");
+            }
+        } catch (err) {
+            console.error("Google Login Error:", err);
+            setError("Google Registration failed. Please try again.");
+        }
     };
 
     const handleEmailSignup = () => {
@@ -28,14 +47,17 @@ const RegisterOption = () => {
             </div>
 
             <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md text-center">
+                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
                 {/* Google Sign-up */}
-                <button
-                    onClick={handleGoogleSignup}
-                    className="flex items-center justify-center w-full py-3 mb-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium"
-                >
-                    <FcGoogle className="text-2xl mr-2 bg-white rounded-full p-1" />
-                    Sign up with Google
-                </button>
+                <div className="mb-4 flex justify-center">
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => setError("Google Signup Failed")}
+                        text="signup_with"
+                        shape="rectangular"
+                        width="100%"
+                    />
+                </div>
 
                 {/* OR Divider */}
                 <button

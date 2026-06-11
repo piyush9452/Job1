@@ -14,6 +14,8 @@ export default function MyCandidates() {
   const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -59,6 +61,14 @@ export default function MyCandidates() {
       </div>
     );
 
+  const filteredApplications = applications.filter((app) => {
+    const candidateName = app.appliedBy?.name?.toLowerCase() || "";
+    const jobTitle = app.job?.title?.toLowerCase() || "";
+    const matchesSearch = candidateName.includes(searchQuery.toLowerCase()) || jobTitle.includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 font-sans mt-16 sm:mt-20">
       <div className="max-w-6xl mx-auto">
@@ -74,7 +84,31 @@ export default function MyCandidates() {
           </p>
         </div>
 
-        {applications.length === 0 ? (
+        {/* FACT: New Candidate Filtering UI */}
+        <div className="mb-8 flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+          <input
+            type="text"
+            placeholder="Search by name or job title..."
+            className="flex-1 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <select
+            className="bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-700"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All Statuses</option>
+            <option value="applied">Applied</option>
+            <option value="shortlisted">Shortlisted</option>
+            <option value="Interview Scheduled">Interview Scheduled</option>
+            <option value="Interview Conducted">Interview Conducted</option>
+            <option value="hired">Hired</option>
+            <option value="NCTT">Not a Fit (NCTT)</option>
+          </select>
+        </div>
+
+        {filteredApplications.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
             <h3 className="text-xl font-bold text-slate-800">
               No candidates yet
@@ -85,7 +119,7 @@ export default function MyCandidates() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {applications.map((app) => {
+            {filteredApplications.map((app) => {
               const candidate = app.appliedBy;
               if (!candidate) return null;
 
