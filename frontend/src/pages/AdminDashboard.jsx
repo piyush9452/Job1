@@ -279,7 +279,6 @@ export default function AdminDashboard() {
               <SidebarItem id="manageAdmins" icon={ShieldAlert} label="Manage Admins" />
             </>
           )}
-        </div>
 
           <p className="text-xs font-black uppercase text-slate-400 tracking-widest pl-4 mb-2 mt-8">Database</p>
           <SidebarItem id="exportDB" icon={Download} label="Database Export" />
