@@ -57,9 +57,8 @@ function App() {
   return (
     <Router>
       <Navbar />
-      <GlobalNotificationPopup />'
+      <GlobalNotificationPopup />
       <ChatWidget />
-      <div className="w-[100vw] h-[50px]"></div>
       <Routes>
         {/* ================= PUBLIC ROUTES ================= */}
         <Route path="/" element={<Home />} />

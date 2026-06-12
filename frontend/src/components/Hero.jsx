@@ -141,7 +141,7 @@ export default function HeroSection() {
   return (
     // FACT: Mobile fix - Changed fixed h-[85vh] to min-h-[100dvh] so the page can scroll on small devices
     // Added pt-28 pb-12 so the content isn't hidden under your transparent navbar
-    <section className="relative w-full min-h-[100dvh] lg:min-h-[750px] lg:h-[85vh] flex lg:items-center justify-center overflow-hidden font-sans pt-28 pb-12 lg:py-0">
+    <section className="relative w-full min-h-[100dvh] lg:min-h-[750px] lg:h-[85vh] flex lg:items-center justify-center overflow-hidden font-sans pt-36 pb-12 lg:pt-36 lg:pb-16">
       <video
         className="absolute inset-0 w-full h-full object-cover scale-105"
         src={heroVideo}
