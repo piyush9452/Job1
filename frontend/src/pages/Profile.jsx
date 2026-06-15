@@ -175,7 +175,10 @@ const Profile = () => {
                       window.open(profile.resume, "_blank");
                     } else if (profile.resumeFileKey) {
                       try {
-                        const { data } = await axios.get(`https://jobone-mrpy.onrender.com/user/${profile._id}/resume/view`);
+                        const token = JSON.parse(localStorage.getItem("userInfo"))?.token;
+                        const { data } = await axios.get(`https://jobone-mrpy.onrender.com/user/${profile._id}/resume/view`, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
                         if (data.viewableUrl) {
                           window.open(data.viewableUrl, "_blank");
                         }
