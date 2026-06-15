@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   Loader2, CheckCircle, XCircle, Building2, Briefcase,
   ShieldAlert, ExternalLink, Download, Search, Snowflake,
-  Flame, LayoutDashboard, Users, LogOut, FileText
+  Flame, LayoutDashboard, Users, LogOut, FileText, User
 } from "lucide-react";
 
 export default function AdminDashboard() {
