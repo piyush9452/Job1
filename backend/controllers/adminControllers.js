@@ -1,5 +1,7 @@
 import * as xlsx from 'xlsx';
-import archiver from 'archiver';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const archiver = require('archiver');
 import User from '../models/users.js';
 
 import errorHandler from "express-async-handler";
