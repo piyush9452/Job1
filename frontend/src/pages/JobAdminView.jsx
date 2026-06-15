@@ -50,7 +50,7 @@ export default function JobAdminView() {
     }
   };
 
-  const handleStatusChange = async (status) => {
+  const handleStatusChange = async (status, stayOnPage = false) => {
     setActionLoading(true);
     try {
       const token = JSON.parse(localStorage.getItem("adminInfo")).token;
@@ -59,10 +59,16 @@ export default function JobAdminView() {
         { status },
         { headers: { Authorization: `Bearer ${token}` } },
       );
+      
+      setJob((prev) => ({ ...prev, status }));
+
       alert(
-        `Job successfully ${status === "active" ? "approved" : status === "hidden" ? "hidden" : "rejected"}!`,
+        `Job successfully ${status === "active" ? "approved" : status === "hidden" ? "hidden" : status === "rejected" ? "rejected" : "updated"}!`,
       );
-      navigate("/admin/dashboard");
+      
+      if (!stayOnPage) {
+        navigate("/admin/dashboard");
+      }
     } catch (err) {
       alert("Failed to update status.");
     } finally {
@@ -137,34 +143,58 @@ export default function JobAdminView() {
           <div className="lg:col-span-1 space-y-6">
             {/* Master Action Block */}
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-6">
-              <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-widest mb-4">
-                Final Decision
-              </h2>
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => handleStatusChange("active")}
-                  disabled={actionLoading}
-                  className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-100"
-                >
-                  <CheckCircle size={18} /> Approve & Publish
-                </button>
-                <button
-                  onClick={() => handleStatusChange("rejected")}
-                  disabled={actionLoading}
-                  className="w-full bg-rose-50 text-rose-700 border border-rose-200 py-3 rounded-xl font-bold hover:bg-rose-100 transition flex items-center justify-center gap-2"
-                >
-                  <XCircle size={18} /> Reject Job
-                </button>
-                {job.status !== "hidden" && (
-                  <button
-                    onClick={() => handleStatusChange("hidden")}
-                    disabled={actionLoading}
-                    className="w-full mt-2 bg-slate-100 text-slate-700 border border-slate-200 py-3 rounded-xl font-bold hover:bg-slate-200 transition flex items-center justify-center gap-2"
-                  >
-                    <EyeOff size={18} /> Hide Job
-                  </button>
-                )}
-              </div>
+              {job.status === "pending_approval" ? (
+                <>
+                  <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-widest mb-4">
+                    Final Decision
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => handleStatusChange("active")}
+                      disabled={actionLoading}
+                      className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50 transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-100"
+                    >
+                      <CheckCircle size={18} /> Approve & Publish
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange("rejected")}
+                      disabled={actionLoading}
+                      className="w-full bg-rose-50 text-rose-700 border border-rose-200 py-3 rounded-xl font-bold hover:bg-rose-100 transition flex items-center justify-center gap-2"
+                    >
+                      <XCircle size={18} /> Reject Job
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange("hidden")}
+                      disabled={actionLoading}
+                      className="w-full mt-2 bg-slate-100 text-slate-700 border border-slate-200 py-3 rounded-xl font-bold hover:bg-slate-200 transition flex items-center justify-center gap-2"
+                    >
+                      <EyeOff size={18} /> Hide Job
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-widest mb-4">
+                    Update Status
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    <select
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={job.status}
+                      onChange={(e) => handleStatusChange(e.target.value, true)}
+                      disabled={actionLoading}
+                    >
+                      <option value="active">Active (Published)</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="hidden">Hidden</option>
+                      <option value="pending_approval">Pending Approval</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                    {actionLoading && <p className="text-xs text-slate-400 text-center animate-pulse">Updating status...</p>}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Core Details Card */}
