@@ -53,13 +53,28 @@ import ForgotPassword from "./pages/ForgotPassword";
 import RecommendedJobs from "./pages/RecommendedJobs";
 import AdminJobseekerView from "./pages/AdminJobseekerView";
 
+import { useLocation } from "react-router-dom";
+
+const PageWrapper = ({ children }) => {
+  const location = useLocation();
+  const noPaddingRoutes = ["/", "/admin/dashboard", "/admin/login"];
+  const hasPadding = !noPaddingRoutes.includes(location.pathname);
+
+  return (
+    <div className={hasPadding ? "pt-[80px]" : ""}>
+      {children}
+    </div>
+  );
+};
+
 function App() {
   return (
     <Router>
       <Navbar />
       <GlobalNotificationPopup />
       <ChatWidget />
-      <Routes>
+      <PageWrapper>
+        <Routes>
         {/* ================= PUBLIC ROUTES ================= */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -260,6 +275,7 @@ function App() {
         />
         <Route path="/job/JobsAroundMe" element={<TestLocation />} />
       </Routes>
+      </PageWrapper>
     </Router>
   );
 }
