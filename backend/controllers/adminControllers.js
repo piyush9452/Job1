@@ -56,9 +56,16 @@ const generateToken = (id) => {
 // @route   POST /api/admin/login
 export const authAdmin = errorHandler(async (req, res) => {
   const { email, password } = req.body;
-  const admin = await Admin.findOne({ email });
+  
+  // Make email search case-insensitive just in case
+  const admin = await Admin.findOne({ email: new RegExp('^' + email + '$', 'i') });
 
-  if (admin && (await admin.matchPassword(password))) {
+  if (!admin) {
+    res.status(401);
+    throw new Error("Invalid email. No admin found with this email.");
+  }
+
+  if (await admin.matchPassword(password)) {
     res.json({
       _id: admin._id,
       name: admin.name,
@@ -68,7 +75,7 @@ export const authAdmin = errorHandler(async (req, res) => {
     });
   } else {
     res.status(401);
-    throw new Error("Invalid email or password");
+    throw new Error("Invalid password for this admin account.");
   }
 });
 
