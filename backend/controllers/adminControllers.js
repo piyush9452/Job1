@@ -89,9 +89,8 @@ export const createAdmin = expressAsyncHandler(async (req, res) => {
     throw new Error('Admin already exists');
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
   const newAdmin = new Admin({
-    name, email, password: hashedPassword, role
+    name, email, password, role
   });
 
   await newAdmin.save();
