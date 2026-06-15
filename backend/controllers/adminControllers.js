@@ -1,7 +1,5 @@
 import * as xlsx from 'xlsx';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const archiver = require('archiver');
+import { ZipArchive } from 'archiver';
 import User from '../models/users.js';
 
 import errorHandler from "express-async-handler";
@@ -329,7 +327,7 @@ export const exportDataToExcel = expressAsyncHandler(async (req, res) => {
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', 'attachment; filename="Platform_Complete_DB.zip"');
 
-  const archive = archiver('zip', { zlib: { level: 9 } });
+  const archive = new ZipArchive({ zlib: { level: 9 } });
   
   archive.on('error', (err) => {
     res.status(500);
