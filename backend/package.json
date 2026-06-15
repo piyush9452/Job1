@@ -16,6 +16,7 @@
     "@aws-sdk/s3-request-presigner": "^3.932.0",
     "@google/generative-ai": "^0.24.1",
     "ai": "^6.0.184",
+    "archiver": "^8.0.0",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",

@@ -1,4 +1,5 @@
 import * as xlsx from 'xlsx';
+import archiver from 'archiver';
 import User from '../models/users.js';
 
 import errorHandler from "express-async-handler";
@@ -276,23 +277,96 @@ const formatEmployersForExcel = (employers) => {
   }));
 };
 
+const formatAdminsForExcel = (admins) => {
+  return admins.map(admin => ({
+    "Admin ID": admin._id?.toString() || "N/A",
+    "Name": admin.name || "N/A",
+    "Email": admin.email || "N/A",
+    "Role": admin.role || "N/A",
+    "Created At": new Date(admin.createdAt).toLocaleDateString()
+  }));
+};
+
+const formatApplicationsForExcel = (applications) => {
+  return applications.map(app => ({
+    "Application ID": app._id?.toString() || "N/A",
+    "Job ID": app.job_id?.toString() || "N/A",
+    "Employer ID": app.jobHost?.toString() || "N/A",
+    "Applicant ID": app.appliedBy?.toString() || "N/A",
+    "Status": app.status || "N/A",
+    "Applied At": new Date(app.appliedAt).toLocaleDateString()
+  }));
+};
+
+const formatContactsForExcel = (contacts) => {
+  return contacts.map(contact => ({
+    "Contact ID": contact._id?.toString() || "N/A",
+    "User ID": contact.userId?.toString() || "N/A",
+    "Name": contact.name || "N/A",
+    "Email": contact.email || "N/A",
+    "Type": contact.communicationType || "N/A",
+    "Message": contact.message || "N/A",
+    "Submitted At": new Date(contact.createdAt).toLocaleDateString()
+  }));
+};
+
 // @desc    Export Complete Data to Excel (SuperAdmin)
 // @route   GET /api/admin/export/all
 export const exportDataToExcel = expressAsyncHandler(async (req, res) => {
   const { default: User } = await import('../models/users.js');
+  const { default: Application } = await import('../models/applications.js');
+  const { default: Contact } = await import('../models/contacted.js');
+
   const users = await User.find({}).select('-password -__v').lean();
   const employers = await Employer.find({}).select('-password -__v').lean();
   const jobs = await Job.find({}).lean();
+  const admins = await Admin.find({}).select('-password -__v').lean();
+  const applications = await Application.find({}).lean();
+  const contacts = await Contact.find({}).lean();
 
-  const workbook = xlsx.utils.book_new();
-  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatJobseekersForExcel(users)), "Jobseeker Profiles");
-  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatEmployersForExcel(employers)), "Employer Profiles");
-  xlsx.utils.book_append_sheet(workbook, xlsx.utils.json_to_sheet(formatJobsForExcel(jobs)), "All Jobs");
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', 'attachment; filename="Platform_Complete_DB.zip"');
 
-  const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Disposition', 'attachment; filename="Platform_Complete_DB.xlsx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(excelBuffer);
+  const archive = archiver('zip', { zlib: { level: 9 } });
+  
+  archive.on('error', (err) => {
+    res.status(500);
+    throw new Error("Failed to generate ZIP archive");
+  });
+
+  archive.pipe(res);
+
+  // Generate and append Admins
+  const wbAdmins = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(wbAdmins, xlsx.utils.json_to_sheet(formatAdminsForExcel(admins)), "Admins");
+  archive.append(xlsx.write(wbAdmins, { type: 'buffer', bookType: 'xlsx' }), { name: 'Admins.xlsx' });
+
+  // Generate and append Applications
+  const wbApps = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(wbApps, xlsx.utils.json_to_sheet(formatApplicationsForExcel(applications)), "Applications");
+  archive.append(xlsx.write(wbApps, { type: 'buffer', bookType: 'xlsx' }), { name: 'Applications.xlsx' });
+
+  // Generate and append Contacts
+  const wbContacts = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(wbContacts, xlsx.utils.json_to_sheet(formatContactsForExcel(contacts)), "Contacts");
+  archive.append(xlsx.write(wbContacts, { type: 'buffer', bookType: 'xlsx' }), { name: 'Contacts.xlsx' });
+
+  // Generate and append Employers
+  const wbEmployers = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(wbEmployers, xlsx.utils.json_to_sheet(formatEmployersForExcel(employers)), "Employers");
+  archive.append(xlsx.write(wbEmployers, { type: 'buffer', bookType: 'xlsx' }), { name: 'Employers.xlsx' });
+
+  // Generate and append Jobs
+  const wbJobs = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(wbJobs, xlsx.utils.json_to_sheet(formatJobsForExcel(jobs)), "Jobs");
+  archive.append(xlsx.write(wbJobs, { type: 'buffer', bookType: 'xlsx' }), { name: 'Jobs.xlsx' });
+
+  // Generate and append Users
+  const wbUsers = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(wbUsers, xlsx.utils.json_to_sheet(formatJobseekersForExcel(users)), "Jobseekers");
+  archive.append(xlsx.write(wbUsers, { type: 'buffer', bookType: 'xlsx' }), { name: 'Users.xlsx' });
+
+  await archive.finalize();
 });
 
 // @desc    Export Employers & Jobs to Excel (EmployerAdmin)
