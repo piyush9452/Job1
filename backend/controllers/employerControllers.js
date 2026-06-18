@@ -555,17 +555,11 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
     });
     const { email, name, picture, sub: googleId } = ticket.getPayload();
 
-    // 2. Unconditionally check for User collision
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      res.status(400);
-      throw new Error('This email is already registered as a Jobseeker.');
-    }
-
+    // 2. Check if employer exists FIRST (Login Scenario)
     let employer = await Employer.findOne({ email });
 
     if (employer) {
-      // --- EXISTING EMPLOYER ---
+      // --- EXISTING EMPLOYER (LOGIN) ---
       const token = jwt.sign({ employer: { id: employer._id } }, process.env.JWT_SECRET, { expiresIn: '5h' });
 
       if (!employer.profilePicture) {
@@ -577,7 +571,7 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
       const hasRealPhone = employer.phone && !employer.phone.startsWith("EMP-");
       const isProfileComplete = hasRealPhone && employer.companyName && employer.companyName.trim() !== "";
 
-      res.status(200).json({
+      return res.status(200).json({
         message: "Google Login Successful",
         token,
         employerId: employer._id,
@@ -586,6 +580,13 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
       });
 
     } else {
+      // --- NEW EMPLOYER (REGISTER) ---
+      // 3. Check for User collision BEFORE creating a new employer
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(400);
+        throw new Error('This email is already registered as a Jobseeker. You cannot create an Employer account with this email.');
+      }
       // --- NEW EMPLOYER ---
       const randomPassword = Math.random().toString(36).slice(-8);
       const hashedPassword = await bcrypt.hash(randomPassword, 10);

@@ -224,22 +224,7 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
   try {
     const { token: googleToken } = req.body;
 
-    // 1. Verify Google Token
-    const ticket = await client.verifyIdToken({
-      idToken: googleToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    
-    const { email, name, picture } = ticket.getPayload();
-
-    // 2. Unconditionally check for Employer collision
-    const existingEmployer = await Employer.findOne({ email });
-    if (existingEmployer) {
-      res.status(400);
-      throw new Error("This email is already registered as an Employer.");
-    }
-
-    // 3. Check if user exists
+    // 2. Check if user exists FIRST (Login Scenario)
     let user = await User.findOne({ email });
 
     if (user) {
@@ -264,6 +249,13 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
       });
 
     } else {
+      // --- SCENARIO 2: NEW USER (REGISTER) ---
+      // 3. Check for Employer collision BEFORE creating a new user
+      const existingEmployer = await Employer.findOne({ email });
+      if (existingEmployer) {
+        res.status(400);
+        throw new Error("This email is already registered as an Employer. You cannot create a Jobseeker account with this email.");
+      }
       // --- SCENARIO 2: NEW USER (REGISTER) ---
       const randomPassword = Math.random().toString(36).slice(-8);
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
