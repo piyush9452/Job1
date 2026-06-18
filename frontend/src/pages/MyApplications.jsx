@@ -200,15 +200,15 @@ export default function MyApplications() {
                 className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 flex flex-col h-full overflow-hidden"
               >
                 {/* Card Header */}
-                <div className="p-6 sm:p-8">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-xl font-extrabold text-indigo-600 shadow-sm shrink-0">
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-lg font-extrabold text-indigo-600 shadow-sm shrink-0">
                         {companyImage ? (
                           <img
                             src={companyImage}
                             alt="Logo"
-                            className="w-full h-full object-cover rounded-2xl"
+                            className="w-full h-full object-cover rounded-xl"
                           />
                         ) : (
                           companyName.charAt(0).toUpperCase()
@@ -216,25 +216,23 @@ export default function MyApplications() {
                       </div>
                       <div className="min-w-0">
                         <h3
-                          className="font-extrabold text-slate-900 text-xl leading-snug truncate pr-2"
+                          className="font-bold text-slate-900 text-lg leading-tight truncate pr-2"
                           title={job.title}
                         >
                           {job.title || "Job Title Unavailable"}
                         </h3>
-                        <p className="text-sm text-slate-500 font-bold flex items-center gap-1.5 mt-1 truncate">
+                        <p className="text-sm text-slate-500 font-medium flex items-center gap-1.5 mt-0.5 truncate">
                           <Building2 size={14} className="text-slate-400" />{" "}
                           {companyName}
                         </p>
                       </div>
                     </div>
+                    {getStatusBadge(app.status)}
                   </div>
 
-                  {/* Status & Messages */}
-                  <div className="mb-6 flex flex-wrap items-center gap-3">
-                    {getStatusBadge(app.status)}
-
-                    {/* FACT: New Employer Message Alert Button */}
-                    {app.employerMessage && (
+                  {/* FACT: New Employer Message Alert Button */}
+                  {app.employerMessage && (
+                    <div className="mb-4">
                       <button
                         onClick={() =>
                           setMessagePopup({
@@ -242,43 +240,37 @@ export default function MyApplications() {
                             message: app.employerMessage,
                           })
                         }
-                        className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-extrabold uppercase tracking-wider rounded-md border border-indigo-200 hover:bg-indigo-100 transition-colors animate-pulse"
+                        className="flex w-full justify-center items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-colors"
                       >
-                        <MessageCircle size={12} /> View Update Details
+                        <MessageCircle size={14} /> View Employer Update
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Job Details mapped to new Schema */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <div className="p-1.5 bg-white rounded-md shadow-sm">
-                        <MapPin size={16} className="text-slate-400" />
-                      </div>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                      <MapPin size={14} className="text-slate-400" />
                       <span
-                        className="text-sm font-bold text-slate-700 truncate"
+                        className="text-xs font-semibold text-slate-700 truncate max-w-[120px]"
                         title={locationStr}
                       >
                         {locationStr || "Office"}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <div className="p-1.5 bg-white rounded-md shadow-sm">
-                        <IndianRupee size={16} className="text-slate-400" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                      <IndianRupee size={14} className="text-slate-400" />
+                      <span className="text-xs font-semibold text-slate-700">
                         {job.salaryAmount
                           ? job.salaryAmount.toLocaleString()
                           : "TBD"}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 col-span-2 sm:col-span-1">
-                      <div className="p-1.5 bg-white rounded-md shadow-sm">
-                        {getModeIcon(job.mode)}
-                      </div>
-                      <span className="text-sm font-bold text-slate-700 truncate">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                      {getModeIcon(job.mode)}
+                      <span className="text-xs font-semibold text-slate-700 truncate">
                         {job.mode}
                       </span>
                     </div>
@@ -286,16 +278,16 @@ export default function MyApplications() {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-auto px-6 sm:px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold uppercase tracking-wider">
-                    <Calendar size={14} /> Applied:{" "}
-                    {new Date(app.appliedAt).toLocaleDateString()}
+                <div className="mt-auto px-5 py-3.5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold tracking-wide">
+                    <Calendar size={14} className="text-slate-400" /> Applied{" "}
+                    {new Date(app.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                   </div>
                   <button
                     onClick={() => setSelectedApplication(app)}
-                    className="text-sm font-extrabold text-indigo-600 hover:text-indigo-800 transition-colors bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100"
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
                   >
-                    View Job Posting
+                    View Details
                   </button>
                 </div>
               </motion.div>

@@ -164,32 +164,32 @@ export default function ApplicationDetailsModal({ application, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col relative border border-slate-100 overflow-hidden"
+        className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col relative border border-slate-100 overflow-hidden"
       >
         {/* Header */}
-        <div className="flex justify-between items-start p-6 sm:p-8 border-b border-slate-100 bg-white relative z-10 shrink-0">
+        <div className="flex justify-between items-start p-5 sm:p-6 border-b border-slate-100 bg-white relative z-10 shrink-0">
           <div className="flex gap-4 items-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-2xl font-extrabold text-indigo-600 shadow-sm shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-xl font-extrabold text-indigo-600 shadow-sm shrink-0">
               {job.postedBy?.image ? (
                 <img
                   src={job.postedBy.image}
                   alt="Logo"
-                  className="w-full h-full object-cover rounded-2xl"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               ) : (
                 companyName.charAt(0).toUpperCase()
               )}
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 leading-tight line-clamp-1">
+              <h2 className="text-lg md:text-xl font-bold text-slate-900 leading-tight line-clamp-1">
                 {job.title}
               </h2>
-              <div className="flex items-center gap-2 text-slate-500 font-bold mt-1 text-sm">
+              <div className="flex items-center gap-2 text-slate-500 font-medium mt-1 text-sm">
                 <Building2 size={14} />
                 {companyName}
               </div>
@@ -197,21 +197,21 @@ export default function ApplicationDetailsModal({ application, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors text-slate-500"
+            className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6 sm:p-8 flex-1 bg-slate-50/50 custom-scrollbar space-y-6">
+        <div className="overflow-y-auto p-5 sm:p-6 flex-1 bg-slate-50/50 custom-scrollbar space-y-5">
           {/* 1. Status Section */}
           <div
-            className={`p-6 rounded-2xl border shadow-sm relative overflow-hidden ${statusUI.color}`}
+            className={`p-5 rounded-xl border relative overflow-hidden ${statusUI.color}`}
           >
-            <div className="flex items-center gap-3 font-extrabold text-lg relative z-10">
+            <div className="flex items-center gap-3 font-bold text-base relative z-10">
               {statusUI.icon} {statusUI.title}
             </div>
-            <p className="text-sm font-bold leading-relaxed opacity-90 pl-9 mt-1 relative z-10">
+            <p className="text-sm font-medium leading-relaxed opacity-90 pl-9 mt-1 relative z-10">
               {statusUI.message}
             </p>
 
@@ -228,14 +228,14 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                     }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-indigo-700 transition-all active:scale-95 w-fit"
                   >
                     <Globe size={16} /> Join Meeting
                   </a>
                 )}
                 {application.rescheduleRequest?.isRequested ? (
                   <div
-                    className={`p-3 rounded-xl text-sm font-bold border ${
+                    className={`mt-3 p-3 rounded-lg text-sm font-medium border ${
                       application.rescheduleRequest.requestStatus === "pending"
                         ? "bg-orange-50 border-orange-200 text-orange-700"
                         : application.rescheduleRequest.requestStatus ===
@@ -244,7 +244,7 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                           : "bg-rose-50 border-rose-200 text-rose-700"
                     }`}
                   >
-                    <span className="uppercase tracking-wider text-[10px] block mb-1">
+                    <span className="uppercase tracking-wider text-[10px] font-bold block mb-1">
                       Reschedule Status
                     </span>
                     {application.rescheduleRequest.requestStatus ===
@@ -261,7 +261,7 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                 ) : !isRescheduling ? (
                   <button
                     onClick={() => setIsRescheduling(true)}
-                    className="flex items-center gap-2 bg-white border border-purple-200 text-purple-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-purple-50 transition-colors"
+                    className="mt-3 flex items-center gap-2 bg-white border border-purple-200 text-purple-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-purple-50 transition-colors"
                   >
                     <CalendarClock size={16} /> Request Reschedule
                   </button>
@@ -269,9 +269,9 @@ export default function ApplicationDetailsModal({ application, onClose }) {
               </div>
             )}
 
-            <div className="mt-4 pt-4 border-t border-black/10 flex items-center gap-2 text-xs font-extrabold opacity-70 pl-9 relative z-10">
+            <div className="mt-4 pt-4 border-t border-black/5 flex items-center gap-1.5 text-xs font-semibold opacity-70 pl-9 relative z-10">
               <Calendar size={14} /> Applied on{" "}
-              {new Date(appliedAt).toLocaleDateString()}
+              {new Date(appliedAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
           </div>
 
@@ -280,22 +280,22 @@ export default function ApplicationDetailsModal({ application, onClose }) {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="bg-white rounded-2xl p-6 border border-purple-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden"
+              className="bg-white rounded-xl p-5 border border-purple-100 shadow-sm overflow-hidden"
             >
-              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-4">
+              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
                 <CalendarClock size={18} className="text-purple-600" /> Request
                 a New Time
               </h3>
 
               {rescheduleStatus === "success" ? (
-                <div className="p-4 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold flex items-center gap-2">
+                <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium flex items-center gap-2">
                   <CheckCircle2 size={18} className="shrink-0" />{" "}
                   {rescheduleFeedback}
                 </div>
               ) : (
                 <form onSubmit={handleRescheduleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                       Reason for Rescheduling
                     </label>
                     <textarea
@@ -308,12 +308,12 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                         })
                       }
                       placeholder="E.g., I have an unexpected medical appointment..."
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition-all resize-none"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition-all resize-none"
                       rows="2"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                       Proposed Date & Time
                     </label>
                     <input
@@ -327,28 +327,28 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                         })
                       }
                       placeholder="E.g., Tomorrow at 3:00 PM EST, or Friday morning"
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition-all"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition-all"
                     />
                   </div>
 
                   {rescheduleStatus === "error" && (
-                    <p className="text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-lg flex items-center gap-1.5">
+                    <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2 rounded-lg flex items-center gap-1.5">
                       <AlertCircle size={14} /> {rescheduleFeedback}
                     </p>
                   )}
 
-                  <div className="flex justify-end gap-3 pt-2">
+                  <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsRescheduling(false)}
-                      className="px-5 py-2.5 text-slate-500 font-bold hover:bg-slate-100 rounded-xl transition-colors text-sm"
+                      className="px-4 py-2 text-slate-500 font-medium hover:bg-slate-100 rounded-lg transition-colors text-sm"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={rescheduleStatus === "loading"}
-                      className="px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-colors text-sm flex items-center gap-2 disabled:opacity-70 shadow-lg shadow-purple-200"
+                      className="px-4 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors text-sm flex items-center gap-2 disabled:opacity-70 shadow-sm"
                     >
                       {rescheduleStatus === "loading" ? (
                         <Loader2 size={16} className="animate-spin" />
@@ -370,53 +370,47 @@ export default function ApplicationDetailsModal({ application, onClose }) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 bg-indigo-50 border border-indigo-100 rounded-2xl shadow-sm relative overflow-hidden"
+              className="p-5 bg-indigo-50/50 border border-indigo-100 rounded-xl shadow-sm relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                <MessageSquare size={120} />
-              </div>
-              <h3 className="text-sm font-extrabold text-indigo-900 mb-3 flex items-center gap-2 relative z-10">
+              <h3 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2 relative z-10">
                 <MessageSquare size={16} className="text-indigo-500" /> Message
                 from Employer
               </h3>
-              <div className="text-indigo-900 font-medium whitespace-pre-wrap leading-relaxed text-sm bg-white/60 p-4 rounded-xl border border-indigo-100/50 relative z-10 shadow-sm">
+              <div className="text-indigo-900/90 font-medium whitespace-pre-wrap leading-relaxed text-sm bg-white p-3.5 rounded-lg border border-indigo-50 relative z-10 shadow-sm">
                 {employerMessage}
               </div>
             </motion.div>
           )}
 
           {/* 2. Job Snapshot */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-              Job Details
+          <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+            <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <Briefcase size={14} /> Job Details
             </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
                   Salary
                 </p>
-                <p className="font-extrabold text-slate-900 flex items-center gap-1">
-                  <IndianRupee size={14} className="text-slate-500" />{" "}
+                <p className="font-bold text-slate-900 flex items-center gap-1 text-sm">
+                  <IndianRupee size={12} className="text-slate-500" />{" "}
                   {job.salaryAmount ? job.salaryAmount.toLocaleString() : "TBD"}
                 </p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
-                  {job.salaryFrequency || "Monthly"}
-                </p>
               </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
                   Work Mode
                 </p>
-                <p className="font-extrabold text-slate-900 flex items-center gap-1.5 truncate">
+                <p className="font-bold text-slate-900 flex items-center gap-1.5 truncate text-sm">
                   {getModeIcon(modeStr)} {modeStr}
                 </p>
               </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 col-span-2">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 col-span-2 sm:col-span-1">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
                   Location
                 </p>
-                <p className="font-extrabold text-slate-900 flex items-center gap-1.5">
-                  <MapPin size={14} className="text-slate-400 shrink-0" />{" "}
+                <p className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
+                  <MapPin size={12} className="text-slate-400 shrink-0" />{" "}
                   <span className="truncate">{displayLocation}</span>
                 </p>
               </div>
@@ -424,23 +418,23 @@ export default function ApplicationDetailsModal({ application, onClose }) {
           </div>
 
           {/* 3. Description Snippet */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-              Job Description
+          <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+            <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <FileText size={14} /> Job Description
             </h3>
-            <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 text-sm text-slate-600 font-medium leading-relaxed max-h-40 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+            <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-600 font-medium leading-relaxed max-h-60 overflow-y-auto custom-scrollbar whitespace-pre-wrap border border-slate-100">
               {job.description}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 bg-white flex justify-end relative z-10 shrink-0">
+        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 flex justify-end relative z-10 shrink-0">
           <button
             onClick={onClose}
-            className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-md active:scale-[0.98]"
+            className="px-6 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-100 transition-colors shadow-sm"
           >
-            Close
+            Close Window
           </button>
         </div>
       </motion.div>
