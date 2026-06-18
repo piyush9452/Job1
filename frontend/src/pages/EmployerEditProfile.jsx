@@ -135,21 +135,38 @@ export default function EmployerEditProfile() {
     setSaving(true);
 
     try {
-      const token = JSON.parse(localStorage.getItem("employerInfo")).token;
+      const storedEmployer = JSON.parse(localStorage.getItem("employerInfo"));
+      const token = storedEmployer.token;
 
-      const payload = { ...form };
-      if (form.latitude && form.longitude) {
-        payload.officeLocation = {
-          type: "Point",
-          coordinates: [Number(form.longitude), Number(form.latitude)],
-          address: form.location,
-        };
-      }
+      const officeLocation = {
+        type: "Point",
+        coordinates: [Number(form.longitude), Number(form.latitude)],
+        address: form.location,
+      };
 
-      await axios.post(
+      const payload = {
+        name: form.name,
+        phone: form.phone,
+        employerType: form.employerType,
+        companyName: form.employerType === "company" ? form.companyName : "",
+        natureOfBusiness: form.employerType === "company" ? form.natureOfBusiness : "",
+        companyWebsite: form.employerType === "company" ? form.companyWebsite : "",
+        location: form.location,
+        officeLocation: officeLocation,
+        industry: form.industry,
+        description: form.description,
+      };
+
+      const { data } = await axios.post(
         "https://jobone-mrpy.onrender.com/employer/updateProfile",
         payload,
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // FACT: Mark profile as complete so ProtectedRoute stops blocking them
+      localStorage.setItem(
+        "employerInfo",
+        JSON.stringify({ ...storedEmployer, ...data, isProfileComplete: true })
       );
 
       alert("Profile updated successfully!");

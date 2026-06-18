@@ -1,10 +1,11 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
 const EmployerProtectedRoute = ({ children }) => {
   const [isAuthorized, setIsAuthorized] = useState("loading");
   const storedData = localStorage.getItem("employerInfo");
+  const location = useLocation();
 
   useEffect(() => {
     const verifyStatus = async () => {
@@ -45,6 +46,20 @@ const EmployerProtectedRoute = ({ children }) => {
       </div>
     );
   if (isAuthorized === "unauthorized") return <Navigate to="/login" />;
+
+  // FACT: If they registered via Google and haven't filled required fields, force redirect
+  if (storedData) {
+    try {
+      const employerInfo = JSON.parse(storedData);
+      if (employerInfo.isProfileComplete === false) {
+         if (location.pathname !== "/employereditprofile" && location.pathname !== "/employerotp/employereditprofile2") {
+             return <Navigate to="/employereditprofile" replace state={{ showWarning: true }} />;
+         }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   return children;
 };

@@ -321,7 +321,7 @@ export default function EditProfile() {
 
       localStorage.setItem(
         "userInfo",
-        JSON.stringify({ ...storedUser, ...data }),
+        JSON.stringify({ ...storedUser, ...data, isProfileComplete: true }),
       );
       alert("Profile updated successfully!");
       navigate("/profile");
