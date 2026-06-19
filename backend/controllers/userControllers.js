@@ -224,6 +224,14 @@ export const googleLogin = expressAsyncHandler(async (req, res) => {
   try {
     const { token: googleToken } = req.body;
 
+    // 1. Verify Google Token
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const { email, name, picture } = ticket.getPayload();
+
     // 2. Check if user exists FIRST (Login Scenario)
     let user = await User.findOne({ email });
 
