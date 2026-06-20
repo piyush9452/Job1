@@ -149,6 +149,7 @@ export default function Navbar() {
 
           {activeRole === "guest" && (
             <>
+              <NavLink to="/jobs">Find Jobs</NavLink>
               <NavLink to="/employerregister">Post a Job</NavLink>
             </>
           )}
@@ -338,6 +339,13 @@ export default function Navbar() {
             {activeRole === "guest" && (
               <>
                 <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
+                  <Link
+                    to="/jobs"
+                    className="text-center w-full py-3 border-2 border-slate-200 rounded-2xl text-slate-700 font-bold hover:bg-slate-50 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Find Jobs
+                  </Link>
                   <Link
                     to="/login"
                     className="text-center w-full py-3 border-2 border-slate-200 rounded-2xl text-slate-700 font-bold hover:bg-slate-50 transition-colors"
