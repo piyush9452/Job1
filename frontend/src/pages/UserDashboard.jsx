@@ -27,7 +27,7 @@ import {
 
 // Import your existing sub-components
 import Hero from "../userdashboard/Hero";
-import JobCategories from "../userdashboard/JobCategories";
+import JobCategories from "../components/JobCategories";
 import JobsAroundMe from "../components/JobsAroundMe";
 import JobDetailsModal from "../components/JobDetailsModal"; // Import Modal
 
