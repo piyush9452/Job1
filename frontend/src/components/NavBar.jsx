@@ -154,6 +154,8 @@ export default function Navbar() {
             </>
           )}
 
+          {isUser && <NavLink to="/jobs">Find Jobs</NavLink>}
+
           {isEmployer && <NavLink to="/createjob">Post a Job</NavLink>}
 
           {isAdmin && (
@@ -399,6 +401,13 @@ export default function Navbar() {
 
             {isUser && (
               <>
+                <Link
+                  to="/jobs"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Find Jobs
+                </Link>
                 <Link
                   to="/userdashboard"
                   className="text-slate-700 font-bold text-lg hover:text-blue-600"
