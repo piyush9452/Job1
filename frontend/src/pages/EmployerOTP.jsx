@@ -38,7 +38,6 @@ const VerifyOTP = () => {
         "https://jobone-mrpy.onrender.com/employer/verifyotp",
         { email, otp }
       );
-      console.log(res);
       // Save token in localStorage
       localStorage.setItem("employerToken", res.data.token);
       localStorage.setItem("employerInfo", JSON.stringify(res.data));

@@ -212,6 +212,7 @@ export default function CreateJob() {
 
   useEffect(() => {
     let isMounted = true;
+    let interval;
 
     const checkEligibility = async () => {
       try {
@@ -220,12 +221,18 @@ export default function CreateJob() {
 
         const { token } = JSON.parse(storedData);
 
-        const { data } = await axios.get(
+        const res = await axios.get(
           "https://jobone-mrpy.onrender.com/employer/check-eligibility",
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         if (!isMounted) return;
+
+        const { data } = res;
 
         if (data.isFrozen) {
           setIsPostingDisabled(true);
@@ -251,6 +258,7 @@ export default function CreateJob() {
         setPageAccess("granted");
       } catch (err) {
         console.error("Eligibility check failed:", err);
+        if (interval) clearInterval(interval);
         if (!isMounted) return;
         
         // --- THIS FIX STOPS THE LOADING LOOP ---
@@ -266,7 +274,7 @@ export default function CreateJob() {
     };
 
     checkEligibility();
-    const interval = setInterval(checkEligibility, 300000); // 5 min heartbeat
+    interval = setInterval(checkEligibility, 300000); // 5 min heartbeat
 
     return () => {
       isMounted = false;

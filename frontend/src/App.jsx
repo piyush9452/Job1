@@ -255,7 +255,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/job/JobsAroundMe" element={<TestLocation />} />
         <Route
           path="/services"
           element={
@@ -264,16 +263,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/job/JobsAroundMe" element={<TestLocation />} />
-        <Route
-          path="/services"
-          element={
-            <ProtectedRoute>
-              <Services />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/job/JobsAroundMe" element={<TestLocation />} />
       </Routes>
       </PageWrapper>
     </Router>
