@@ -145,7 +145,12 @@ export default function Navbar() {
 
         {/* --- DESKTOP MENU --- */}
         <div className="hidden md:flex items-center space-x-8">
-          {!isAdmin && <NavLink to="/">Home</NavLink>}
+          {!isAdmin && (
+            <>
+              <NavLink to="/">Home</NavLink>
+              <NavLink to="/contact">Contact Us</NavLink>
+            </>
+          )}
 
           {activeRole === "guest" && (
             <>
@@ -317,13 +322,22 @@ export default function Navbar() {
           >
             {/* Note: Mobile menu text is always dark since the dropdown background is white/glass */}
             {!isAdmin && (
-              <Link
-                to="/"
-                className="text-slate-700 font-bold text-lg hover:text-blue-600"
-                onClick={() => setMenuOpen(false)}
-              >
-                Home
-              </Link>
+              <>
+                <Link
+                  to="/"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  to="/contact"
+                  className="text-slate-700 font-bold text-lg hover:text-blue-600"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Contact Us
+                </Link>
+              </>
             )}
 
             {isAdmin && (

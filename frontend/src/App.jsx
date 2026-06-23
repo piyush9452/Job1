@@ -54,6 +54,7 @@ import RecommendedJobs from "./pages/RecommendedJobs";
 import AdminJobseekerView from "./pages/AdminJobseekerView";
 
 import { useLocation } from "react-router-dom";
+import Contact from "./pages/Contact";
 
 const PageWrapper = ({ children }) => {
   const location = useLocation();
@@ -79,6 +80,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/register" element={<Register />} />
         <Route path="/userregister" element={<UserRegister />} />
         <Route path="/employerregister" element={<EmployerRegister />} />
