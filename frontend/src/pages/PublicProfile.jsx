@@ -106,24 +106,41 @@ export default function PublicProfile() {
     }
   };
 
-  // FACT: Forces a hard download instead of just opening a new tab
+  // FACT: Forces a hard download using the new S3 uploaded resume system
   const handleDownloadResume = async () => {
-    if (!profile?.resume) return;
+    if (!profile?.resumeFileKey) {
+      alert("No uploaded resume found for this candidate.");
+      return;
+    }
+    
     setIsDownloading(true);
     try {
-      const response = await fetch(profile.resume);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `${profile.name.replace(/\s+/g, "_")}_Resume.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      const stored = localStorage.getItem("employerInfo");
+      const token = stored ? JSON.parse(stored).token : null;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const { data } = await axios.get(
+        `https://jobone-mrpy.onrender.com/user/${profile._id}/resume/view`,
+        { headers }
+      );
+
+      if (data && data.url) {
+        const response = await fetch(data.url);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = `${profile.name.replace(/\s+/g, "_")}_Resume.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        alert("Failed to retrieve resume URL.");
+      }
     } catch (error) {
-      console.error("Download failed, opening in new tab instead", error);
-      window.open(profile.resume, "_blank"); // Fallback
+      console.error("Download failed", error);
+      alert("Error downloading resume. It may have been deleted.");
     } finally {
       setIsDownloading(false);
     }
@@ -313,7 +330,7 @@ export default function PublicProfile() {
                 </div>
               </div>
 
-              {profile.resume ? (
+              {profile.resumeFileKey ? (
                 <button
                   onClick={handleDownloadResume}
                   disabled={isDownloading}
