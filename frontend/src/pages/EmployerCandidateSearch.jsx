@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   Search,
   Loader2,
   ArrowRight,
@@ -91,6 +92,12 @@ export default function Candidates() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 font-sans mt-16 sm:mt-20">
       <div className="max-w-6xl mx-auto">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-6 transition-colors font-bold text-sm uppercase tracking-wide"
+        >
+          <ArrowLeft size={16} /> Back
+        </button>
         {/* Header & Search Bar */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 mb-8 text-center">
           <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
