@@ -21,12 +21,4 @@ const AuthHome = () => {
 
 export default AuthHome;
 
-
-
-
-useEffect(
-    ()=>{
-        console.log(1)
-    }
-    
-,[])
+
