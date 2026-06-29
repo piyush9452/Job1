@@ -124,8 +124,8 @@ export default function PublicProfile() {
         { headers }
       );
 
-      if (data && data.url) {
-        const response = await fetch(data.url);
+      if (data && data.viewableUrl) {
+        const response = await fetch(data.viewableUrl);
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
         const link = document.createElement("a");

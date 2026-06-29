@@ -352,14 +352,8 @@ export const getViewableResumeUrl = expressAsyncHandler(async (req, res) => {
     res.status(404); throw new Error("No resume file uploaded for this user");
   }
 
-  // SECURITY: Enforce strict resume access
-  if (req.employerId) {
-    // Employers can view any candidate's resume
-  } else if (req.user) {
-    if (req.user._id.toString() !== req.params.id.toString()) {
-       res.status(403); throw new Error("Forbidden: You can only view your own resume.");
-    }
-  } else {
+  // SECURITY: Allow anyone authenticated to view the resume
+  if (!req.employerId && !req.user && !req.admin) {
     res.status(401); throw new Error("Not authorized");
   }
 
@@ -377,14 +371,8 @@ export const getDownloadableResumeUrl = expressAsyncHandler(async (req, res) => 
     res.status(404); throw new Error("No resume file uploaded for this user");
   }
 
-  // SECURITY: Enforce strict resume access
-  if (req.employerId) {
-    // Employers can download any candidate's resume
-  } else if (req.user) {
-    if (req.user._id.toString() !== req.params.id.toString()) {
-       res.status(403); throw new Error("Forbidden: You can only download your own resume.");
-    }
-  } else {
+  // SECURITY: Allow anyone authenticated to download the resume
+  if (!req.employerId && !req.user && !req.admin) {
     res.status(401); throw new Error("Not authorized");
   }
 
