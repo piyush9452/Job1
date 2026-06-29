@@ -67,14 +67,16 @@ export const protectAny = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      const user = await User.findById(decoded.id).select("-password");
+      const targetId = decoded.id || (decoded.employer && decoded.employer.id);
+      
+      const user = await User.findById(targetId).select("-password");
       if (user) {
         if (user.isFrozen) return res.status(403).json({ message: "Account Suspended" });
         req.user = user;
         return next();
       }
 
-      const employer = await Employer.findById(decoded.id).select("-password");
+      const employer = await Employer.findById(targetId).select("-password");
       if (employer) {
         if (employer.isFrozen) return res.status(403).json({ message: "Account Suspended" });
         req.employerId = employer._id;

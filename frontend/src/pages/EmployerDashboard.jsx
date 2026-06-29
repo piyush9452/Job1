@@ -62,7 +62,7 @@ export default function EmployerDashboard() {
         }
 
         const { data } = await axios.get(
-          `https://jobone-mrpy.onrender.com/jobs/employerJobs`,
+          `https://jobone-mrpy.onrender.com/jobs/employer-jobs`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
 
