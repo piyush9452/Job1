@@ -52,6 +52,15 @@ export default function JobsAroundMe({ onJobClick }) {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const handleAutoTrigger = () => {
+      // Small delay to let smooth scroll finish
+      setTimeout(() => handleGetLocation(), 300);
+    };
+    window.addEventListener("autoTriggerLocation", handleAutoTrigger);
+    return () => window.removeEventListener("autoTriggerLocation", handleAutoTrigger);
+  }, []);
+
   const handleGetLocation = () => {
     setLoading(true);
     setError(null);
@@ -216,36 +225,43 @@ export default function JobsAroundMe({ onJobClick }) {
               <div
                 key={job._id}
                 onClick={() => onJobClick ? onJobClick(job) : navigate(`/job/${job._id}`)}
-                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all cursor-pointer group flex flex-col h-full relative overflow-hidden"
+                className="bg-white hover:bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:border-blue-200 transition-all duration-300 cursor-pointer group flex flex-col h-full relative overflow-hidden"
               >
-                <div className="flex items-start justify-between mb-4 mt-2">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-xl font-bold text-slate-400 border border-slate-100 shadow-inner">
+                {/* Top highlight bar */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <div className="flex items-start justify-between mb-5 mt-1">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-2xl font-black text-blue-600 border border-blue-100/50 shadow-sm group-hover:scale-105 transition-transform duration-300">
                     {(job.postedByCompany || job.postedByName || "C").charAt(0)}
                   </div>
-                  <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-lg uppercase tracking-wide border border-slate-200 mt-1">
+                  <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl uppercase tracking-wider border border-blue-100 shadow-sm mt-1">
                     {Array.isArray(job.jobType) ? job.jobType.join(", ") : job.jobType}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-extrabold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
+                <h3 className="text-xl font-extrabold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
                   {job.title}
                 </h3>
-                <p className="text-sm text-slate-500 font-bold mb-4">
+                <p className="text-sm text-slate-500 font-semibold mb-5">
                   {job.postedByCompany || job.postedByName || "Company Confidential"}
                 </p>
 
-                <div className="mt-auto space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-slate-600 font-bold">
-                    <MapPin size={16} className="text-slate-400 shrink-0" />
+                <div className="mt-auto space-y-3 pt-4 border-t border-slate-50/80">
+                  <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                    <div className="p-1.5 rounded-lg bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-500 transition-colors">
+                        <MapPin size={14} className="shrink-0" />
+                    </div>
                     <span className="truncate">
                       {typeof job.location === "object"
                         ? job.location.address
                         : job.location}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-600 font-bold">
-                    <IndianRupee size={16} className="text-slate-400 shrink-0" />
-                    <span>
+                  <div className="flex items-center gap-2.5 text-sm text-slate-600 font-medium">
+                    <div className="p-1.5 rounded-lg bg-slate-100 text-slate-500 group-hover:bg-green-100 group-hover:text-green-600 transition-colors">
+                        <IndianRupee size={14} className="shrink-0" />
+                    </div>
+                    <span className="font-bold text-slate-700 group-hover:text-green-700 transition-colors">
                       {job.salaryAmount === 0 || (job.salaryMin === 0 && job.salaryMax === 0) 
                         ? "Unpaid"
                         : job.salaryAmount?.toLocaleString() || job.salaryMin?.toLocaleString() || job.salary?.toLocaleString() || "TBD"}

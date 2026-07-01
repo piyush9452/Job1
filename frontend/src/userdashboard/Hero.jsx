@@ -36,15 +36,28 @@ const Hero = () => {
 
                     <div className="mt-8 flex flex-wrap gap-4">
                         <button
+                            onClick={() => {
+                                const section = document.getElementById("jobs-near-me");
+                                if (section) {
+                                    section.scrollIntoView({ behavior: "smooth" });
+                                    setTimeout(() => window.dispatchEvent(new Event("autoTriggerLocation")), 500);
+                                }
+                            }}
+                            className="px-8 py-3.5 bg-gradient-to-r from-blue-500/40 to-cyan-400/40 backdrop-blur-md border border-cyan-300/50 text-white rounded-xl font-bold shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.6)] hover:scale-105 transition transform duration-200"
+                        >
+                            Find Jobs Near Me
+                        </button>
+
+                        <button
                             onClick={() => navigate("/profile")}
-                            className="px-8 py-3.5 bg-white text-blue-900 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition transform duration-200"
+                            className="px-8 py-3.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-xl font-bold hover:bg-white/20 hover:border-white/40 shadow-[0_4px_16px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition transform duration-200"
                         >
                             Go to Profile
                         </button>
 
                         <button
                             onClick={() => navigate("/jobs")}
-                            className="px-8 py-3.5 border-2 border-white/80 text-white rounded-xl font-bold hover:bg-white/10 hover:border-white transition backdrop-blur-sm"
+                            className="px-8 py-3.5 bg-white/5 backdrop-blur-md border border-white/10 text-white/90 rounded-xl font-bold hover:bg-white/10 hover:border-white/30 hover:text-white transition duration-200"
                         >
                             Browse Jobs
                         </button>
