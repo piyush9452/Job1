@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import backgroundImage from "../assets/backgroundImage.png";
 import "./HeroRain.scss"; // Import the rain styles
 
 const Hero = () => {
@@ -52,13 +51,35 @@ const Hero = () => {
                     </div>
                 </div>
 
-                {/* RIGHT VISUAL */}
-                <div className="flex-1 flex justify-center pointer-events-auto">
-                    <img
-                        src={backgroundImage}
-                        alt="Hero Illustration"
-                        className="w-[280px] md:w-[400px] lg:w-[480px] drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition duration-500"
-                    />
+                {/* RIGHT VISUAL - Glassmorphism Stats Grid */}
+                <div className="flex-1 flex justify-center items-center pointer-events-auto w-full">
+                    <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-lg">
+                        
+                        {/* Stat 1 */}
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] hover:-translate-y-2 transition transform duration-300">
+                            <span className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">500+</span>
+                            <span className="mt-2 text-sm md:text-base font-medium text-blue-100 uppercase tracking-wider">Live Jobs</span>
+                        </div>
+
+                        {/* Stat 2 */}
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] hover:-translate-y-2 transition transform duration-300">
+                            <span className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">100+</span>
+                            <span className="mt-2 text-sm md:text-base font-medium text-blue-100 uppercase tracking-wider">Companies</span>
+                        </div>
+
+                        {/* Stat 3 */}
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] hover:-translate-y-2 transition transform duration-300">
+                            <span className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">1,000+</span>
+                            <span className="mt-2 text-sm md:text-base font-medium text-blue-100 uppercase tracking-wider">Candidates</span>
+                        </div>
+
+                        {/* Stat 4 */}
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] hover:-translate-y-2 transition transform duration-300">
+                            <span className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">50+</span>
+                            <span className="mt-2 text-sm md:text-base font-medium text-blue-100 uppercase tracking-wider">Locations</span>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </section>
