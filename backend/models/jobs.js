@@ -94,5 +94,8 @@ const JobSchema = new mongoose.Schema({
   applicants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], 
 });
 
+// Force 2dsphere index for geospatial queries
+JobSchema.index({ location: "2dsphere" });
+
 const Job = mongoose.model("Job", JobSchema);
 export default Job;

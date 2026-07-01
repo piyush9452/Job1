@@ -517,6 +517,52 @@ export const getNearbyJobs = expressAsyncHandler(async (req, res) => {
     res.status(200).json(jobs);
   } catch (error) {
     console.error("--> [getNearbyJobs] ERROR in MongoDB Query:", error);
+
+    // Error 291: NoQueryExecutionPlans (Missing 2dsphere index)
+    if (error.code === 291) {
+      console.log("--> [getNearbyJobs] Missing 2dsphere index detected! Attempting auto-fix...");
+      try {
+        // 1. Unset location on jobs that have invalid or empty coordinates
+        await Job.updateMany(
+          { 
+            $or: [
+              { "location.coordinates": { $exists: false } },
+              { "location.coordinates": { $size: 0 } },
+              { "location.type": { $ne: "Point" } }
+            ]
+          },
+          { $unset: { location: "" } }
+        );
+        
+        // 2. Force index rebuild
+        await Job.syncIndexes();
+        console.log("--> [getNearbyJobs] Indexes synced. Retrying query...");
+
+        // 3. Retry the query
+        const retryJobs = await Job.find({
+          status: "active",
+          location: {
+            $near: {
+              $geometry: {
+                type: "Point",
+                coordinates: [parseFloat(lng), parseFloat(lat)],
+              },
+              $maxDistance: distanceInMeters,
+            },
+          },
+        });
+        console.log(`--> [getNearbyJobs] Retry successful! Found ${retryJobs.length} jobs.`);
+        return res.status(200).json(retryJobs);
+      } catch (retryError) {
+        console.error("--> [getNearbyJobs] Auto-fix failed:", retryError);
+        return res.status(500).json({
+          message: "Database error during geospatial query auto-fix.",
+          error: retryError.message,
+          stack: retryError.stack
+        });
+      }
+    }
+
     res.status(500).json({
       message: "Database error during geospatial query.",
       error: error.message,
