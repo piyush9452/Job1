@@ -16,10 +16,6 @@ const Hero = () => {
                 {drops.map((_, i) => (
                     <div key={i} className="drop"></div>
                 ))}
-                <div className="left"></div>
-                <div className="right"></div>
-                <div className="left center"></div>
-                <div className="right center"></div>
             </div>
 
             {/* Soft Glow Overlay - Optional but keeps the JobOne feel */}
