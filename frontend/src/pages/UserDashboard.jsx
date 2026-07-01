@@ -27,6 +27,8 @@ import {
 
 // Import your existing sub-components
 import Hero from "../userdashboard/Hero";
+import FeaturedJobs from "../userdashboard/FeaturedJobs";
+import Footer from "../components/Footer";
 import JobCategories from "../components/JobCategories";
 import JobsAroundMe from "../components/JobsAroundMe";
 import JobDetailsModal from "../components/JobDetailsModal"; // Import Modal
@@ -332,29 +334,7 @@ export default function Home() {
         </section>
       </div>
 
-      {/* 6. FOOTER */}
-      <footer className="bg-slate-950 text-slate-400 w-full pt-16 pb-8 border-t border-slate-900">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 border-b border-slate-800 pb-12">
-            <div className="space-y-4">
-              <Link
-                to="/"
-                className="text-2xl font-bold text-white tracking-tight"
-              >
-                JOBONE Portal
-              </Link>
-              <p className="text-sm leading-relaxed text-slate-400">
-                Connecting talent with opportunity.
-              </p>
-            </div>
-            {/* ... (Keep your footer links as is) ... */}
-          </div>
-          <div className="pt-8 text-center text-xs text-slate-500">
-            &copy; {new Date().getFullYear()} JOBONE Portal. All rights
-            reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* JOB DETAILS MODAL */}
       {selectedJob && (

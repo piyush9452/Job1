@@ -211,9 +211,40 @@ export default function JobsAroundMe({ onJobClick }) {
         </h3>
 
         {!userLocation ? (
-          <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-            <MapPin size={32} className="mx-auto mb-2 opacity-50" />
-            <p>Click "Use My Location" to see jobs on the map.</p>
+          <div className="relative">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm rounded-3xl">
+              <div className="bg-slate-900/90 text-white px-6 py-3 rounded-2xl font-semibold shadow-xl flex items-center gap-2 backdrop-blur-md border border-slate-700/50 hover:scale-105 transition-transform cursor-pointer" onClick={handleGetLocation}>
+                <MapPin size={18} className="text-cyan-400" />
+                (Recommended jobs will show here)
+              </div>
+              <p className="text-sm font-medium text-slate-700 mt-3 bg-white/80 px-4 py-1.5 rounded-full shadow-sm">Click "Use My Location" above to see jobs</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 select-none pointer-events-none">
+              {[1, 2, 3].map((skeleton) => (
+                <div
+                  key={skeleton}
+                  className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl flex flex-col h-full relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+                  <div className="flex items-start justify-between mb-5 mt-1 relative z-0">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700/50"></div>
+                    <div className="h-6 w-16 bg-slate-800 rounded-xl"></div>
+                  </div>
+                  <div className="h-6 w-3/4 bg-slate-800 rounded-md mb-3 relative z-0"></div>
+                  <div className="h-4 w-1/2 bg-slate-800 rounded-md mb-6 relative z-0"></div>
+                  <div className="mt-auto space-y-3 pt-4 border-t border-slate-800/80 relative z-0">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-800"></div>
+                      <div className="h-4 w-1/2 bg-slate-800 rounded-md"></div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-800"></div>
+                      <div className="h-4 w-1/3 bg-slate-800 rounded-md"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : jobs.length === 0 ? (
           <div className="text-center py-10 text-gray-500">

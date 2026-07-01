@@ -1,15 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaMapMarkerAlt, FaBriefcase, FaSearch } from "react-icons/fa";
 import "./HeroRain.scss"; // Import the rain styles
 
 const Hero = () => {
     const navigate = useNavigate();
+    const [title, setTitle] = useState("");
+    const [location, setLocation] = useState("");
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        navigate(`/jobs?title=${encodeURIComponent(title)}&location=${encodeURIComponent(location)}`);
+    };
 
     // Generate an array of 100 to map over for raindrops (optimized from 500)
     const drops = Array.from({ length: 100 });
 
     return (
         <section className="hero-rain-container flex items-center justify-center relative w-full overflow-hidden">
+            {/* Animated Glass Blobs */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-cyan-500/20 mix-blend-screen blur-[100px] animate-blob" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-600/20 mix-blend-screen blur-[120px] animate-blob animation-delay-2000" />
+                <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] max-w-[400px] max-h-[400px] rounded-full bg-indigo-500/20 mix-blend-screen blur-[90px] animate-blob animation-delay-4000" />
+            </div>
+
             {/* Animated Rain Background */}
             <div className="rain">
                 {drops.map((_, i) => (
@@ -72,6 +87,41 @@ const Hero = () => {
                             Browse Jobs
                         </button>
                     </div>
+
+                    <form
+                        onSubmit={handleSearch}
+                        className="mt-8 w-full max-w-2xl flex flex-col md:flex-row items-center bg-white/5 backdrop-blur-md p-2 rounded-3xl md:rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all focus-within:border-cyan-400/50 focus-within:bg-white/10 gap-2 md:gap-0"
+                    >
+                        <div className="flex items-center px-4 py-3 md:py-2 flex-1 w-full md:border-r border-white/20 group">
+                            <FaBriefcase className="text-cyan-400/70 group-focus-within:text-cyan-400 mr-3 shrink-0 text-base transition-colors" />
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Job title, keyword, or company"
+                                className="w-full bg-transparent outline-none text-white placeholder-blue-100/70 text-sm md:text-base font-medium"
+                            />
+                        </div>
+
+                        <div className="flex items-center px-4 py-3 md:py-2 flex-1 w-full border-t border-white/20 md:border-t-0 group">
+                            <FaMapMarkerAlt className="text-cyan-400/70 group-focus-within:text-cyan-400 mr-3 shrink-0 text-base transition-colors" />
+                            <input
+                                type="text"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                placeholder="City, state, or 'Remote'"
+                                className="w-full bg-transparent outline-none text-white placeholder-blue-100/70 text-sm md:text-base font-medium"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="w-full md:w-auto bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-8 py-3.5 md:py-3 rounded-2xl md:rounded-full transition-all text-sm md:text-base shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] flex items-center justify-center gap-2"
+                        >
+                            <FaSearch size={14} />
+                            Search
+                        </button>
+                    </form>
                 </div>
 
                 {/* RIGHT VISUAL - Glassmorphism Stats Grid */}
