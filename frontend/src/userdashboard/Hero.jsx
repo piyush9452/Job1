@@ -34,7 +34,7 @@ const Hero = () => {
                         Create an impressive profile, showcase your skills, and get discovered by top employers in a dynamic tech-driven ecosystem.
                     </p>
 
-                    <div className="mt-8 flex flex-wrap gap-4">
+                    <div className="mt-8 flex flex-row flex-wrap lg:flex-nowrap gap-3 items-center">
                         <button
                             onClick={() => {
                                 const section = document.getElementById("jobs-near-me");
@@ -43,21 +43,31 @@ const Hero = () => {
                                     setTimeout(() => window.dispatchEvent(new Event("autoTriggerLocation")), 500);
                                 }
                             }}
-                            className="px-8 py-3.5 bg-gradient-to-r from-blue-500/40 to-cyan-400/40 backdrop-blur-md border border-cyan-300/50 text-white rounded-xl font-bold shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.6)] hover:scale-105 transition transform duration-200"
+                            className="px-5 py-3 bg-gradient-to-r from-blue-500/40 to-cyan-400/40 backdrop-blur-sm border border-cyan-300/50 text-white rounded-xl font-bold shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.6)] hover:scale-105 transition transform duration-200 text-sm md:text-base whitespace-nowrap"
                         >
                             Find Jobs Near Me
                         </button>
 
                         <button
+                            onClick={() => {
+                                const section = document.getElementById("ai-recommended-jobs");
+                                if (section) section.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            className="px-5 py-3 bg-gradient-to-r from-indigo-500/30 to-purple-400/30 backdrop-blur-sm border border-indigo-300/50 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:shadow-[0_0_25px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition transform duration-200 text-sm md:text-base whitespace-nowrap"
+                        >
+                            AI Recommended Jobs
+                        </button>
+
+                        <button
                             onClick={() => navigate("/profile")}
-                            className="px-8 py-3.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-xl font-bold hover:bg-white/20 hover:border-white/40 shadow-[0_4px_16px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition transform duration-200"
+                            className="px-5 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl font-bold hover:bg-white/20 hover:border-white/40 shadow-[0_4px_16px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition transform duration-200 text-sm md:text-base whitespace-nowrap"
                         >
                             Go to Profile
                         </button>
 
                         <button
                             onClick={() => navigate("/jobs")}
-                            className="px-8 py-3.5 bg-white/5 backdrop-blur-md border border-white/10 text-white/90 rounded-xl font-bold hover:bg-white/10 hover:border-white/30 hover:text-white transition duration-200"
+                            className="px-5 py-3 bg-white/5 backdrop-blur-sm border border-white/10 text-white/90 rounded-xl font-bold hover:bg-white/10 hover:border-white/30 hover:text-white transition duration-200 text-sm md:text-base whitespace-nowrap"
                         >
                             Browse Jobs
                         </button>

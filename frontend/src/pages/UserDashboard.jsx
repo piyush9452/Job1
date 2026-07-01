@@ -119,17 +119,7 @@ export default function Home() {
       {/* MAIN CONTENT CONTAINER */}
       <div className="w-full">
         {/* 3. JOB CATEGORIES */}
-        <section className="py-20 px-4 sm:px-6 bg-white relative overflow-hidden">
-          {/* Decorative background element */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-            <div className="absolute top-10 left-10 w-72 h-72 bg-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-            <div className="absolute top-10 right-10 w-72 h-72 bg-purple-50 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-          </div>
-
-          <div className="max-w-7xl mx-auto relative z-10">
-            <JobCategories />
-          </div>
-        </section>
+        <JobCategories />
 
         {/* 4. JOBS NEAR ME */}
         <section id="jobs-near-me" className="py-20 bg-slate-900 text-white relative overflow-hidden">
@@ -155,14 +145,14 @@ export default function Home() {
 
         {/* RECOMMENDED JOBS (AI MATCHED) */}
         {loadingRecommendations ? (
-          <section className="py-16 px-4 sm:px-6 bg-indigo-50/50 border-y border-indigo-100 flex justify-center items-center">
+          <section id="ai-recommended-jobs" className="py-16 px-4 sm:px-6 bg-indigo-50/50 border-y border-indigo-100 flex justify-center items-center">
             <div className="flex items-center gap-2 text-indigo-600 font-bold">
               <Sparkles size={20} className="animate-pulse" /> Generating AI
               Recommendations...
             </div>
           </section>
         ) : recommendedJobs.length > 0 ? (
-          <section className="py-16 px-4 sm:px-6 bg-indigo-50 border-y border-indigo-100">
+          <section id="ai-recommended-jobs" className="py-16 px-4 sm:px-6 bg-indigo-50 border-y border-indigo-100">
             <div className="max-w-7xl mx-auto">
               <div className="mb-10">
                 <span className="text-indigo-600 font-bold text-xs uppercase tracking-wider bg-white border border-indigo-100 px-3 py-1 rounded-full flex items-center gap-2 w-fit shadow-sm">

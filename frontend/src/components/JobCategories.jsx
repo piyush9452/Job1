@@ -163,7 +163,7 @@ export default function JobCategories() {
   };
 
   return (
-    <section className="relative py-20 bg-[#F8FAFC] font-sans overflow-hidden">
+    <section className="relative py-10 bg-[#F8FAFC] font-sans overflow-hidden w-full">
       {/* FREEROAMING LAVA LAMP BACKGROUNDS */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div
@@ -187,7 +187,7 @@ export default function JobCategories() {
         />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="relative z-10 w-full px-4 sm:px-6 md:px-10 lg:px-16 mx-auto max-w-[1600px]">
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           whileInView={{ opacity: 1, y: 0 }}
