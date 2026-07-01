@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaMapMarkerAlt, FaBriefcase, FaSearch } from "react-icons/fa";
+import { motion } from "framer-motion";
 import "./HeroRain.scss"; // Import the rain styles
 
 const Hero = () => {
@@ -20,9 +21,33 @@ const Hero = () => {
         <section className="hero-rain-container flex items-center justify-center relative w-full overflow-hidden">
             {/* Animated Glass Blobs */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-cyan-500/20 mix-blend-screen blur-[100px] animate-blob" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-600/20 mix-blend-screen blur-[120px] animate-blob animation-delay-2000" />
-                <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] max-w-[400px] max-h-[400px] rounded-full bg-indigo-500/20 mix-blend-screen blur-[90px] animate-blob animation-delay-4000" />
+                <motion.div
+                    animate={{
+                        x: ["0vw", "20vw", "-10vw", "10vw", "0vw"],
+                        y: ["0vh", "15vh", "5vh", "-10vh", "0vh"],
+                        scale: [1, 1.1, 0.9, 1.2, 1],
+                    }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-cyan-500/20 mix-blend-screen blur-[100px]"
+                />
+                <motion.div
+                    animate={{
+                        x: ["0vw", "-20vw", "10vw", "-15vw", "0vw"],
+                        y: ["0vh", "-10vh", "20vh", "5vh", "0vh"],
+                        scale: [1, 0.9, 1.1, 0.9, 1],
+                    }}
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-600/20 mix-blend-screen blur-[120px]"
+                />
+                <motion.div
+                    animate={{
+                        x: ["0vw", "15vw", "-20vw", "5vw", "0vw"],
+                        y: ["0vh", "10vh", "-15vh", "20vh", "0vh"],
+                        scale: [1, 1.2, 0.8, 1.1, 1],
+                    }}
+                    transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] max-w-[400px] max-h-[400px] rounded-full bg-indigo-500/20 mix-blend-screen blur-[90px]"
+                />
             </div>
 
             {/* Animated Rain Background */}
