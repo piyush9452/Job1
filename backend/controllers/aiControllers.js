@@ -241,76 +241,51 @@ export const recommendJobs = expressAsyncHandler(async (req, res) => {
         skillsRequired: job.skillsRequired
     }));
 
-    // 5. Gemini setup
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // 5. Direct Robust Skill Matching
+    const scoredJobs = jobsToSend.map(job => {
+        let matchScore = 0;
+        let matchedSkills = [];
 
-    const prompt = `
-You are an AI job recommendation engine.
+        // Normalize user skills for partial matching
+        const normalizedUserSkills = userSkills.map(s => s.toLowerCase().trim());
 
-Candidate:
-${JSON.stringify({
-        skills: userSkills,
-        experience: user.resumeData?.experience || user.experience || [],
-        education: user.resumeData?.education || user.education || [],
-        description: user.resumeData?.description || user.bio || ""
-    })}
+        if (job.skillsRequired && job.skillsRequired.length > 0) {
+            let matchCount = 0;
+            job.skillsRequired.forEach(reqSkill => {
+                const normalizedReq = reqSkill.toLowerCase().trim();
+                // Check if any user skill is included in the required skill or vice versa
+                const isMatch = normalizedUserSkills.some(userSkill => 
+                    normalizedReq.includes(userSkill) || userSkill.includes(normalizedReq)
+                );
 
-Jobs:
-${JSON.stringify(cleanJobs)}
+                if (isMatch) {
+                    matchCount++;
+                    matchedSkills.push(reqSkill);
+                }
+            });
 
-Instructions:
-- Match based on skills + role relevance
-- Return top 5 jobs
-- Add matchScore (0-100)
-- Add short reason
+            // Boost score slightly for jobs that have any matching skills to prioritize them
+            matchScore = Math.round((matchCount / job.skillsRequired.length) * 100);
+            if (matchScore > 0 && matchScore < 100) {
+                matchScore = Math.min(100, matchScore + 10); // generous bump
+            }
+        } else {
+            // If the job has no specific skills required, give it a baseline score
+            matchScore = 50; 
+        }
 
-Return ONLY JSON:
-{
-  "recommendedJobs": [
-    {
-      "jobId": "id",
-      "title": "Job title",
-      "matchScore": 90,
-      "reason": "Short reason"
-    }
-  ]
-}
-`;
+        return {
+            jobId: job._id,
+            title: job.title,
+            matchScore: matchScore,
+            reason: matchedSkills.length > 0 
+                ? `Matches skills: ${matchedSkills.slice(0, 2).join(", ")}` 
+                : "Profile aligns with job requirements",
+        };
+    });
 
-    try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
+    // Sort by matchScore descending
+    scoredJobs.sort((a, b) => b.matchScore - a.matchScore);
 
-        const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-        const jsonString = cleaned.substring(
-            cleaned.indexOf("{"),
-            cleaned.lastIndexOf("}") + 1
-        );
-
-        const parsed = JSON.parse(jsonString);
-
-        res.status(200).json(parsed);
-    } catch (err) {
-        console.error("Gemini Error:", err);
-
-        // 🔥 Fallback (VERY IMPORTANT)
-        const fallback = jobs.map(job => {
-            const matchCount = userSkills.filter(skill =>
-                job.skillsRequired?.some(js => js.toLowerCase() === skill.toLowerCase())
-            ).length;
-
-            return {
-                jobId: job._id,
-                title: job.title,
-                matchScore: job.skillsRequired.length
-                    ? Math.round((matchCount / job.skillsRequired.length) * 100)
-                    : 30,
-                reason: "Based on skill matching"
-            };
-        });
-
-        res.status(200).json({ recommendedJobs: fallback.slice(0, 5) });
-    }
+    res.status(200).json({ recommendedJobs: scoredJobs.slice(0, 6) });
 });
