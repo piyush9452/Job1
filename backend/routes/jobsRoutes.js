@@ -1,6 +1,6 @@
 import { 
   createJob, getJob, getJobs, getJobApplicants, getEmployerCreatedJobs, 
-  updateJob, deleteJob, getEmployerMetrics, jobCreatedByUser, getJobCountsByIndustry, getSimilarJobs 
+  updateJob, deleteJob, getEmployerMetrics, jobCreatedByUser, getJobCountsByIndustry, getSimilarJobs, getNearbyJobs
 } from "../controllers/jobsControllers.js";
 import { protect, protectAdmin } from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js";
@@ -31,6 +31,8 @@ router.get("/employer/:id",protectEmployer, jobCreatedByUser);
 
 
 router.get("/", getJobs);
+
+router.get("/nearby", getNearbyJobs);
 
 router.get("/:id/similar", getSimilarJobs);
 

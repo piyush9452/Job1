@@ -480,3 +480,33 @@ export const getSimilarJobs = expressAsyncHandler(async (req, res) => {
 
   res.status(200).json(similarJobs);
 });
+
+// @desc    Get nearby jobs based on coordinates
+// @route   GET /api/jobs/nearby
+// @access  Public
+export const getNearbyJobs = expressAsyncHandler(async (req, res) => {
+  const { lat, lng, dist } = req.query;
+
+  if (!lat || !lng) {
+    res.status(400);
+    throw new Error("Latitude and longitude are required.");
+  }
+
+  // Convert distance to meters (default 50km)
+  const distanceInMeters = (parseInt(dist) || 50) * 1000;
+
+  const jobs = await Job.find({
+    status: "active",
+    location: {
+      $near: {
+        $geometry: {
+          type: "Point",
+          coordinates: [parseFloat(lng), parseFloat(lat)], // MongoDB expects [longitude, latitude]
+        },
+        $maxDistance: distanceInMeters,
+      },
+    },
+  });
+
+  res.status(200).json(jobs);
+});
