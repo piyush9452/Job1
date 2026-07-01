@@ -25,7 +25,7 @@
 }
 
 .drop {
-  $drops: 500;
+  $drops: 100;
   border: 0.25vmin solid transparent;
   /* Soft blue drops */
   border-bottom-color: rgba(171, 194, 233, 0.6);
@@ -35,9 +35,12 @@
   
   @for $i from 1 through $drops {
     &:nth-child(#{$i}) {
-      opacity: random(90) * 0.01;
+      /* Boosted opacity slightly since there are fewer drops */
+      opacity: (random(60) + 40) * 0.01;
       left: random(1200) * 0.1vw;
       border-left-width: random(80) * 0.1vmin;
+      /* Hardware acceleration hint */
+      will-change: transform;
       /* Slowed down rain: changed 0.15s to 0.35s base */
       animation: fall-#{$i}
         (random(15) * 0.35s)
@@ -46,7 +49,7 @@
         infinite;
     }
     @keyframes fall-#{$i} {
-      #{percentage( random(50) / 500 )} {
+      #{percentage( random(50) / 100 )} {
         transform: rotate(var(--angle)) translateX(0);
       }
       to {

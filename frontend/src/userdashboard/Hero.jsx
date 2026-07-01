@@ -5,8 +5,8 @@ import "./HeroRain.scss"; // Import the rain styles
 const Hero = () => {
     const navigate = useNavigate();
 
-    // Generate an array of 500 to map over for raindrops
-    const drops = Array.from({ length: 500 });
+    // Generate an array of 100 to map over for raindrops (optimized from 500)
+    const drops = Array.from({ length: 100 });
 
     return (
         <section className="hero-rain-container flex items-center justify-center relative w-full overflow-hidden">
