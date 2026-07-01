@@ -36,57 +36,83 @@ import JobDetailsModal from "../components/JobDetailsModal"; // Import Modal
 export default function Home() {
   const [featuredJobs, setFeaturedJobs] = useState([]);
   const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [allFetchedJobs, setAllFetchedJobs] = useState([]);
+  const [lastFetchedTime, setLastFetchedTime] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null); // State for Modal
   const navigate = useNavigate();
 
+  const fetchRecommendations = async (allJobsList, force = false) => {
+    try {
+      const stored = localStorage.getItem("userInfo");
+      if (!stored) return;
+      const token = JSON.parse(stored)?.token;
+      if (!token) return;
+
+      if (!force) {
+        const cachedJobs = localStorage.getItem("aiRecommendedJobsCache");
+        const cachedTime = localStorage.getItem("aiRecommendedJobsTime");
+        if (cachedJobs && cachedTime) {
+          setRecommendedJobs(JSON.parse(cachedJobs));
+          setLastFetchedTime(cachedTime);
+          return;
+        }
+      }
+
+      setLoadingRecommendations(true);
+      const { data } = await axios.get(
+        "https://jobone-if7l.onrender.com/ai/recommend-jobs",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (data && data.recommendedJobs) {
+        const richRecommendations = data.recommendedJobs
+          .map((aiJob) => {
+            const fullJob = allJobsList.find((j) => j._id === aiJob.jobId);
+            return {
+              ...fullJob,
+              matchScore: aiJob.matchScore,
+              reason: aiJob.reason,
+              _id: aiJob.jobId,
+              title: fullJob?.title || aiJob.title,
+            };
+          })
+          .filter((j) => j.postedByCompany || j.postedByName); // Ensure we found the full job
+
+        setRecommendedJobs(richRecommendations);
+
+        const now = new Date().toLocaleString();
+        setLastFetchedTime(now);
+        localStorage.setItem("aiRecommendedJobsCache", JSON.stringify(richRecommendations));
+        localStorage.setItem("aiRecommendedJobsTime", now);
+      }
+    } catch (err) {
+      console.error("Failed to fetch recommendations", err);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
+
+  const handleRefreshAI = () => {
+    localStorage.removeItem("aiRecommendedJobsCache");
+    localStorage.removeItem("aiRecommendedJobsTime");
+    if (allFetchedJobs.length > 0) {
+      fetchRecommendations(allFetchedJobs, true);
+    }
+  };
+
   // --- FETCH FEATURED & RECOMMENDED JOBS ---
   useEffect(() => {
-    const fetchRecommendations = async (allJobsList) => {
-      try {
-        const stored = localStorage.getItem("userInfo");
-        if (!stored) return;
-        const token = JSON.parse(stored)?.token;
-        if (!token) return;
-
-        setLoadingRecommendations(true);
-        const { data } = await axios.get(
-          "https://jobone-if7l.onrender.com/ai/recommend-jobs",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-
-        if (data && data.recommendedJobs) {
-          const richRecommendations = data.recommendedJobs
-            .map((aiJob) => {
-              const fullJob = allJobsList.find((j) => j._id === aiJob.jobId);
-              return {
-                ...fullJob,
-                matchScore: aiJob.matchScore,
-                reason: aiJob.reason,
-                _id: aiJob.jobId,
-                title: fullJob?.title || aiJob.title,
-              };
-            })
-            .filter((j) => j.postedByCompany || j.postedByName); // Ensure we found the full job
-
-          setRecommendedJobs(richRecommendations);
-        }
-      } catch (err) {
-        console.error("Failed to fetch recommendations", err);
-      } finally {
-        setLoadingRecommendations(false);
-      }
-    };
-
     const fetchFeatured = async () => {
       try {
         const { data } = await axios.get(
           "https://jobone-mrpy.onrender.com/jobs?limit=100",
         );
         const allJobs = data.data || data || [];
+        setAllFetchedJobs(allJobs);
 
         // Take the first 6 jobs as "Featured"
         setFeaturedJobs(allJobs.slice(0, 6));
@@ -156,18 +182,34 @@ export default function Home() {
         ) : recommendedJobs.length > 0 ? (
           <section id="ai-recommended-jobs" className="py-16 px-4 sm:px-6 bg-indigo-50 border-y border-indigo-100">
             <div className="max-w-7xl mx-auto">
-              <div className="mb-10">
-                <span className="text-indigo-600 font-bold text-xs uppercase tracking-wider bg-white border border-indigo-100 px-3 py-1 rounded-full flex items-center gap-2 w-fit shadow-sm">
-                  <Sparkles size={12} className="text-indigo-500" /> AI Matched
-                  For You
-                </span>
-                <h2 className="text-3xl font-bold text-slate-900 mt-3">
-                  Recommended Jobs
-                </h2>
-                <p className="text-slate-600 mt-2">
-                  Personalized matches based on your skills and profile
-                  experience.
-                </p>
+              <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <span className="text-indigo-600 font-bold text-xs uppercase tracking-wider bg-white border border-indigo-100 px-3 py-1 rounded-full flex items-center gap-2 w-fit shadow-sm">
+                    <Sparkles size={12} className="text-indigo-500" /> AI Matched For You
+                  </span>
+                  <h2 className="text-3xl font-bold text-slate-900 mt-3">
+                    Recommended Jobs
+                  </h2>
+                  <p className="text-slate-600 mt-2">
+                    Personalized matches based on your skills and profile experience.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col items-start md:items-end text-sm">
+                  {lastFetchedTime && (
+                    <span className="text-slate-500 mb-2">
+                      Last fetched: <span className="font-semibold text-slate-700">{lastFetchedTime}</span>
+                    </span>
+                  )}
+                  <button 
+                    onClick={handleRefreshAI}
+                    disabled={loadingRecommendations}
+                    className="flex items-center gap-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg font-bold transition-colors disabled:opacity-50"
+                  >
+                    <Sparkles size={16} className={loadingRecommendations ? "animate-spin" : ""} />
+                    Refresh Recommendations
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
