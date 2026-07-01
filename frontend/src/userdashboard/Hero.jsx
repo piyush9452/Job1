@@ -21,7 +21,7 @@ const Hero = () => {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.15),transparent_50%)] pointer-events-none z-10" />
 
             {/* CONTENT */}
-            <div className="relative z-20 w-full max-w-7xl mx-auto py-20 px-6 md:px-20 flex flex-col md:flex-row items-center gap-12 pointer-events-none">
+            <div className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-20 flex flex-col md:flex-row items-center gap-12 pointer-events-none">
                 
                 {/* LEFT CONTENT */}
                 <div className="flex-1 text-white pointer-events-auto">
