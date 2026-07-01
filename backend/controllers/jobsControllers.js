@@ -486,27 +486,41 @@ export const getSimilarJobs = expressAsyncHandler(async (req, res) => {
 // @access  Public
 export const getNearbyJobs = expressAsyncHandler(async (req, res) => {
   const { lat, lng, dist } = req.query;
+  console.log("--> [getNearbyJobs] Request received with:", { lat, lng, dist });
 
   if (!lat || !lng) {
+    console.log("--> [getNearbyJobs] Missing lat or lng");
     res.status(400);
     throw new Error("Latitude and longitude are required.");
   }
 
   // Convert distance to meters (default 50km)
   const distanceInMeters = (parseInt(dist) || 50) * 1000;
+  console.log("--> [getNearbyJobs] Max distance in meters:", distanceInMeters);
 
-  const jobs = await Job.find({
-    status: "active",
-    location: {
-      $near: {
-        $geometry: {
-          type: "Point",
-          coordinates: [parseFloat(lng), parseFloat(lat)], // MongoDB expects [longitude, latitude]
+  try {
+    console.log("--> [getNearbyJobs] Executing MongoDB $near query...");
+    const jobs = await Job.find({
+      status: "active",
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [parseFloat(lng), parseFloat(lat)], // MongoDB expects [longitude, latitude]
+          },
+          $maxDistance: distanceInMeters,
         },
-        $maxDistance: distanceInMeters,
       },
-    },
-  });
+    });
 
-  res.status(200).json(jobs);
+    console.log(`--> [getNearbyJobs] Query successful! Found ${jobs.length} jobs.`);
+    res.status(200).json(jobs);
+  } catch (error) {
+    console.error("--> [getNearbyJobs] ERROR in MongoDB Query:", error);
+    res.status(500).json({
+      message: "Database error during geospatial query.",
+      error: error.message,
+      stack: error.stack
+    });
+  }
 });
