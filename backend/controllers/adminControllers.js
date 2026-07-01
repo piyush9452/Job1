@@ -1,6 +1,8 @@
 import * as xlsx from 'xlsx';
 import { ZipArchive } from 'archiver';
 import User from '../models/users.js';
+import Application from '../models/applications.js';
+import Contact from '../models/contacted.js';
 
 import errorHandler from "express-async-handler";
 import Admin from "../models/admin.js";
@@ -121,7 +123,6 @@ export const getAllEmployersForAdmin = errorHandler(async (req, res) => {
 // @desc    Get all jobseekers (for admin view)
 // @route   GET /api/admin/users
 export const getAllJobseekersForAdmin = errorHandler(async (req, res) => {
-  const { default: User } = await import('../models/users.js');
   const users = await User.find({}).select("-password").sort({ createdAt: -1 });
   res.json(users);
 });
@@ -148,7 +149,6 @@ export const getEmployerJobsWithApplications = errorHandler(async (req, res) => 
   // Also get applications for each job to give the admin a full view
   const jobsWithApps = await Promise.all(
     jobs.map(async (job) => {
-      const { default: Application } = await import('../models/applications.js');
       const applications = await Application.find({ job: job._id }).populate('appliedBy', 'name email phone');
       return { ...job.toObject(), applications };
     })
@@ -160,15 +160,14 @@ export const getEmployerJobsWithApplications = errorHandler(async (req, res) => 
 // @desc    Get all applications made by a specific jobseeker
 // @route   GET /api/admin/users/:id/applications
 export const getJobseekerApplicationsForAdmin = errorHandler(async (req, res) => {
-  const { default: Application } = await import('../models/applications.js');
-  const { default: User } = await import('../models/users.js');
-
   const user = await User.findById(req.params.id).select("-password");
   if (!user) {
     res.status(404);
     throw new Error('User not found');
   }
 
+  // Use dynamic import specifically for Application to avoid circular dependencies if they exist,
+  // but use a direct default extraction that works in ES6
   const applications = await Application.find({ appliedBy: req.params.id })
     .populate("job", "title location status companyName")
     .sort({ appliedAt: -1 });
@@ -319,10 +318,6 @@ const formatContactsForExcel = (contacts) => {
 // @desc    Export Complete Data to Excel (SuperAdmin)
 // @route   GET /api/admin/export/all
 export const exportDataToExcel = expressAsyncHandler(async (req, res) => {
-  const { default: User } = await import('../models/users.js');
-  const { default: Application } = await import('../models/applications.js');
-  const { default: Contact } = await import('../models/contacted.js');
-
   const users = await User.find({}).select('-password -__v').lean();
   const employers = await Employer.find({}).select('-password -__v').lean();
   const jobs = await Job.find({}).lean();
@@ -394,7 +389,6 @@ export const exportEmployersDataToExcel = expressAsyncHandler(async (req, res) =
 // @desc    Export Jobseekers & Jobs to Excel (JobseekerAdmin)
 // @route   GET /api/admin/export/jobseekers
 export const exportJobseekersDataToExcel = expressAsyncHandler(async (req, res) => {
-  const { default: User } = await import('../models/users.js');
   const users = await User.find({}).select('-password -__v').lean();
   const jobs = await Job.find({}).lean();
 
@@ -499,7 +493,6 @@ export const searchEmployers = expressAsyncHandler(async (req, res) => {
 });
 
 export const getAdminDashboardStats = expressAsyncHandler(async (req, res) => {
-  const { default: User } = await import('../models/users.js');
   const totalJobs = await Job.countDocuments();
   const totalJobseekers = await User.countDocuments();
   const totalEmployers = await Employer.countDocuments();
