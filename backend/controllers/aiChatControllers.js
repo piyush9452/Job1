@@ -67,21 +67,20 @@ export const handleChatBot = async (req, res) => {
       stopWhen: stepCountIs(5),
     });
 
-    // ── THE ROBUST MANUAL BRIDGE ──────────────────────────────────
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    // Manually iterate over the stream parts to avoid 'toDataStream' crashes
-    for await (const chunk of result.fullStream) {
-      res.write(`data: ${JSON.stringify(chunk)}\n\n`);
-    }
-
-    res.write('data: [DONE]\n\n');
-    res.end();
+    // ── NATIVE VERCEL AI SDK STREAMING ───────────────────────────
+    console.log('[Chatbot] Pipping data stream to Express response...');
+    
+    // This strictly adheres to the Data Stream Protocol expected by useChat on frontend
+    result.pipeDataStreamToResponse(res);
+    
+    console.log('[Chatbot] Stream successfully connected and active.');
 
   } catch (error) {
-    console.error('Chatbot Error:', error);
+    console.error('[Chatbot Error] An error occurred in the pipeline:', error.message || error);
+    if (error.cause) {
+      console.error('[Chatbot Error Cause]:', error.cause);
+    }
+    
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to process chat' });
     }
