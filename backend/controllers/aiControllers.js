@@ -211,8 +211,7 @@ export const recommendJobs = expressAsyncHandler(async (req, res) => {
         : user.skills || []; // your profile skills field
 
     if (!userSkills.length) {
-        res.status(400);
-        throw new Error("No skills found. Add skills to your profile or upload a resume.");
+        return res.status(200).json({ recommendedJobs: [], message: "No skills found. Add skills to your profile or upload a resume." });
     }
 
     // 2. Fetch jobs (optimized)

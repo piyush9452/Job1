@@ -247,6 +247,16 @@ export default function Home() {
                       </span>
                     </div>
 
+
+
+
+
+
+
+
+
+
+
                     <h3 className="text-lg font-extrabold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">
                       {job.title}
                     </h3>

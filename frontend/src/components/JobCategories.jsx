@@ -182,7 +182,7 @@ export default function JobCategories() {
             y: ["0vh", "-20vh", "40vh", "10vh", "0vh"],
             scale: [1, 0.9, 1.3, 0.9, 1],
           }}
-          transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           className={`absolute top-[40%] right-[10%] w-[35rem] h-[35rem] rounded-full mix-blend-multiply blur-[120px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b2}`}
         />
       </div>
@@ -256,7 +256,7 @@ export default function JobCategories() {
                   setActiveBlobs({ b1: cat.blob1, b2: cat.blob2 })
                 }
                 whileHover={{ y: -6, scale: 1.02 }}
-                className="group relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-md p-6 border border-slate-200/80 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.1)] hover:border-slate-300 cursor-pointer transition-colors duration-300"
+                className="group relative overflow-hidden rounded-2xl bg-white/30 backdrop-blur-md p-6 border border-slate-200/80 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.1)] hover:border-slate-300 cursor-pointer transition-colors duration-300"
               >
                 <div
                   className={`absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${cat.color} opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-20`}

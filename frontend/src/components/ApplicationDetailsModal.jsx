@@ -34,14 +34,14 @@ export default function ApplicationDetailsModal({ application, onClose }) {
   const [rescheduleFeedback, setRescheduleFeedback] = useState("");
 
   const {
-    job,
+    job = {},
     status,
     appliedAt,
     employerMessage,
     meetingLink,
     applicationId,
   } = application;
-  const companyName = job.postedBy?.name || "Company Confidential";
+  const companyName = job?.postedBy?.name || "Company Confidential";
 
   // --- RESCHEDULE HANDLER ---
   const handleRescheduleSubmit = async (e) => {

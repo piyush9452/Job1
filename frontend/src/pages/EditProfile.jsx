@@ -180,6 +180,7 @@ export default function EditProfile() {
       const { data: s3Data } = await axios.post(
         `https://jobone-if7l.onrender.com/user/${userId}/resume/upload-url`,
         { fileType: file.type },
+        { headers: { Authorization: `Bearer ${storedData.token}` } }
       );
       await fetch(s3Data.uploadUrl, {
         method: "PUT",
@@ -189,6 +190,7 @@ export default function EditProfile() {
       await axios.post(
         `https://jobone-if7l.onrender.com/user/${userId}/resume/save-key`,
         { key: s3Data.key },
+        { headers: { Authorization: `Bearer ${storedData.token}` } }
       );
       setProfile((prev) => ({ ...prev, resumeFileKey: s3Data.key }));
 
