@@ -99,26 +99,17 @@ export const allApplicationFromUser = errorHandler(async (req, res) => {
       meetingLink: app.meetingLink || "", 
       rescheduleRequest: app.rescheduleRequest || {}, // Sent to frontend so candidate knows if reschedule is pending
       applicantMessage: app.applicantMessage || "",
+      screeningAnswers: app.screeningAnswers || [],
       applicantHasSeen: app.applicantHasSeen,
-      appliedAt: app.appliedAt,
+      appliedAt: app.appliedAt || app.createdAt,
       job: {
+        ...(app.job_id.toObject ? app.job_id.toObject() : app.job_id),
         id: app.job_id._id,
-        title: app.job_id.title,
-        description: app.job_id.description,
-        mode: app.job_id.mode,                       
-        workDays: app.job_id.workDays,               
-        location: app.job_id.location,
-        salaryAmount: app.job_id.salaryAmount,       
-        salaryFrequency: app.job_id.salaryFrequency, 
-        isLongTerm: app.job_id.isLongTerm,           
-        noOfDays: app.job_id.noOfDays,               
-        skillsRequired: app.job_id.skillsRequired,
         postedBy: {
           id: app.job_id.postedBy?._id,
           name: app.job_id.postedByName || app.job_id.postedBy?.name,
           image: app.job_id.postedByImage || app.job_id.postedBy?.profileImage,
         },
-        status: app.job_id.status,
       },
     }));
 
