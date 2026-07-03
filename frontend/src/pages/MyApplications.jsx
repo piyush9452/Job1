@@ -18,6 +18,7 @@ import {
   Building,
   Globe,
   MessageCircle,
+  ArrowLeft,
 } from "lucide-react";
 import ApplicationDetailsModal from "../components/ApplicationDetailsModal";
 
@@ -161,6 +162,12 @@ export default function MyApplications() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] py-20 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-6xl mx-auto mt-10">
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-6 flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold transition-colors"
+        >
+          <ArrowLeft size={18} /> Back
+        </button>
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
           <div>
