@@ -183,7 +183,8 @@ export default function MyApplications() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {applications.map((app) => {
             const job = app.job || {};
-            const isRemote = job.mode === "Work from Home";
+            const modeStr = Array.isArray(job.mode) ? job.mode.join(", ") : job.mode || "";
+            const isRemote = modeStr.toLowerCase().includes("home") || modeStr === "Online";
             const locationStr = isRemote
               ? "Remote"
               : typeof job.location === "object"
@@ -262,16 +263,16 @@ export default function MyApplications() {
                     <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
                       <IndianRupee size={14} className="text-slate-400" />
                       <span className="text-xs font-semibold text-slate-700">
-                        {job.salaryAmount
-                          ? job.salaryAmount.toLocaleString()
+                        {job.salaryMin
+                          ? `${job.salaryMin.toLocaleString()} - ${job.salaryMax.toLocaleString()}/${job.salaryFrequency}`
                           : "TBD"}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
-                      {getModeIcon(job.mode)}
+                      {getModeIcon(Array.isArray(job.mode) ? job.mode.join(", ") : job.mode || "")}
                       <span className="text-xs font-semibold text-slate-700 truncate">
-                        {job.mode}
+                        {Array.isArray(job.mode) ? job.mode.join(", ") : job.mode}
                       </span>
                     </div>
                   </div>

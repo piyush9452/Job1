@@ -382,50 +382,37 @@ export default function ApplicationDetailsModal({ application, onClose }) {
             </motion.div>
           )}
 
-          {/* 2. Job Snapshot */}
+          {/* Cover Letter */}
           <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <Briefcase size={14} /> Job Details
+              <FileText size={14} /> Cover Letter / Pitch
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                  Salary
-                </p>
-                <p className="font-bold text-slate-900 flex items-center gap-1 text-sm">
-                  <IndianRupee size={12} className="text-slate-500" />{" "}
-                  {job.salaryAmount ? job.salaryAmount.toLocaleString() : "TBD"}
-                </p>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                  Work Mode
-                </p>
-                <p className="font-bold text-slate-900 flex items-center gap-1.5 truncate text-sm">
-                  {getModeIcon(modeStr)} {modeStr}
-                </p>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 col-span-2 sm:col-span-1">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                  Location
-                </p>
-                <p className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
-                  <MapPin size={12} className="text-slate-400 shrink-0" />{" "}
-                  <span className="truncate">{displayLocation}</span>
-                </p>
-              </div>
+            <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-600 font-medium leading-relaxed whitespace-pre-wrap border border-slate-100">
+              {application.applicantMessage || "No cover letter provided."}
             </div>
           </div>
 
-          {/* 3. Description Snippet */}
-          <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
-            <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <FileText size={14} /> Job Description
-            </h3>
-            <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-600 font-medium leading-relaxed max-h-60 overflow-y-auto custom-scrollbar whitespace-pre-wrap border border-slate-100">
-              {job.description}
+          {/* Screening Questions */}
+          {application.screeningAnswers && application.screeningAnswers.length > 0 && (
+            <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <CheckCircle2 size={14} /> Employer Screening Questions
+              </h3>
+              <div className="space-y-4">
+                {application.screeningAnswers.map((item, index) => (
+                  <div key={index} className="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-2">
+                    <label className="text-sm font-semibold text-slate-800 flex items-start">
+                      <span className="text-purple-600 mr-2 mt-0.5">{index + 1}.</span> 
+                      <span>{item.question}</span>
+                    </label>
+                    <div className="text-sm font-medium text-slate-700 bg-white p-3 rounded-lg border border-purple-50 ml-5 shadow-sm">
+                      {item.answer}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}
