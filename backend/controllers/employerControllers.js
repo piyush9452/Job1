@@ -13,6 +13,7 @@ import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import mime from 'mime-types';
 import Application from "../models/applications.js";
 import User from "../models/users.js";
+import Job from "../models/jobs.js";
 import { OAuth2Client } from 'google-auth-library';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -705,23 +706,28 @@ export const searchCandidatesBySkills = expressAsyncHandler(async (req, res) => 
 
 
 export const getMyCandidates = expressAsyncHandler(async (req, res) => {
-  const employerId = req.employerId;
+  try {
+    const employerId = req.employerId;
 
-  // 1. Find all jobs posted by this employer
-  const jobs = await Job.find({ postedBy: employerId }).select('_id title');
-  const jobIds = jobs.map(j => j._id);
+    // 1. Find all jobs posted by this employer
+    const jobs = await Job.find({ postedBy: employerId }).select('_id title');
+    const jobIds = jobs.map(j => j._id);
 
-  if (jobIds.length === 0) {
-    return res.status(200).json([]);
+    if (jobIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // 2. Find all applications for these jobs and populate candidate data
+    const applications = await Application.find({ job_id: { $in: jobIds } })
+      .populate("appliedBy", "name email phone profilePicture skills resumeData")
+      .populate("job_id", "title")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error("ERROR IN getMyCandidates:", error);
+    res.status(500).json({ message: "Server Error loading candidates", error: error.message, stack: error.stack });
   }
-
-  // 2. Find all applications for these jobs and populate candidate data
-  const applications = await Application.find({ job_id: { $in: jobIds } })
-    .populate("appliedBy", "name email phone profilePicture skills resumeData")
-    .populate("job_id", "title")
-    .sort({ createdAt: -1 });
-
-  res.status(200).json(applications);
 });
 
 export const forgotPasswordEmployer = expressAsyncHandler(async (req, res) => {
