@@ -51,7 +51,7 @@
         infinite;
     }
     @keyframes fall-#{$i} {
-      #{percentage( math.div(math.random(50), 100) )} {
+      #{math.percentage( math.div(math.random(50), 100) )} {
         transform: rotate(var(--angle)) translateX(0);
       }
       to {
