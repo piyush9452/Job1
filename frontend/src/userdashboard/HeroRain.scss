@@ -1,3 +1,5 @@
+@use "sass:math";
+
 @property --angle {
   syntax: "<angle>";
   inherits: false;
@@ -36,20 +38,20 @@
   @for $i from 1 through $drops {
     &:nth-child(#{$i}) {
       /* Boosted opacity slightly since there are fewer drops */
-      opacity: (random(60) + 40) * 0.01;
-      left: random(1200) * 0.1vw;
-      border-left-width: random(80) * 0.1vmin;
+      opacity: (math.random(60) + 40) * 0.01;
+      left: math.random(1200) * 0.1vw;
+      border-left-width: math.random(80) * 0.1vmin;
       /* Hardware acceleration hint */
       will-change: transform;
       /* Slowed down rain: changed 0.15s to 0.35s base */
       animation: fall-#{$i}
-        (random(15) * 0.35s)
-        (random(25) * -0.5s)
+        (math.random(15) * 0.35s)
+        (math.random(25) * -0.5s)
         ease-in
         infinite;
     }
     @keyframes fall-#{$i} {
-      #{percentage( random(50) / 100 )} {
+      #{percentage( math.div(math.random(50), 100) )} {
         transform: rotate(var(--angle)) translateX(0);
       }
       to {
