@@ -64,7 +64,7 @@ export default function MyCandidates() {
 
   const filteredApplications = applications.filter((app) => {
     const candidateName = app.appliedBy?.name?.toLowerCase() || "";
-    const jobTitle = app.job?.title?.toLowerCase() || "";
+    const jobTitle = app.job_id?.title?.toLowerCase() || "";
     const matchesSearch = candidateName.includes(searchQuery.toLowerCase()) || jobTitle.includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -153,7 +153,7 @@ export default function MyCandidates() {
                       <p className="text-xs text-slate-500 font-medium truncate flex items-center gap-1 mt-1">
                         <Briefcase size={12} /> Applied for:{" "}
                         <span className="font-bold text-slate-700">
-                          {app.job?.title}
+                          {app.job_id?.title}
                         </span>
                       </p>
                     </div>
@@ -174,7 +174,7 @@ export default function MyCandidates() {
 
                   <button
                     onClick={() =>
-                      navigate(`/application/${app._id}`, {
+                      navigate(`/profile/${candidate._id}`, {
                         state: { application: app },
                       })
                     }
