@@ -1,7 +1,7 @@
 import express from "express";
 import { 
   createUser, loginUser, updateUser, userDetails, verifyUserOTP, resendUserOTP, googleLogin,
-  getResumeUploadUrl, saveResumeKey, getViewableResumeUrl, getDownloadableResumeUrl,
+  getResumeUploadUrl, saveResumeKey, getViewableResumeUrl, getDownloadableResumeUrl, getProfilePicUploadUrl,
   forgotPasswordUser, resetPasswordUser
 } from "../controllers/userControllers.js";
 import { protectAny, protect } from "../middleware/authorization.js";
@@ -21,6 +21,7 @@ router.post("/reset-password", resetPasswordUser);
 
 // FACT: New S3 Resume Endpoints
 router.post("/:id/resume/upload-url", protect, getResumeUploadUrl);
+router.post("/:id/profile-picture/upload-url", protect, getProfilePicUploadUrl);
 router.post("/:id/resume/save-key", protect, saveResumeKey);
 router.get("/:id/resume/view", protectAny, getViewableResumeUrl);
 router.get("/:id/resume/download", protectAny, getDownloadableResumeUrl);

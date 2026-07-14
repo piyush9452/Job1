@@ -8,7 +8,7 @@ import UserOTP from '../models/userVerification.js';
 import sendEmail from '../utils/emailVerification.js';
 import { validationResult } from 'express-validator';
 
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Application from "../models/applications.js";
 import crypto from 'crypto';
@@ -196,6 +196,27 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
     const notAllowed = ["email", "password"]; 
     notAllowed.forEach(field => delete updates[field]);
 
+    // FACT: If the profile picture is being updated, delete the old one from S3 if it exists
+    if (updates.profilePicture) {
+      const oldUser = await User.findById(userId);
+      if (oldUser && oldUser.profilePicture && oldUser.profilePicture.includes("amazonaws.com") && oldUser.profilePicture !== updates.profilePicture) {
+        try {
+          const urlObj = new URL(oldUser.profilePicture);
+          const key = urlObj.pathname.substring(1); // Remove leading slash
+          if (key) {
+            const client = getS3Client();
+            await client.send(new DeleteObjectCommand({
+              Bucket: process.env.AWS_BUCKET_NAME,
+              Key: decodeURIComponent(key)
+            }));
+            console.log(`Deleted old profile picture: ${key}`);
+          }
+        } catch (err) {
+          console.error("Failed to delete old profile picture from S3:", err);
+        }
+      }
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: updates },  
@@ -207,6 +228,31 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(updatedUser);
+});
+
+export const getProfilePicUploadUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client();
+  const userId = req.params.id;
+  const { fileType } = req.body; 
+  
+  if (!fileType) {
+    res.status(400); throw new Error("File type is required");
+  }
+
+  const extension = fileType.split('/')[1] || 'jpg';
+  const randomBytes = crypto.randomBytes(8).toString('hex');
+  const key = `profile_pictures/user-${userId}-${randomBytes}.${extension}`;
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    ContentType: fileType,
+  });
+
+  const url = await getSignedUrl(client, command, { expiresIn: 600 });
+  const publicUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${key}`;
+  
+  res.status(200).json({ uploadUrl: url, key: key, publicUrl });
 });
 
 

@@ -22,6 +22,8 @@ export default function EditProfile() {
   const location = useLocation(); // Hook to access state passed from Login
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imgUploadType, setImgUploadType] = useState("link"); // "link" or "upload"
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // --- POPUP STATE ---
   const [showPopup, setShowPopup] = useState(false);
@@ -127,9 +129,44 @@ export default function EditProfile() {
     fetchUser();
   }, [navigate, location]);
 
-  // --- HANDLERS (Same as before) ---
+  // --- HANDLERS ---
   const handleProfileChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const storedString = localStorage.getItem("userInfo");
+      if (!storedString) throw new Error("Not logged in");
+      const { token, id, userId } = JSON.parse(storedString);
+      const uid = id || userId;
+
+      const { data } = await axios.post(
+        `https://jobone-mrpy.onrender.com/user/${uid}/profile-picture/upload-url`,
+        { fileType: file.type },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await axios.put(data.uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+      });
+
+      setProfile(prev => ({ ...prev, profilePicture: data.publicUrl }));
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleAddSkill = () => {
@@ -177,6 +214,10 @@ export default function EditProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (uploadingImage) {
+      alert("Please wait for the image upload to complete.");
+      return;
+    }
     setSaving(true);
 
     try {
@@ -319,14 +360,58 @@ export default function EditProfile() {
                 </p>
               </div>
               <div className="md:col-span-2">
-                <InputGroup
-                  label="Profile Picture URL"
-                  icon={<LinkIcon size={18} />}
-                  name="profilePicture"
-                  value={profile.profilePicture}
-                  onChange={handleProfileChange}
-                  placeholder="https://example.com/photo.jpg"
-                />
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                  Profile Picture
+                </label>
+                <div className="flex gap-4 mb-3 border-b border-gray-100 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setImgUploadType("link")}
+                    className={`text-sm font-semibold transition-colors ${imgUploadType === "link" ? "text-indigo-600 border-b-2 border-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Provide Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImgUploadType("upload")}
+                    className={`text-sm font-semibold transition-colors ${imgUploadType === "upload" ? "text-indigo-600 border-b-2 border-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Upload Image
+                  </button>
+                </div>
+
+                {imgUploadType === "link" ? (
+                  <InputGroup
+                    icon={<LinkIcon size={18} />}
+                    name="profilePicture"
+                    value={profile.profilePicture}
+                    onChange={handleProfileChange}
+                    placeholder="https://example.com/photo.jpg"
+                  />
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="block w-full text-sm text-slate-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-indigo-50 file:text-indigo-700
+                        hover:file:bg-indigo-100 cursor-pointer
+                        border border-slate-200 rounded-xl p-2"
+                    />
+                    {uploadingImage && <Loader2 className="animate-spin text-indigo-600" size={24} />}
+                  </div>
+                )}
+                {profile.profilePicture && !uploadingImage && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <img src={profile.profilePicture} alt="Profile Preview" className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200" />
+                    <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded">Image ready</span>
+                  </div>
+                )}
               </div>
               <div className="md:col-span-2">
                 <InputGroup

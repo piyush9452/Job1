@@ -7,7 +7,7 @@ import Employer from '../models/employer.js'; // Adjust path as needed
 import {protectEmployer} from '../middleware/employercheck.js';
 import OTP from '../models/verification.js';
 import sendEmail from '../utils/emailVerification.js';
-import {S3Client, PutObjectCommand, GetObjectCommand} from '@aws-sdk/client-s3';
+import {S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand} from '@aws-sdk/client-s3';
 import crypto from 'crypto';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import mime from 'mime-types';
@@ -348,7 +348,25 @@ export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
   if (req.body.location !== undefined) employer.location = req.body.location; 
   if (req.body.officeLocation !== undefined) employer.officeLocation = req.body.officeLocation;
   if (req.body.industry !== undefined) employer.industry = req.body.industry;
-  if (req.body.profilePicture !== undefined) employer.profilePicture = req.body.profilePicture;
+  if (req.body.profilePicture !== undefined) {
+    if (employer.profilePicture && employer.profilePicture.includes("amazonaws.com") && employer.profilePicture !== req.body.profilePicture) {
+      try {
+        const urlObj = new URL(employer.profilePicture);
+        const key = urlObj.pathname.substring(1);
+        if (key) {
+          const client = getS3Client();
+          await client.send(new DeleteObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: decodeURIComponent(key)
+          }));
+          console.log(`Deleted old employer profile picture: ${key}`);
+        }
+      } catch (err) {
+        console.error("Failed to delete old employer profile picture from S3:", err);
+      }
+    }
+    employer.profilePicture = req.body.profilePicture;
+  }
   
   if (employer.employerType === "company") {
     if (req.body.companyName !== undefined) employer.companyName = req.body.companyName;
@@ -405,9 +423,30 @@ export const getPresignedUploadUrl = expressAsyncHandler(async (req, res) => {
   res.status(200).json({ uploadUrl: url, key: key });
 });
 
+export const getEmployerProfilePicUploadUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client();
+  const employerId = req.employerId;
+  const { fileType } = req.body; 
+  
+  if (!fileType) {
+    res.status(400); throw new Error("File type is required");
+  }
 
+  const extension = fileType.split('/')[1] || 'jpg';
+  const randomBytes = crypto.randomBytes(8).toString('hex');
+  const key = `profile_pictures/employer-${employerId}-${randomBytes}.${extension}`;
 
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    ContentType: fileType,
+  });
 
+  const url = await getSignedUrl(client, command, { expiresIn: 600 });
+  const publicUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${key}`;
+  
+  res.status(200).json({ uploadUrl: url, key: key, publicUrl });
+});
 
 export const saveDocumentKey = expressAsyncHandler(async (req, res) => {
   const { key } = req.body;

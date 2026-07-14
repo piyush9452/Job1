@@ -26,6 +26,8 @@ export default function EmployerEditProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [imgUploadType, setImgUploadType] = useState("link"); // "link" or "upload"
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [form, setForm] = useState({
     employerType: "company",
@@ -102,8 +104,46 @@ export default function EmployerEditProfile() {
     }));
   }, []);
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const storedString = localStorage.getItem("employerInfo");
+      if (!storedString) throw new Error("Not logged in");
+      const { token } = JSON.parse(storedString);
+
+      const { data } = await axios.post(
+        `https://jobone-mrpy.onrender.com/employer/profile-picture/upload-url`,
+        { fileType: file.type },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await axios.put(data.uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+      });
+
+      setForm((prev) => ({ ...prev, profilePicture: data.publicUrl }));
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (uploadingImage) {
+      alert("Please wait for the image upload to complete.");
+      return;
+    }
 
     // FACT: Validating against the new 50-word minimum
     if (wordCount < MIN_WORDS) {
@@ -360,14 +400,57 @@ export default function EmployerEditProfile() {
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
                 <ImageIcon size={16} className="text-blue-500" /> Profile/Logo
-                URL
               </label>
-              <input
-                name="profilePicture"
-                value={form.profilePicture}
-                onChange={onChange}
-                className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
-              />
+              
+              <div className="flex gap-4 mb-3 border-b border-gray-100 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setImgUploadType("link")}
+                  className={`text-sm font-semibold transition-colors ${imgUploadType === "link" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  Provide Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImgUploadType("upload")}
+                  className={`text-sm font-semibold transition-colors ${imgUploadType === "upload" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  Upload Image
+                </button>
+              </div>
+
+              {imgUploadType === "link" ? (
+                <input
+                  name="profilePicture"
+                  value={form.profilePicture}
+                  onChange={onChange}
+                  placeholder="https://example.com/logo.png"
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
+                />
+              ) : (
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="block w-full text-sm text-slate-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-blue-50 file:text-blue-700
+                      hover:file:bg-blue-100 cursor-pointer
+                      border border-slate-200 rounded-xl p-2"
+                  />
+                  {uploadingImage && <Loader2 className="animate-spin text-blue-600" size={24} />}
+                </div>
+              )}
+              {form.profilePicture && !uploadingImage && (
+                <div className="mt-3 flex items-center gap-3">
+                  <img src={form.profilePicture} alt="Preview" className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200" />
+                  <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded">Image ready</span>
+                </div>
+              )}
             </div>
           </div>
 
