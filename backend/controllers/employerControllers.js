@@ -19,7 +19,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 let s3Client;
 
-const getS3Client = () => {
+export const getS3Client = () => {
   if (!s3Client) {
     // This code will now run *after* dotenv.config()
     s3Client = new S3Client({
