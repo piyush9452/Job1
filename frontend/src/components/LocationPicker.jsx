@@ -190,10 +190,10 @@ export default function LocationPicker({ onLocationSelect }) {
         <button
           type="button"
           onClick={handleCurrentLocation}
-          className="bg-emerald-600 text-white p-2 rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors"
+          className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors gap-2 text-sm font-bold whitespace-nowrap"
           title="Use My Current Location"
         >
-          <Navigation size={20} />
+          <Navigation size={18} /> Use My Current Location
         </button>
         <button
           type="button"
