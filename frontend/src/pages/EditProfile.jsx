@@ -30,6 +30,8 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [imgUploadType, setImgUploadType] = useState("link");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -237,6 +239,42 @@ export default function EditProfile() {
     }
   };
 
+  
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const storedString = localStorage.getItem("userInfo");
+      if (!storedString) throw new Error("Not logged in");
+      const { token, id, userId } = JSON.parse(storedString);
+      const uid = id || userId;
+
+      const { data } = await axios.post(
+        `https://jobone-mrpy.onrender.com/user/${uid}/profile-picture/upload-url`,
+        { fileType: file.type },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await axios.put(data.uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+      });
+
+      setProfile(prev => ({ ...prev, profilePicture: data.publicUrl }));
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleProfileChange = (e) =>
     setProfile({ ...profile, [e.target.name]: e.target.value });
 
@@ -338,7 +376,7 @@ export default function EditProfile() {
   if (loading)
     return (
       <div className="min-h-screen bg-white flex justify-center items-center">
-        <Loader2 className="animate-spin text-orange-500" size={48} />
+        <Loader2 className="animate-spin text-blue-600" size={48} />
       </div>
     );
 
@@ -378,7 +416,7 @@ export default function EditProfile() {
           </h1>
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 bg-white/50 hover:bg-white/80 backdrop-blur-xl border border-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-all shadow-sm"
+            className="flex items-center gap-2 bg-white/50 hover:bg-white backdrop-blur-xl border border-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-all shadow-sm"
           >
             <ArrowLeft size={16} /> Cancel
           </button>
@@ -389,8 +427,8 @@ export default function EditProfile() {
           <GlassCard className="border-orange-200 bg-orange-50/40 shadow-[0_0_40px_rgba(249,115,22,0.08)]">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-orange-600 flex items-center gap-2">
-                  <Sparkles className="text-orange-500" size={20} /> AI Resume
+                <h3 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+                  <Sparkles className="text-blue-600" size={20} /> AI Resume
                   Auto-Fill
                 </h3>
                 <p className="text-sm text-orange-900/70 mt-1">
@@ -409,7 +447,7 @@ export default function EditProfile() {
                 <button
                   type="button"
                   disabled={isParsing}
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white px-6 py-3 rounded-xl font-bold shadow-md transition-all w-full"
+                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-md transition-all w-full"
                 >
                   {isParsing ? (
                     <>
@@ -424,7 +462,7 @@ export default function EditProfile() {
               </div>
             </div>
             {profile.resumeFileKey && (
-              <p className="mt-4 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-full inline-block backdrop-blur-sm">
+              <p className="mt-4 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-full inline-block ">
                 ✓ Resume securely attached
               </p>
             )}
@@ -433,7 +471,7 @@ export default function EditProfile() {
           {/* 1. PERSONAL DETAILS */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <User className="text-red-500" size={22} /> Personal Details
+              <User className="text-blue-600" size={22} /> Personal Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputGroup
@@ -450,13 +488,13 @@ export default function EditProfile() {
               />
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Gender <span className="text-rose-500">*</span>
+                  Gender <span className="text-blue-600">*</span>
                 </label>
                 <select
                   name="gender"
                   value={profile.gender || ""}
                   onChange={handleProfileChange}
-                  className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 transition-all appearance-none shadow-sm backdrop-blur-sm"
+                  className="w-full p-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-100 text-slate-900 transition-all appearance-none shadow-sm "
                 >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
@@ -476,7 +514,7 @@ export default function EditProfile() {
           {/* 2. SUMMARY */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <FileText className="text-orange-500" size={22} /> Professional
+              <FileText className="text-blue-600" size={22} /> Professional
               Summary
             </h2>
             <textarea
@@ -484,7 +522,7 @@ export default function EditProfile() {
               value={profile.description}
               onChange={handleProfileChange}
               rows={4}
-              className="w-full p-4 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm backdrop-blur-sm"
+              className="w-full p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-100 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm "
               placeholder="Tell employers about yourself..."
             />
           </GlassCard>
@@ -492,14 +530,14 @@ export default function EditProfile() {
           {/* 3. SKILLS */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <Code className="text-rose-500" size={22} /> Skills
+              <Code className="text-blue-600" size={22} /> Skills
             </h2>
             <div className="flex gap-3 mb-6">
               <input
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 placeholder="Type a skill..."
-                className="flex-1 p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/50 text-slate-900 placeholder-slate-400 transition-all shadow-sm backdrop-blur-sm"
+                className="flex-1 p-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-100 text-slate-900 placeholder-slate-400 transition-all shadow-sm "
                 onKeyDown={(e) =>
                   e.key === "Enter" && (e.preventDefault(), handleAddSkill())
                 }
@@ -507,7 +545,7 @@ export default function EditProfile() {
               <button
                 type="button"
                 onClick={handleAddSkill}
-                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white px-6 rounded-xl font-bold shadow-md transition-all"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-xl font-bold shadow-md transition-all"
               >
                 Add
               </button>
@@ -536,9 +574,9 @@ export default function EditProfile() {
           {/* 4. WORK EXPERIENCE */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <Briefcase className="text-red-500" size={22} /> Work Experience
+              <Briefcase className="text-blue-600" size={22} /> Work Experience
             </h2>
-            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner ">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <GlassInput
                   value={expForm.role}
@@ -581,7 +619,7 @@ export default function EditProfile() {
               {experience.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                  className="p-5 bg-white border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
                 >
                   <div>
                     <h4 className="font-bold text-lg text-slate-900">
@@ -603,7 +641,7 @@ export default function EditProfile() {
                     onClick={() =>
                       setExperience(experience.filter((_, i) => i !== idx))
                     }
-                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-1"
                   >
                     <X size={20} />
                   </button>
@@ -615,9 +653,9 @@ export default function EditProfile() {
           {/* 5. EDUCATION */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <GraduationCap className="text-orange-500" size={22} /> Education
+              <GraduationCap className="text-blue-600" size={22} /> Education
             </h2>
-            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner ">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="md:col-span-2">
                   <GlassInput
@@ -673,13 +711,13 @@ export default function EditProfile() {
               {education.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                  className="p-5 bg-white border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
                 >
                   <div>
                     <h4 className="font-bold text-lg text-slate-900">
                       {item.degree}
                     </h4>
-                    <p className="text-sm text-orange-600 font-medium mb-1">
+                    <p className="text-sm text-blue-700 font-medium mb-1">
                       {item.university}
                     </p>
                     <p className="text-xs text-slate-500 font-mono">
@@ -696,7 +734,7 @@ export default function EditProfile() {
                     onClick={() =>
                       setEducation(education.filter((_, i) => i !== idx))
                     }
-                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-1"
                   >
                     <X size={20} />
                   </button>
@@ -708,9 +746,9 @@ export default function EditProfile() {
           {/* 6. PROJECTS */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <FileText className="text-rose-500" size={22} /> Projects
+              <FileText className="text-blue-600" size={22} /> Projects
             </h2>
-            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner ">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <GlassInput
                   value={projForm.title}
@@ -743,7 +781,7 @@ export default function EditProfile() {
                     }
                     placeholder="Description"
                     rows={3}
-                    className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm backdrop-blur-sm"
+                    className="w-full p-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-100 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm "
                   />
                 </div>
               </div>
@@ -759,7 +797,7 @@ export default function EditProfile() {
               {projects.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                  className="p-5 bg-white border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
                 >
                   <div>
                     <h4 className="font-bold text-lg text-slate-900">
@@ -779,7 +817,7 @@ export default function EditProfile() {
                     onClick={() =>
                       setProjects(projects.filter((_, i) => i !== idx))
                     }
-                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-1"
                   >
                     <X size={20} />
                   </button>
@@ -791,9 +829,9 @@ export default function EditProfile() {
           {/* 7. CERTIFICATIONS */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <Award className="text-red-500" size={22} /> Certifications
+              <Award className="text-blue-600" size={22} /> Certifications
             </h2>
-            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner ">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="md:col-span-2">
                   <GlassInput
@@ -840,7 +878,7 @@ export default function EditProfile() {
               {certifications.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                  className="p-5 bg-white border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
                 >
                   <div>
                     <h4 className="font-bold text-lg text-slate-900">
@@ -858,7 +896,7 @@ export default function EditProfile() {
                         certifications.filter((_, i) => i !== idx),
                       )
                     }
-                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-1"
                   >
                     <X size={20} />
                   </button>
@@ -870,9 +908,9 @@ export default function EditProfile() {
           {/* 8. ONLINE PRESENCE */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <Globe className="text-orange-500" size={22} /> Online Presence
+              <Globe className="text-blue-600" size={22} /> Online Presence
             </h2>
-            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner ">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <GlassInput
                   value={linkForm.platform}
@@ -901,13 +939,13 @@ export default function EditProfile() {
               {portfolioLinks.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-4 bg-white/60 border border-slate-200 rounded-xl flex justify-between items-center backdrop-blur-md shadow-sm"
+                  className="p-4 bg-white border border-slate-200 rounded-xl flex justify-between items-center backdrop-blur-md shadow-sm"
                 >
                   <div className="min-w-0">
                     <h4 className="font-bold text-slate-900">
                       {item.platform}
                     </h4>
-                    <p className="text-sm text-orange-600 truncate mt-0.5">
+                    <p className="text-sm text-blue-700 truncate mt-0.5">
                       {item.url}
                     </p>
                   </div>
@@ -918,7 +956,7 @@ export default function EditProfile() {
                         portfolioLinks.filter((_, i) => i !== idx),
                       )
                     }
-                    className="text-slate-400 hover:text-rose-500 transition-colors p-2 shrink-0"
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-2 shrink-0"
                   >
                     <X size={20} />
                   </button>
@@ -930,10 +968,10 @@ export default function EditProfile() {
           {/* 9. VOLUNTEERING */}
           <GlassCard>
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-200/50 pb-4">
-              <HeartHandshake className="text-rose-500" size={22} />{" "}
+              <HeartHandshake className="text-blue-600" size={22} />{" "}
               Volunteering
             </h2>
-            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner backdrop-blur-sm">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6 shadow-inner ">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="md:col-span-2">
                   <GlassInput
@@ -966,7 +1004,7 @@ export default function EditProfile() {
                     }
                     placeholder="Description"
                     rows={3}
-                    className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm backdrop-blur-sm"
+                    className="w-full p-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-100 text-slate-900 placeholder-slate-400 transition-all resize-none shadow-sm "
                   />
                 </div>
               </div>
@@ -982,7 +1020,7 @@ export default function EditProfile() {
               {volunteering.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-5 bg-white/60 border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
+                  className="p-5 bg-white border border-slate-200 rounded-2xl flex justify-between items-start backdrop-blur-md shadow-sm"
                 >
                   <div>
                     <h4 className="font-bold text-lg text-slate-900">
@@ -1003,7 +1041,7 @@ export default function EditProfile() {
                     onClick={() =>
                       setVolunteering(volunteering.filter((_, i) => i !== idx))
                     }
-                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-1"
                   >
                     <X size={20} />
                   </button>
@@ -1016,14 +1054,14 @@ export default function EditProfile() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex-1 py-4 bg-white/80 hover:bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl backdrop-blur-lg transition-all shadow-sm"
+              className="flex-1 py-4 bg-white hover:bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl  transition-all shadow-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || isParsing}
-              className="flex-1 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 border border-transparent text-white font-bold rounded-2xl flex justify-center items-center gap-2 transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)] disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 border border-transparent text-white font-bold rounded-2xl flex justify-center items-center gap-2 transition-all shadow-md shadow-blue-200 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
             >
               {saving ? (
                 <Loader2 className="animate-spin" />
@@ -1042,7 +1080,7 @@ export default function EditProfile() {
 // FACT: Reusable Smart Glass Components for White Mode
 const GlassCard = ({ children, className = "" }) => (
   <div
-    className={`bg-white/40 backdrop-blur-3xl border border-white/60 rounded-3xl p-6 md:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] ${className}`}
+    className={`bg-white/40  border border-white/60 rounded-3xl p-6 md:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] ${className}`}
   >
     {children}
   </div>
@@ -1058,7 +1096,7 @@ const InputGroup = ({ label, name, value, onChange, disabled = false }) => (
       value={value}
       onChange={onChange}
       disabled={disabled}
-      className={`w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all shadow-sm backdrop-blur-sm ${disabled && "opacity-60 bg-slate-100 cursor-not-allowed"}`}
+      className={`w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-100 text-slate-900 placeholder-slate-400 transition-all shadow-sm ${disabled ? "opacity-60 bg-slate-100 cursor-not-allowed" : "bg-white"}`}
     />
   </div>
 );
@@ -1068,6 +1106,6 @@ const GlassInput = ({ value, onChange, placeholder }) => (
     value={value}
     onChange={onChange}
     placeholder={placeholder}
-    className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 placeholder-slate-400 transition-all shadow-sm backdrop-blur-sm"
+    className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-100 text-slate-900 placeholder-slate-400 transition-all shadow-sm"
   />
 );
