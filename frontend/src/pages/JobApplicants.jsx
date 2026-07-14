@@ -51,6 +51,11 @@ export default function JobApplicants() {
     message: "",
     name: "",
   });
+  const [assessmentModal, setAssessmentModal] = useState({
+    show: false,
+    answers: [],
+    name: "",
+  });
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -515,6 +520,22 @@ export default function JobApplicants() {
                               </button>
                             )}
 
+                            {app.screeningAnswers && app.screeningAnswers.length > 0 && (
+                              <button
+                                onClick={() =>
+                                  setAssessmentModal({
+                                    show: true,
+                                    answers: app.screeningAnswers,
+                                    name: candidate.name,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 font-bold px-3 py-2 rounded-lg hover:bg-blue-100 transition-all text-sm shadow-sm"
+                                title="Read Assessment"
+                              >
+                                <CheckSquare size={16} /> Assessment
+                              </button>
+                            )}
+
                             {app.rescheduleRequest?.requestStatus ===
                               "pending" && (
                               <button
@@ -600,6 +621,46 @@ export default function JobApplicants() {
                 <p className="text-slate-700 leading-relaxed font-medium whitespace-pre-wrap">
                   "{pitchModal.message}"
                 </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {assessmentModal.show && (
+          <div
+            className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() =>
+              setAssessmentModal({ show: false, answers: [], name: "" })
+            }
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative max-h-[85vh] overflow-y-auto"
+            >
+              <button
+                onClick={() =>
+                  setAssessmentModal({ show: false, answers: [], name: "" })
+                }
+                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
+              <div className="flex items-center gap-3 mb-6 text-blue-600">
+                <CheckSquare size={28} />
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  Assessment: {assessmentModal.name}
+                </h3>
+              </div>
+              <div className="space-y-4">
+                {assessmentModal.answers.map((qa, index) => (
+                  <div key={index} className="p-5 bg-blue-50 border border-blue-100 rounded-2xl">
+                    <p className="font-bold text-slate-800 mb-2">Q: {qa.question}</p>
+                    <p className="text-slate-700 font-medium whitespace-pre-wrap">A: {qa.answer}</p>
+                  </div>
+                ))}
               </div>
             </motion.div>
           </div>
