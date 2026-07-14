@@ -14,7 +14,7 @@ import applicationRoutes from './routes/applicationRoutes.js';
 import employerRoutes from './routes/employerRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import adminRoutes from "./routes/adminRoutes.js";
-
+import imageRoutes from "./routes/imageRoutes.js";
 
 connectDB();
 
@@ -47,6 +47,9 @@ app.use("/employer",employerRoutes);
 
 //AI Routes
 app.use("/ai", aiRoutes);
+
+//Images Route
+app.use("/images", imageRoutes);
 //---------------------------MAIN ROUTES---------------------------------------//
 
 

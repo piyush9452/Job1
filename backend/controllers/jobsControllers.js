@@ -151,6 +151,11 @@ export const createJob = expressAsyncHandler(async (req, res) => {
 
 export const getJob = expressAsyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid job ID format" });
+  }
+
   const job = await Job.findById(id);
   
   if (!job) return res.status(404).json({ message: "Job not found" });

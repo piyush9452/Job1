@@ -53,7 +53,7 @@ export default function EmployerProfile() {
       if (!info.token) return;
 
       const { data } = await axios.get(
-        "https://jobone-mrpy.onrender.com/jobs/employerJobs",
+        "https://jobone-mrpy.onrender.com/jobs/employer-jobs",
         { headers: { Authorization: `Bearer ${info.token}` } }
       );
 

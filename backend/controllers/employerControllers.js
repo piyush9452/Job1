@@ -443,7 +443,7 @@ export const getEmployerProfilePicUploadUrl = expressAsyncHandler(async (req, re
   });
 
   const url = await getSignedUrl(client, command, { expiresIn: 600 });
-  const publicUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${key}`;
+  const publicUrl = `https://jobone-mrpy.onrender.com/images/${key}`;
   
   res.status(200).json({ uploadUrl: url, key: key, publicUrl });
 });
