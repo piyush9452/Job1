@@ -261,11 +261,11 @@ export default function EmployerProfile() {
             <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
               {profile.description || "No description provided yet."}
             </p>
-            {/* Provide helpful context if description is too short based on our new rule */}
-            {profile.description && profile.description.split(/\s+/).length < 200 && (
+            {/* Provide helpful context if description is too short or too long based on our new rule */}
+            {profile.description && (profile.description.split(/\s+/).filter(w => w.length > 0).length < 50 || profile.description.split(/\s+/).filter(w => w.length > 0).length > 200) && (
                <div className="mt-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-start gap-2">
                   <XCircle size={16} className="shrink-0 mt-0.5" />
-                  <p>Your description is currently under the required 200 words. You will not be able to post jobs until you expand this section in Edit Profile.</p>
+                  <p>Your description must be between 50 and 200 words. You will not be able to post jobs until you update this section in Edit Profile.</p>
                </div>
             )}
           </div>
