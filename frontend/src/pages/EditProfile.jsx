@@ -502,6 +502,60 @@ export default function EditProfile() {
                   <option value="Other">Other</option>
                 </select>
               </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                  Profile Picture
+                </label>
+                <div className="flex gap-4 mb-3 border-b border-gray-100 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setImgUploadType("link")}
+                    className={`text-sm font-semibold transition-colors ${imgUploadType === "link" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Provide Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImgUploadType("upload")}
+                    className={`text-sm font-semibold transition-colors ${imgUploadType === "upload" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    Upload Image
+                  </button>
+                </div>
+
+                {imgUploadType === "link" ? (
+                  <InputGroup
+                    label=""
+                    name="profilePicture"
+                    value={profile.profilePicture}
+                    onChange={handleProfileChange}
+                    placeholder="https://example.com/photo.jpg"
+                  />
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="block w-full text-sm text-slate-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100 cursor-pointer
+                        border border-slate-200 rounded-xl p-2"
+                    />
+                    {uploadingImage && <Loader2 className="animate-spin text-blue-600" size={24} />}
+                  </div>
+                )}
+                {profile.profilePicture && !uploadingImage && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <img src={profile.profilePicture} alt="Profile Preview" className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200" />
+                    <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded">Image ready</span>
+                  </div>
+                )}
+              </div>
               <InputGroup
                 label="Email Address"
                 name="email"
