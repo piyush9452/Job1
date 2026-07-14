@@ -125,10 +125,10 @@ export default function AdminJobseekerView() {
                       <div className="flex justify-between items-start gap-4">
                         <div>
                           <h3 className="font-bold text-lg text-slate-800">
-                            {app.job?.title || "Unknown Job"}
+                            {app.job_id?.title || "Unknown Job"}
                           </h3>
                           <p className="text-sm text-slate-500 font-medium">
-                            {app.job?.companyName || "Unknown Company"} • {app.job?.location || "Unknown Location"}
+                            {app.job_id?.postedByCompany || "Unknown Company"} • {app.job_id?.location?.address || "Unknown Location"}
                           </p>
                           <div className="mt-3 flex gap-4 text-sm text-slate-600">
                             <p>
@@ -147,7 +147,7 @@ export default function AdminJobseekerView() {
                             {app.status}
                           </span>
                           <button
-                            onClick={() => window.open(`/admin/job/${app.job?._id}`, "_blank")}
+                            onClick={() => window.open(`/admin/job/${app.job_id?._id}`, "_blank")}
                             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 mt-2 underline"
                           >
                             View Job
