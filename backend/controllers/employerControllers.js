@@ -300,7 +300,8 @@ export const loginEmployer = expressAsyncHandler(async (req, res) => {
   res.status(200).json({ 
     token,
     employerId: employer._id, // Frontend needs this for 'employerInfo'
-    email: employer.email     // Optional but good to have
+    email: employer.email,     // Optional but good to have
+    employerType: employer.employerType // Added to distinguish individual vs company
   });
 });
 
@@ -577,6 +578,7 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
         token,
         employerId: employer._id,
         email: employer.email,
+        employerType: employer.employerType,
         isProfileComplete: !!isProfileComplete
       });
 
@@ -615,6 +617,7 @@ export const googleLoginEmployer = expressAsyncHandler(async (req, res) => {
         token,
         employerId: savedEmployer._id,
         email: savedEmployer.email,
+        employerType: savedEmployer.employerType,
         isProfileComplete: false // Forces redirect to Edit Profile
       });
     }

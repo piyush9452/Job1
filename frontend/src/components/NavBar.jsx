@@ -35,9 +35,18 @@ export default function Navbar() {
   }, []);
 
   // --- 1. DETERMINE ROLE ---
-  const userInfo = localStorage.getItem("userInfo");
-  const employerInfo = localStorage.getItem("employerInfo");
-  const adminInfo = localStorage.getItem("adminInfo");
+  const userInfoStr = localStorage.getItem("userInfo");
+  const employerInfoStr = localStorage.getItem("employerInfo");
+  const adminInfoStr = localStorage.getItem("adminInfo");
+  
+  const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+  const employerInfo = employerInfoStr ? JSON.parse(employerInfoStr) : null;
+  const adminInfo = adminInfoStr ? JSON.parse(adminInfoStr) : null;
+
+  let employerType = "company"; // default fallback
+  if (employerInfo && employerInfo.employerType) {
+    employerType = employerInfo.employerType;
+  }
 
   let activeRole = "guest";
 
@@ -220,7 +229,7 @@ export default function Navbar() {
                           className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-colors"
                           onClick={() => setUserMenuOpen(false)}
                         >
-                          <Building size={16} /> Company Profile
+                          <Building size={16} /> {employerType === "individual" ? "Employer Profile" : "Company Profile"}
                         </Link>
                       </div>
                     )}
@@ -400,7 +409,7 @@ export default function Navbar() {
                   className="text-slate-700 font-bold text-lg hover:text-blue-600"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Company Profile
+                  {employerType === "individual" ? "Employer Profile" : "Company Profile"}
                 </Link>
                 <div className="pt-4 border-t border-slate-100">
                   <button
