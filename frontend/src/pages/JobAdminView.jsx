@@ -287,15 +287,27 @@ export default function JobAdminView() {
 
           {/* --- RIGHT MAIN CONTENT --- */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Description */}
-            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-3">
-                <FileText className="text-blue-600" /> Job Description & Summary
-              </h2>
-              <div
-                className="prose prose-sm max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-bold prose-ul:list-disc prose-ul:pl-4 prose-li:my-1"
-                dangerouslySetInnerHTML={{ __html: job.description }}
-              />
+            {/* Description & Responsibilities */}
+            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-8">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-3">
+                  <FileText className="text-blue-600" /> Job Summary
+                </h2>
+                <div
+                  className="prose prose-sm max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-bold prose-ul:list-disc prose-ul:pl-4 prose-li:my-1"
+                  dangerouslySetInnerHTML={{ __html: job.jobSummary }}
+                />
+              </div>
+              
+              <div>
+                <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-3">
+                  <Briefcase className="text-blue-600" /> Key Responsibilities
+                </h2>
+                <div
+                  className="prose prose-sm max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-bold prose-ul:list-disc prose-ul:pl-4 prose-li:my-1"
+                  dangerouslySetInnerHTML={{ __html: job.keyResponsibilities }}
+                />
+              </div>
             </div>
 
             {/* Candidate Requirements */}
