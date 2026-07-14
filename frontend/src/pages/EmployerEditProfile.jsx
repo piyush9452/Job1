@@ -195,6 +195,7 @@ export default function EmployerEditProfile() {
         officeLocation: officeLocation,
         industry: form.industry,
         description: form.description,
+        profilePicture: form.profilePicture,
       };
 
       const { data } = await axios.post(
