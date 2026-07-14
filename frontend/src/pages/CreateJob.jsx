@@ -656,6 +656,10 @@ export default function CreateJob() {
         delete payload.applicationDeadline;
       }
 
+      if (payload.isFlexibleShifts) {
+        payload.shifts = [];
+      }
+
       if (!job.useOfficeLocation && needsLocation) {
         payload.location = {
           type: "Point",
@@ -1742,8 +1746,8 @@ export default function CreateJob() {
               {/* Timings Block */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Expected Timings
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide flex items-center gap-1">
+                    Expected Timings {!job.isFlexibleShifts && <span className="text-red-500">*</span>}
                   </label>
                   <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer">
                     <input

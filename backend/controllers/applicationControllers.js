@@ -58,8 +58,7 @@ export const createApplication = errorHandler(async (req, res) => {
     screeningAnswers: screeningAnswers || [], 
   });
 
-  job.applicants.push(userId);
-  await job.save();
+  await Job.updateOne({ _id: jobId }, { $addToSet: { applicants: userId } });
 
   await User.findByIdAndUpdate(userId, { $addToSet: { appliedJobs: jobId } }, { new: true });
 

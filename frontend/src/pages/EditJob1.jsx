@@ -1116,10 +1116,10 @@ export default function EditJob() {
 
               <div className="pt-2 border-t border-slate-100">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Shift Timings
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide flex items-center gap-1">
+                    Expected Timings {!job.isFlexibleShifts && <span className="text-red-500">*</span>}
                   </label>
-                  <label className="text-xs font-bold text-indigo-600 flex items-center gap-1.5 cursor-pointer bg-indigo-50 px-3 py-1.5 rounded-lg">
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
                     <input
                       type="checkbox"
                       name="isFlexibleShifts"
