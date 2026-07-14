@@ -9,7 +9,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from "axios";
-import { Search } from "lucide-react";
+import { Search, Navigation } from "lucide-react";
 
 // Fix Leaflet's default icon path issue in React
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -139,6 +139,42 @@ export default function LocationPicker({ onLocationSelect }) {
     }
   };
 
+  const handleCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        
+        try {
+          const res = await axios.get(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+          );
+          const newAddress = res.data.display_name;
+          const newPos = { lat, lng };
+
+          setMapCenter([lat, lng]);
+          setPosition(newPos);
+          setAddress(newAddress);
+          setSearchQuery(""); // Clear search query if they used GPS
+        } catch (error) {
+          console.error("Reverse geocoding failed", error);
+          const newPos = { lat, lng };
+          setMapCenter([lat, lng]);
+          setPosition(newPos);
+          setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }
+      },
+      (err) => {
+        alert("Unable to retrieve your location. Please ensure location permissions are granted in your browser settings.");
+      }
+    );
+  };
+
   return (
     <div className="space-y-3">
       {/* Search Bar */}
@@ -153,8 +189,17 @@ export default function LocationPicker({ onLocationSelect }) {
         />
         <button
           type="button"
+          onClick={handleCurrentLocation}
+          className="bg-emerald-600 text-white p-2 rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors"
+          title="Use My Current Location"
+        >
+          <Navigation size={20} />
+        </button>
+        <button
+          type="button"
           onClick={handleSearch}
-          className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"
+          className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
+          title="Search"
         >
           <Search size={20} />
         </button>
