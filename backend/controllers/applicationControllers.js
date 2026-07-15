@@ -126,7 +126,7 @@ export const updateApplicationStatus = errorHandler(async (req, res) => {
 
   const application = await Application.findById(id)
     .populate("appliedBy", "name email")
-    .populate("job_id", "title");
+    .populate("job_id", "title postedByCompany postedByName isThirdPartyRecruiting showHiringCompanyName hiringCompanyName");
 
   if (!application) {
     res.status(404);
@@ -228,7 +228,7 @@ export const requestInterviewReschedule = errorHandler(async (req, res) => {
   const userId = req.user._id;
 
   const application = await Application.findOne({ _id: id, appliedBy: userId })
-    .populate("job_id", "title")
+    .populate("job_id", "title postedByCompany postedByName isThirdPartyRecruiting showHiringCompanyName hiringCompanyName")
     .populate("jobHost", "email name")
     .populate("appliedBy", "name");
 
@@ -267,7 +267,7 @@ export const respondToRescheduleRequest = errorHandler(async (req, res) => {
   const { id } = req.params;
   const { action, employerMessage } = req.body; // action must be "approved" or "rejected"
 
-  const application = await Application.findById(id).populate("appliedBy", "name email").populate("job_id", "title");
+  const application = await Application.findById(id).populate("appliedBy", "name email").populate("job_id", "title postedByCompany postedByName isThirdPartyRecruiting showHiringCompanyName hiringCompanyName");
 
   if (!application || application.jobHost.toString() !== req.employerId.toString()) {
     res.status(403);

@@ -767,7 +767,7 @@ export const getMyCandidates = expressAsyncHandler(async (req, res) => {
     // 2. Find all applications for these jobs and populate candidate data
     const applications = await Application.find({ job_id: { $in: jobIds } })
       .populate("appliedBy", "name email phone profilePicture skills resumeData")
-      .populate("job_id", "title")
+      .populate("job_id", "title postedByCompany postedByName isThirdPartyRecruiting showHiringCompanyName hiringCompanyName")
       .sort({ createdAt: -1 });
 
     res.status(200).json(applications);

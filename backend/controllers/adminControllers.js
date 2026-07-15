@@ -169,7 +169,7 @@ export const getJobseekerApplicationsForAdmin = errorHandler(async (req, res) =>
   // Use dynamic import specifically for Application to avoid circular dependencies if they exist,
   // but use a direct default extraction that works in ES6
   const applications = await Application.find({ appliedBy: req.params.id })
-    .populate("job_id", "title location status postedByCompany")
+    .populate("job_id", "title location status postedByCompany postedByName isThirdPartyRecruiting showHiringCompanyName hiringCompanyName")
     .sort({ appliedAt: -1 });
 
   res.json({ user, applications });
