@@ -26,6 +26,7 @@ import { motion } from "framer-motion";
 
 export default function JobConfirmModal({
   job,
+  employerProfileName,
   summary,
   responsibilities,
   onClose,
@@ -115,7 +116,7 @@ export default function JobConfirmModal({
               {job.title || "Untitled Job"}
             </h1>
             <p className="text-indigo-600 font-bold flex items-center gap-2 mb-4">
-              <CompanyDisplay job={job} fallback="Confidential Employer" />
+              <CompanyDisplay job={job} fallback={employerProfileName || "Confidential Employer"} />
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 text-xs font-bold rounded-lg border border-slate-200">

@@ -116,7 +116,7 @@ export const registerEmployer = expressAsyncHandler(async (req, res) => {
 export const checkEmployerEligibility = expressAsyncHandler(async (req, res) => {
   // 1. Fetch employer with ALL necessary fields for checking
   const employer = await Employer.findById(req.employerId).select(
-    'isApproved isFrozen phone location officeLocation industry description aadharCard panCard employerType companyName natureOfBusiness gstForm tradeLicense educationDocuments'
+    'name isApproved isFrozen phone location officeLocation industry description aadharCard panCard employerType companyName natureOfBusiness gstForm tradeLicense educationDocuments'
   );
 
   if (!employer) {
@@ -179,7 +179,12 @@ export const checkEmployerEligibility = expressAsyncHandler(async (req, res) => 
   }
 
   // All checks passed
-  res.status(200).json({ isFrozen: false, access: "granted" });
+  res.status(200).json({ 
+    isFrozen: false, 
+    access: "granted",
+    companyName: employer.companyName,
+    name: employer.name 
+  });
 });
 
 export const verifyOTP = expressAsyncHandler(async (req, res) => {

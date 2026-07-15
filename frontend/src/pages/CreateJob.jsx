@@ -172,6 +172,7 @@ export default function CreateJob() {
   const [missingItems, setMissingItems] = useState([]);
   const currencyRef = useRef(null);
   const [isPostingDisabled, setIsPostingDisabled] = useState(false);
+  const [employerProfileName, setEmployerProfileName] = useState("Confidential Employer");
 
   const flagUrl = (iso) => `https://flagcdn.com/20x15/${iso}.png`;
 
@@ -251,10 +252,16 @@ export default function CreateJob() {
         }
 
         if (data.access === "incomplete") {
+          setIsPostingDisabled(true);
           setMissingItems(data.missingItems);
           setBlockMessage(data.message);
-          setPageAccess("incomplete");
+          setPageAccess("granted"); // Allow them to see form but can't post
           return;
+        }
+
+        // Capture employer names for live preview
+        if (data.companyName || data.name) {
+          setEmployerProfileName(data.companyName || data.name);
         }
 
         setIsPostingDisabled(false);
@@ -2065,6 +2072,7 @@ export default function CreateJob() {
       {showConfirm && (
         <JobConfirmModal
           job={job}
+          employerProfileName={employerProfileName}
           summary={jobSummary}
           responsibilities={keyResponsibilities}
           loading={loading}
