@@ -21,18 +21,31 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showNavbar, setShowNavbar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const userMenuRef = useRef(null);
 
   // --- 0. SCROLL DYNAMIC EFFECT ---
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 20);
+
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // Scrolling down and past threshold
+        setShowNavbar(false);
+      } else {
+        // Scrolling up
+        setShowNavbar(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
     window.addEventListener("scroll", handleScroll);
-    // Trigger once on mount to check initial position
-    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   // --- 1. DETERMINE ROLE ---
   const userInfoStr = localStorage.getItem("userInfo");
@@ -130,11 +143,12 @@ export default function Navbar() {
 
   return (
     <nav
-      // FACT: True Glassmorphism uses extreme blur, boosted saturation, and translucent white edges.
-      className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-500 ${
+      className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-300 ${
+        showNavbar ? "translate-y-0" : "-translate-y-full"
+      } ${
         scrolled || menuOpen
-          ? "bg-black/40 backdrop-blur-sm backdrop-saturate-200  "
-          : "bg-black/40 backdrop-blur-sm backdrop-saturate-200 "
+          ? "bg-black/60 backdrop-blur-md backdrop-saturate-200 shadow-md"
+          : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-5 lg:px-10 flex justify-between items-center">
