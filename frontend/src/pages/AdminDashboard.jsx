@@ -19,6 +19,7 @@ import {
   FileText,
   User,
 } from "lucide-react";
+import CompanyDisplay from "../components/CompanyDisplay";
 
 export default function AdminDashboard() {
   const [pendingJobs, setPendingJobs] = useState([]);
@@ -578,8 +579,8 @@ export default function AdminDashboard() {
                         <h3 className="font-bold text-lg text-slate-800">
                           {job.title}
                         </h3>
-                        <p className="text-sm text-slate-500 mt-1">
-                          {job.postedByCompany} •{" "}
+                        <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                          <CompanyDisplay job={job} fallback={job.postedByCompany || "Confidential"} /> •{" "}
                           {typeof job.location === "object"
                             ? job.location?.address
                             : job.location}
@@ -693,8 +694,8 @@ export default function AdminDashboard() {
                         <h3 className="font-bold text-lg text-slate-800">
                           {job.title}
                         </h3>
-                        <p className="text-sm text-slate-500 mt-1">
-                          {job.postedByCompany} •{" "}
+                        <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                          <CompanyDisplay job={job} fallback={job.postedByCompany || "Confidential"} /> •{" "}
                           {typeof job.location === "object"
                             ? job.location?.address
                             : job.location}

@@ -14,6 +14,7 @@ import {
   XOctagon,
   Search,
 } from "lucide-react";
+import CompanyDisplay from "../components/CompanyDisplay";
 import axios from "axios";
 
 export default function EmployerDashboard() {
@@ -335,6 +336,9 @@ export default function EmployerDashboard() {
                           <td className="p-4">
                             <div className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
                               {job.title}
+                            </div>
+                            <div className="text-xs text-slate-500 font-bold mt-1 flex items-center gap-1.5">
+                              <CompanyDisplay job={job} fallback={employerInfo?.companyName || employerInfo?.name || "Your Company"} />
                             </div>
                             <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
                               <Clock size={12} /> Posted:{" "}

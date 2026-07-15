@@ -19,7 +19,9 @@ import {
   ListChecks,
   Target,
   AlertTriangle,
+  Stethoscope,
 } from "lucide-react";
+import CompanyDisplay from "./CompanyDisplay";
 import { motion } from "framer-motion";
 
 export default function JobConfirmModal({
@@ -109,9 +111,12 @@ export default function JobConfirmModal({
                 {modeStr}
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-2 tracking-tight leading-tight">
               {job.title || "Untitled Job"}
             </h1>
+            <p className="text-indigo-600 font-bold flex items-center gap-2 mb-4">
+              <CompanyDisplay job={job} fallback="Confidential Employer" />
+            </p>
             <div className="flex flex-wrap gap-2">
               <span className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 text-xs font-bold rounded-lg border border-slate-200">
                 <MapPin size={14} className="text-slate-400" />{" "}
