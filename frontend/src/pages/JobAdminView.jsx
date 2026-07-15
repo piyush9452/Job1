@@ -19,7 +19,9 @@ import {
   Languages,
   HelpCircle,
   EyeOff,
+  CheckCircle2,
 } from "lucide-react";
+import CompanyDisplay from "../components/CompanyDisplay";
 
 export default function JobAdminView() {
   const { id } = useParams();
@@ -119,16 +121,17 @@ export default function JobAdminView() {
                 ID: {job._id}
               </span>
             </div>
-            <h1 className="text-2xl font-extrabold flex items-center gap-3">
-              Review: {job.title}
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight leading-tight">
+              {job.title}
             </h1>
-            <p className="text-slate-400 mt-2 flex items-center gap-2 font-medium">
-              <Building size={16} className="text-slate-500" />{" "}
-              {job.postedByCompany || job.postedByName}
+            <div className="flex flex-wrap items-center text-slate-400 font-bold gap-3 mb-6">
+              <span className="text-indigo-400 text-sm">
+                <CompanyDisplay job={job} fallback="Confidential Employer" />
+              </span>
               <span className="text-slate-600">•</span>
               <Clock size={16} className="text-slate-500" /> Posted on{" "}
               {formatDate(job.postedAt)}
-            </p>
+            </div>
           </div>
           <button
             onClick={() => navigate("/admin/dashboard")}

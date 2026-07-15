@@ -75,6 +75,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     shifts, isFlexibleShifts, mode, noOfDays, noOfPeopleRequired, 
     genderPreference, qualifications, courses, ageLimit, languages, experience,
     pinCode, location, useOfficeLocation ,applicationDeadline,
+    isThirdPartyRecruiting, hiringCompanyName, showHiringCompanyName,
   } = req.body;
 
   let locationData;
@@ -118,6 +119,9 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     endDate,
       isFlexibleDuration,
     applicationDeadline,
+    isThirdPartyRecruiting: isThirdPartyRecruiting || false,
+    hiringCompanyName: hiringCompanyName || "",
+    showHiringCompanyName: showHiringCompanyName || false,
     shifts: isFlexibleShifts ? [] : shifts, 
     isFlexibleShifts,
     mode, 
