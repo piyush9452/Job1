@@ -147,8 +147,8 @@ export default function Navbar() {
         showNavbar ? "translate-y-0" : "-translate-y-full"
       } ${
         scrolled || menuOpen
-          ? "bg-black/60 backdrop-blur-md backdrop-saturate-200 shadow-md"
-          : "bg-transparent"
+          ? "bg-black/40 backdrop-blur-sm backdrop-saturate-200"
+          : "bg-black/40 backdrop-blur-sm backdrop-saturate-200"
       }`}
     >
       <div className="container mx-auto px-5 lg:px-10 flex justify-between items-center">
