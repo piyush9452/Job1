@@ -338,7 +338,7 @@ export default function EmployerDashboard() {
                               {job.title}
                             </div>
                             <div className="text-xs text-slate-500 font-bold mt-1 flex items-center gap-1.5">
-                              <CompanyDisplay job={job} fallback={employerInfo?.companyName || employerInfo?.name || "Your Company"} />
+                              <CompanyDisplay job={job} fallback={employerName || "Your Company"} />
                             </div>
                             <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
                               <Clock size={12} /> Posted:{" "}
