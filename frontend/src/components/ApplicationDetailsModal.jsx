@@ -214,15 +214,18 @@ export default function ApplicationDetailsModal({ application, onClose }) {
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (job.postedBy) navigate(`/company/${job.postedBy}`);
-                    }}
-                    className="text-slate-700 hover:text-indigo-600 hover:underline cursor-pointer"
-                  >
-                    <CompanyDisplay job={job} fallback="Confidential Employer" />
-                  </span>
+                {job.title}
+              </h1>
+              <div className="flex flex-wrap items-center text-slate-500 text-xs sm:text-sm font-bold gap-3 mt-2">
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (job.postedBy) navigate(`/company/${job.postedBy}`);
+                  }}
+                  className="text-slate-700 hover:text-indigo-600 hover:underline cursor-pointer"
+                >
+                  <CompanyDisplay job={job} fallback="Confidential Employer" />
+                </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                 <span className="flex items-center gap-1">
                   <MapPin size={14} className="text-slate-400" />{" "}
