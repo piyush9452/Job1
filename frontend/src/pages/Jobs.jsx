@@ -12,7 +12,10 @@ import {
   X,
   Building2,
   Target,
+  Bookmark,
+  Building,
 } from "lucide-react";
+import CompanyDisplay from "../components/CompanyDisplay";
 import JobDetailsModal from "../components/JobDetailsModal";
 
 // FACT: Removed 'export' to fix the React Module Redline Error
@@ -489,9 +492,7 @@ export default function Jobs() {
                           {job.title}
                         </h3>
                         <p className="text-sm text-slate-500 font-bold mb-3 flex items-center gap-1.5">
-                          {job.postedByCompany ||
-                            job.postedByName ||
-                            "Company Confidential"}
+                          <CompanyDisplay job={job} fallback="Company Confidential" />
                         </p>
                         <div className="flex flex-wrap gap-2.5 text-xs font-bold text-slate-600">
                           <span className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">

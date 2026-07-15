@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import CompanyDisplay from "../components/CompanyDisplay";
 import { Link, useNavigate } from "react-router-dom";
 import {
   MapPin,
@@ -261,9 +262,7 @@ export default function Home() {
                       {job.title}
                     </h3>
                     <p className="text-sm text-slate-500 font-bold mb-4">
-                      {job.postedByCompany ||
-                        job.postedByName ||
-                        "Company Confidential"}
+                      <CompanyDisplay job={job} fallback="Company Confidential" showVia={false} />
                     </p>
 
                     <div className="p-3.5 bg-indigo-50/50 rounded-xl mb-5 border border-indigo-50/80">
@@ -358,7 +357,7 @@ export default function Home() {
                       {job.title}
                     </h3>
                     <p className="text-sm text-slate-500 font-medium mb-4">
-                      {job.postedByCompany || "Company Confidential"}
+                      <CompanyDisplay job={job} fallback="Company Confidential" showVia={false} />
                     </p>
 
                     <div className="mt-auto space-y-3">

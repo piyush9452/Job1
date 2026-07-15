@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, MapPin, Briefcase, Clock, Building2, IndianRupee, ArrowRight, X } from "lucide-react";
+import CompanyDisplay from "../components/CompanyDisplay";
 import JobDetailsModal from "../components/JobDetailsModal"; // Re-using existing modal
 
 export default function RecommendedJobs() {
@@ -125,7 +126,7 @@ export default function RecommendedJobs() {
                     </h3>
                     <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium mt-1">
                       <Building2 size={14} />
-                      {job.postedByCompany?.companyName || job.postedByName || "Confidential"}
+                      <CompanyDisplay job={job} fallback="Confidential" />
                     </div>
                   </div>
                 </div>

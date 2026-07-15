@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import CompanyDisplay from "./CompanyDisplay";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   MapPin,
@@ -142,7 +143,7 @@ export default function FeaturedJobs() {
                         {job.title}
                       </h3>
                       <p className="text-sm text-slate-500 font-medium truncate mt-0.5">
-                        {companyName}
+                        <CompanyDisplay job={job} fallback="Company Confidential" />
                       </p>
                     </div>
                   </div>

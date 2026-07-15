@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import CompanyDisplay from "../components/CompanyDisplay";
 import { motion } from "framer-motion";
 import {
   Loader2,
@@ -172,7 +173,7 @@ export default function ApplyPage() {
           </h1>
           <p className="text-indigo-300 font-bold flex items-center gap-2 mb-6 relative z-10">
             <Building size={16} />{" "}
-            {job.postedByCompany || job.postedByName || "Confidential Employer"}
+            <CompanyDisplay job={job} fallback="Confidential Employer" className="text-indigo-300" />
           </p>
 
           <div className="flex flex-wrap gap-2.5 relative z-10">
@@ -241,7 +242,7 @@ export default function ApplyPage() {
                                 {sJob.title}
                               </h4>
                               <p className="text-xs text-slate-500 font-medium truncate flex items-center gap-2 mt-0.5">
-                                {sJob.postedByCompany || "Confidential"}{" "}
+                                <CompanyDisplay job={sJob} fallback="Confidential" />{" "}
                                 <span className="w-1 h-1 bg-slate-300 rounded-full"></span>{" "}
                                 <MapPin size={10} /> {sDisplayLoc}
                               </p>

@@ -92,6 +92,10 @@ const JobSchema = new mongoose.Schema({
   },
   
   applicants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], 
+
+  isThirdPartyRecruiting: { type: Boolean, default: false },
+  hiringCompanyName: { type: String, default: "" },
+  showHiringCompanyName: { type: Boolean, default: false }
 });
 
 // Force 2dsphere index for geospatial queries

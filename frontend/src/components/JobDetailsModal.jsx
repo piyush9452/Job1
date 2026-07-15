@@ -22,7 +22,10 @@ import {
   Timer,
   Hash,
   Activity,
+  Building,
 } from "lucide-react";
+import axios from "axios";
+import CompanyDisplay from "./CompanyDisplay";
 import ApplyModal from "./ApplyModal";
 
 export default function JobDetailsModal({ job, onClose }) {
@@ -116,9 +119,7 @@ export default function JobDetailsModal({ job, onClose }) {
                     }}
                     className="text-slate-700 hover:text-indigo-600 hover:underline cursor-pointer"
                   >
-                    {job.postedByCompany ||
-                      job.postedByName ||
-                      "Confidential Employer"}
+                    <CompanyDisplay job={job} fallback="Confidential Employer" />
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                   <span className="flex items-center gap-1">

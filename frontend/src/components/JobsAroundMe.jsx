@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from "axios";
+import CompanyDisplay from "./CompanyDisplay";
 import {
   MapPin,
   Navigation,
@@ -274,7 +275,7 @@ export default function JobsAroundMe({ onJobClick }) {
                   {job.title}
                 </h3>
                 <p className="text-sm text-slate-500 font-semibold mb-5">
-                  {job.postedByCompany || job.postedByName || "Company Confidential"}
+                  <CompanyDisplay job={job} fallback="Company Confidential" />
                 </p>
 
                 <div className="mt-auto space-y-3 pt-4 border-t border-slate-50/80">

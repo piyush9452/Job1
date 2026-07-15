@@ -74,6 +74,9 @@ export default function EditJob() {
     location: "",
     latitude: null,
     longitude: null,
+    isThirdPartyRecruiting: false,
+    hiringCompanyName: "",
+    showHiringCompanyName: false,
   });
 
   const [isUnpaid, setIsUnpaid] = useState(false);
@@ -220,6 +223,9 @@ export default function EditJob() {
             typeof d.location === "object"
               ? d.location?.coordinates?.[0]
               : null,
+          isThirdPartyRecruiting: d.isThirdPartyRecruiting || false,
+          hiringCompanyName: d.hiringCompanyName || "",
+          showHiringCompanyName: d.showHiringCompanyName || false,
         });
       } catch (err) {
         console.error("Error fetching job:", err);
@@ -487,6 +493,56 @@ export default function EditJob() {
                   <option value="deadline passed">Deadline Passed</option>
                 </select>
               </div>
+            </div>
+
+            {/* THIRD-PARTY RECRUITING */}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 shadow-sm">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={job.isThirdPartyRecruiting}
+                  onChange={(e) => {
+                    setJob((prev) => ({
+                      ...prev,
+                      isThirdPartyRecruiting: e.target.checked,
+                      hiringCompanyName: e.target.checked ? prev.hiringCompanyName : "",
+                      showHiringCompanyName: e.target.checked ? prev.showHiringCompanyName : false,
+                    }));
+                  }}
+                  className="w-5 h-5 text-indigo-600 rounded border-blue-300 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-bold text-gray-800">
+                  I am recruiting on behalf of another company (Agency/Third-Party)
+                </span>
+              </label>
+
+              {job.isThirdPartyRecruiting && (
+                <div className="mt-4 pl-8 space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Client Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={job.hiringCompanyName}
+                      onChange={(e) => setJob({ ...job, hiringCompanyName: e.target.value })}
+                      placeholder="e.g. Google, Microsoft, Confidential Client"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all text-sm"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer mt-2">
+                    <input
+                      type="checkbox"
+                      checked={job.showHiringCompanyName}
+                      onChange={(e) => setJob({ ...job, showHiringCompanyName: e.target.checked })}
+                      className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-600 font-medium">
+                      Show the client's company name publicly on the Job Card
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
