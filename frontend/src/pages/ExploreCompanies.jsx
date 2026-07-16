@@ -16,6 +16,7 @@ export default function ExploreCompanies() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchCompanies = async () => {
       try {
         const res = await axios.get("https://jobone-mrpy.onrender.com/employer/explore");

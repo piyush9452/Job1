@@ -32,6 +32,7 @@ export default function CompanyProfile() {
   const [selectedJob, setSelectedJob] = useState(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchCompanyData = async () => {
       try {
         setLoading(true);
