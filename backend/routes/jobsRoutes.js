@@ -1,6 +1,6 @@
 import { 
   createJob, getJob, getJobs, getJobApplicants, getEmployerCreatedJobs, 
-  updateJob, deleteJob, getEmployerMetrics, jobCreatedByUser, getJobCountsByIndustry, getSimilarJobs, getNearbyJobs
+  updateJob, deleteJob, getEmployerMetrics, jobCreatedByUser, getJobCountsByIndustry, getSimilarJobs, getNearbyJobs, getPublicStats
 } from "../controllers/jobsControllers.js";
 import { protect, protectAdmin } from "../middleware/authorization.js";
 import { protectEmployer } from "../middleware/employercheck.js";
@@ -18,6 +18,7 @@ router.post("/", protectEmployer, [
 
 router.get("/category-counts", getJobCountsByIndustry);
 
+router.get("/public-stats", getPublicStats);
 
 // Get employer created jobs (with detailed application stats)
 router.get("/employer-jobs", protectEmployer, getEmployerCreatedJobs);

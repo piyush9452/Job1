@@ -579,3 +579,25 @@ export const getNearbyJobs = expressAsyncHandler(async (req, res) => {
     });
   }
 });
+
+export const getPublicStats = expressAsyncHandler(async (req, res) => {
+  // 1. Live Jobs
+  const liveJobsCount = await Job.countDocuments({ status: { $nin: ['closed', 'inactive', 'pending_approval', 'rejected', 'disregarded'] } });
+
+  // 2. Companies (Approved employers)
+  const companiesCount = await Employer.countDocuments({ isApproved: "approved" });
+
+  // 3. Candidates (Users)
+  const candidatesCount = await User.countDocuments({});
+
+  // 4. Locations
+  const locations = await Job.distinct('location');
+  const locationsCount = locations.length;
+
+  res.json({
+    liveJobs: liveJobsCount,
+    companies: companiesCount,
+    candidates: candidatesCount,
+    locations: locationsCount
+  });
+});
