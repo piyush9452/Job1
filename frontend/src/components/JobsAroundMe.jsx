@@ -145,7 +145,7 @@ export default function JobsAroundMe({ onJobClick }) {
 
       {/* Map View */}
       {userLocation && (
-        <div className="h-[400px] w-full z-0 relative border-b border-gray-100">
+        <div className="h-[250px] sm:h-[300px] md:h-[400px] w-full z-0 relative border-b border-gray-100">
           <MapContainer
             center={[userLocation.lat, userLocation.lng]}
             zoom={12}
