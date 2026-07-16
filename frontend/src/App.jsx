@@ -52,6 +52,7 @@ import JobAdminView from "./pages/JobAdminView";
 import ForgotPassword from "./pages/ForgotPassword";
 import RecommendedJobs from "./pages/RecommendedJobs";
 import AdminJobseekerView from "./pages/AdminJobseekerView";
+import ExploreCompanies from "./pages/ExploreCompanies";
 
 import { useLocation } from "react-router-dom";
 import Contact from "./pages/Contact";
@@ -150,6 +151,8 @@ function App() {
           }
         />
         <Route path="/userotp" element={<UserOTP />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/companies" element={<ExploreCompanies />} />
 
         {/* ================= EMPLOYER ROUTES ================= */}
         <Route

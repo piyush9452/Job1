@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, User, Mail, Phone, Briefcase, FileText, Download } from "lucide-react";
+import CompanyDisplay from "../components/CompanyDisplay";
 
 export default function AdminJobseekerView() {
   const { id } = useParams();
@@ -128,7 +129,9 @@ export default function AdminJobseekerView() {
                             {app.job_id?.title || "Unknown Job"}
                           </h3>
                           <p className="text-sm text-slate-500 font-medium">
-                            {app.job_id?.postedByCompany || "Unknown Company"} • {app.job_id?.location?.address || "Unknown Location"}
+                            <div className="flex items-center gap-1">
+                              <CompanyDisplay job={app.job_id} fallback={app.job_id?.postedByCompany || "Unknown Company"} /> • {app.job_id?.location?.address || "Unknown Location"}
+                            </div>
                           </p>
                           <div className="mt-3 flex gap-4 text-sm text-slate-600">
                             <p>

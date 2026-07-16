@@ -104,7 +104,10 @@ export default function CompanyCard() {
                 className="mt-10 flex flex-wrap items-center gap-6"
                 style={{ transform: "translateZ(60px)" }}
               >
-                <button className="group flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+                <button 
+                  onClick={() => window.location.href = '/companies'}
+                  className="group flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+                >
                   Explore Companies
                   <FaArrowRight className="text-xs transition-transform group-hover:translate-x-1" />
                 </button>

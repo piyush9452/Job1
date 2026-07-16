@@ -1,5 +1,5 @@
 import express from "express";
-import { registerEmployer,loginEmployer,verifyOTP,resendOTP,checkEmployerEligibility,searchCandidatesBySkills,getMyCandidates, getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl, forgotPasswordEmployer, resetPasswordEmployer, getEmployerProfilePicUploadUrl} from "../controllers/employerControllers.js";
+import { registerEmployer,loginEmployer,verifyOTP,resendOTP,checkEmployerEligibility,searchCandidatesBySkills,getMyCandidates, getPublicEmployerProfile ,updateEmployerProfile,getPresignedUploadUrl,saveDocumentKey,googleLoginEmployer,getViewableDocumentUrl,getDownloadableDocumentUrl, forgotPasswordEmployer, resetPasswordEmployer, getEmployerProfilePicUploadUrl, getExploreEmployers} from "../controllers/employerControllers.js";
 import { getEmployerCreatedJobs } from "../controllers/jobsControllers.js";
 import { body } from 'express-validator';
 import {protect} from "../middleware/authorization.js";
@@ -30,6 +30,8 @@ router.post("/reset-password", resetPasswordEmployer);
 router.post("/updateProfile",protectEmployer,updateEmployerProfile)
 
 router.get("/profile/:id", getPublicEmployerProfile);
+
+router.get("/explore", getExploreEmployers);
 
 router.post("/generate-upload-url",protectEmployer, getPresignedUploadUrl);
 router.post("/profile-picture/upload-url",protectEmployer, getEmployerProfilePicUploadUrl);

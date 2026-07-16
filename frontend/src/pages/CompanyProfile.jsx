@@ -50,9 +50,9 @@ export default function CompanyProfile() {
         const companyJobs = allJobs.filter(
           (j) =>
             j.postedBy === id &&
-            j.status !== "inactive" &&
-            j.status !== "closed" &&
-            j.status !== "deadline passed",
+            j.status !== "pending_approval" &&
+            j.status !== "rejected" &&
+            j.status !== "disregarded"
         );
         setJobs(companyJobs);
       } catch (err) {

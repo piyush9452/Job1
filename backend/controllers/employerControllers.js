@@ -325,6 +325,35 @@ export const getPublicEmployerProfile = expressAsyncHandler(async (req, res) => 
 });
 
 
+export const getExploreEmployers = expressAsyncHandler(async (req, res) => {
+  // Find all approved and unfrozen employers
+  const employers = await Employer.find({ isApproved: 'approved', isFrozen: false })
+    .select('companyName name industry location profilePicture description employerType');
+
+  // Find all jobs that are not pending or disregarded
+  const validJobs = await Job.find({
+    status: { $nin: ['pending_approval', 'disregarded', 'rejected'] }
+  }).select('postedBy status');
+
+  // Count jobs per employer
+  const jobCounts = {};
+  validJobs.forEach(job => {
+    const employerId = job.postedBy.toString();
+    jobCounts[employerId] = (jobCounts[employerId] || 0) + 1;
+  });
+
+  // Filter employers who have at least one valid job
+  const hiringEmployers = employers
+    .map(emp => ({
+      ...emp.toObject(),
+      jobCount: jobCounts[emp._id.toString()] || 0
+    }))
+    .filter(emp => emp.jobCount > 0);
+
+  res.status(200).json(hiringEmployers);
+});
+
+
 export const updateEmployerProfile = expressAsyncHandler(async (req, res) => {
   const employer = await Employer.findById(req.employerId).select('-password');
 
