@@ -1,9 +1,11 @@
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { FaArrowRight, FaCheckCircle, FaStar } from "react-icons/fa";
 import demoIllustration from "../assets/skyscrapers.jpg";
 
 export default function CompanyCard() {
+  const navigate = useNavigate();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -105,7 +107,7 @@ export default function CompanyCard() {
                 style={{ transform: "translateZ(60px)" }}
               >
                 <button 
-                  onClick={() => window.location.href = '/companies'}
+                  onClick={() => navigate('/companies')}
                   className="group flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
                 >
                   Explore Companies
