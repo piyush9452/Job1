@@ -20,7 +20,7 @@ const Hero = () => {
   const drops = Array.from({ length: 100 });
 
   return (
-    <section className="hero-rain-container flex items-center justify-center relative w-full overflow-hidden">
+    <section className="hero-rain-container flex items-center justify-center relative w-full min-h-[100dvh] pt-32 pb-20 overflow-hidden">
       {/* Animated Glass Blobs */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div
@@ -63,20 +63,20 @@ const Hero = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.15),transparent_50%)] pointer-events-none z-10" />
 
       {/* CONTENT */}
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-20 flex flex-col md:flex-row items-center gap-12 pointer-events-none">
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 pointer-events-none mt-10 lg:mt-0">
         {/* LEFT CONTENT */}
-        <div className="flex-1 text-white pointer-events-auto">
+        <div className="flex-1 text-white pointer-events-auto flex flex-col items-center lg:items-start text-center lg:text-left w-full">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-white drop-shadow-md">
             Build Your Career with <br />
             <span className="text-cyan-300">JobOne</span>
           </h1>
 
-          <p className="mt-6 text-blue-50 text-lg max-w-xl font-medium drop-shadow-sm">
+          <p className="mt-6 text-blue-50 text-base md:text-lg max-w-xl font-medium drop-shadow-sm">
             Create an impressive profile, showcase your skills, and get
             discovered by top employers in a dynamic tech-driven ecosystem.
           </p>
 
-          <div className="mt-8 flex flex-row flex-wrap lg:flex-nowrap gap-3 items-center">
+          <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-3 items-center w-full max-w-2xl">
             <button
               onClick={() => {
                 const section = document.getElementById("jobs-near-me");
@@ -128,7 +128,7 @@ const Hero = () => {
 
           <form
             onSubmit={handleSearch}
-            className="mt-8 w-full max-w-2xl flex flex-col md:flex-row items-center bg-black/5 backdrop-blur-md p-2 rounded-3xl md:rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all focus-within:border-cyan-400/50 focus-within:bg-white/10 gap-2 md:gap-0"
+            className="mt-10 w-full max-w-2xl flex flex-col sm:flex-row items-center bg-black/5 backdrop-blur-md p-2 rounded-3xl sm:rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all focus-within:border-cyan-400/50 focus-within:bg-white/10 gap-2 sm:gap-0"
           >
             <div className="flex items-center px-4 py-3 md:py-2 flex-1 w-full md:border-r border-white/20 group">
               <FaBriefcase className="text-cyan-400/70 group-focus-within:text-cyan-400 mr-3 shrink-0 text-base transition-colors" />
@@ -141,7 +141,7 @@ const Hero = () => {
               />
             </div>
 
-            <div className="flex items-center px-4 py-3 md:py-2 flex-1 w-full border-t border-white/20 md:border-t-0 group">
+            <div className="flex items-center px-4 py-3 sm:py-2 flex-1 w-full border-t border-white/20 sm:border-t-0 group">
               <FaMapMarkerAlt className="text-cyan-400/70 group-focus-within:text-cyan-400 mr-3 shrink-0 text-base transition-colors" />
               <input
                 type="text"
@@ -154,7 +154,7 @@ const Hero = () => {
 
             <button
               type="submit"
-              className="w-full md:w-auto bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-8 py-3.5 md:py-3 rounded-2xl md:rounded-full transition-all text-sm md:text-base shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-8 py-3.5 sm:py-3 rounded-2xl sm:rounded-full transition-all text-sm sm:text-base shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] flex items-center justify-center gap-2"
             >
               <FaSearch size={14} />
               Search
@@ -163,8 +163,8 @@ const Hero = () => {
         </div>
 
         {/* RIGHT VISUAL - Glassmorphism Stats Grid */}
-        <div className="flex-1 flex justify-center items-center pointer-events-auto w-full">
-          <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-lg">
+        <div className="flex-1 flex justify-center lg:justify-end items-center pointer-events-auto w-full mt-10 lg:mt-0">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 w-full max-w-md lg:max-w-lg">
             {/* Stat 1 */}
             <div className="bg-black/10 backdrop-blur-xs border border-white/20 rounded-xl p-6 flex flex-col items-center justify-center shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] hover:-translate-y-2 transition transform duration-300">
               <span className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
