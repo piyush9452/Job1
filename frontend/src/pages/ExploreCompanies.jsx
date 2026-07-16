@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Building2, Search, MapPin, Briefcase, Filter } from "lucide-react";
+import { Building2, Search, MapPin, Briefcase, Filter, ArrowLeft } from "lucide-react";
 
 export default function ExploreCompanies() {
   const [companies, setCompanies] = useState([]);
@@ -55,6 +55,14 @@ export default function ExploreCompanies() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-indigo-900 rounded-3xl p-8 sm:p-16 text-center text-white relative overflow-hidden shadow-2xl">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+          
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute top-6 left-4 sm:left-6 flex items-center gap-2 text-white/80 hover:text-white transition-colors font-bold text-sm uppercase tracking-wide bg-black/20 hover:bg-black/40 px-4 py-2 rounded-xl backdrop-blur-md z-20"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+
           <div className="relative z-10">
             <h1 className="text-3xl sm:text-5xl font-extrabold mb-6 tracking-tight">
               Explore Top Companies

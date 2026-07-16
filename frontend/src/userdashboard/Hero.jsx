@@ -117,6 +117,13 @@ const Hero = () => {
             >
               Browse Jobs
             </button>
+
+            <button
+              onClick={() => navigate("/companies")}
+              className="px-5 py-3 bg-gradient-to-r from-emerald-500/30 to-teal-400/30 backdrop-blur-sm border border-emerald-300/50 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] hover:-translate-y-1 transition transform duration-200 text-sm md:text-base whitespace-nowrap"
+            >
+              Explore Companies
+            </button>
           </div>
 
           <form
