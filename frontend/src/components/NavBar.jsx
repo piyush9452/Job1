@@ -147,8 +147,8 @@ export default function Navbar() {
         showNavbar ? "translate-y-0" : "-translate-y-full"
       } ${
         scrolled || menuOpen
-          ? "bg-black/40 backdrop-blur-sm backdrop-saturate-200"
-          : "bg-black/40 backdrop-blur-sm backdrop-saturate-200"
+          ? "bg-white shadow-sm md:shadow-none md:bg-black/40 md:backdrop-blur-sm md:backdrop-saturate-200"
+          : "bg-white md:bg-black/40 md:backdrop-blur-sm md:backdrop-saturate-200"
       }`}
     >
       <div className="container mx-auto px-5 lg:px-10 flex justify-between items-center">
@@ -158,12 +158,24 @@ export default function Navbar() {
           className="flex items-center transition-opacity duration-300 hover:opacity-80"
           onClick={() => setMenuOpen(false)}
         >
-          <LogoJobOne
-            width={350}
-            height={200}
-            textColor={scrolled ? "#FFFFFF" : "#FFFFFF"}
-            className="h-15 md:h-25 w-auto"
-          />
+          {/* Mobile Logo */}
+          <div className="block md:hidden">
+            <LogoJobOne
+              width={350}
+              height={200}
+              textColor="#000000"
+              className="h-15 w-auto"
+            />
+          </div>
+          {/* Desktop Logo */}
+          <div className="hidden md:block">
+            <LogoJobOne
+              width={350}
+              height={200}
+              textColor="#FFFFFF"
+              className="h-25 w-auto"
+            />
+          </div>
         </Link>
 
         {/* --- DESKTOP MENU --- */}
@@ -322,11 +334,7 @@ export default function Navbar() {
         <div className="md:hidden flex items-center">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className={`focus:outline-none p-2 rounded-full transition-colors duration-300 ${
-              scrolled || menuOpen
-                ? "text-slate-700 hover:bg-slate-100"
-                : "text-white hover:bg-white/20 backdrop-blur-sm"
-            }`}
+            className="focus:outline-none p-2 rounded-full transition-colors duration-300 text-slate-900 hover:bg-slate-100"
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
