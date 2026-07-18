@@ -213,40 +213,21 @@ export default function JobsAroundMe({ onJobClick }) {
         </h3>
 
         {!userLocation ? (
-          <div className="relative">
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm rounded-3xl">
-              <div className="bg-slate-900/90 text-white px-6 py-3 rounded-2xl font-semibold shadow-xl flex items-center gap-2 backdrop-blur-md border border-slate-700/50 hover:scale-105 transition-transform cursor-pointer" onClick={handleGetLocation}>
-                <MapPin size={18} className="text-cyan-400" />
-                (Recommended jobs will show here)
-              </div>
-              <p className="text-sm font-medium text-slate-700 mt-3 bg-white/80 px-4 py-1.5 rounded-full shadow-sm">Click "Use My Location" above to see jobs</p>
+          <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-8 flex flex-col items-center justify-center text-center shadow-sm h-64 hover:border-blue-300 transition-colors">
+            <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4 shadow-sm shadow-blue-100 animate-pulse">
+              <MapPin size={28} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 select-none pointer-events-none">
-              {[1, 2, 3].map((skeleton) => (
-                <div
-                  key={skeleton}
-                  className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl flex flex-col h-full relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                  <div className="flex items-start justify-between mb-5 mt-1 relative z-0">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700/50"></div>
-                    <div className="h-6 w-16 bg-slate-800 rounded-xl"></div>
-                  </div>
-                  <div className="h-6 w-3/4 bg-slate-800 rounded-md mb-3 relative z-0"></div>
-                  <div className="h-4 w-1/2 bg-slate-800 rounded-md mb-6 relative z-0"></div>
-                  <div className="mt-auto space-y-3 pt-4 border-t border-slate-800/80 relative z-0">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-800"></div>
-                      <div className="h-4 w-1/2 bg-slate-800 rounded-md"></div>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-800"></div>
-                      <div className="h-4 w-1/3 bg-slate-800 rounded-md"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h4 className="text-lg font-bold text-slate-800">Discover Local Opportunities</h4>
+            <p className="text-slate-500 text-sm max-w-sm mt-2 mb-6">
+              We need your location to show the best jobs in your immediate area. 
+            </p>
+            <button
+              onClick={handleGetLocation}
+              className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold shadow-md hover:bg-slate-800 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+            >
+              <Navigation size={18} className="text-cyan-400" />
+              Enable Location
+            </button>
           </div>
         ) : jobs.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
