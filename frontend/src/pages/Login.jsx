@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { FaUserTie, FaBuilding } from "react-icons/fa";
+import { Eye, EyeOff } from "lucide-react";
 import BackgroundJoin from "../components/BackgroundJoin";
 
 export default function Login() {
@@ -10,6 +11,7 @@ export default function Login() {
   const [activeTab, setActiveTab] = useState("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -169,14 +171,29 @@ export default function Login() {
             </div>
 
             <div>
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm rounded-xl p-3.5 outline-none focus:border-blue-500 focus:bg-white/10 transition-colors"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm rounded-xl p-3.5 outline-none focus:border-blue-500 focus:bg-white/10 transition-colors pr-12 hide-password-toggle"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <style>{`
+                .hide-password-toggle::-ms-reveal,
+                .hide-password-toggle::-ms-clear {
+                  display: none;
+                }
+              `}</style>
               <div className="text-right mt-2">
                 <Link
                   to="/forgot-password"
