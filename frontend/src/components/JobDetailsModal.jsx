@@ -94,7 +94,7 @@ export default function JobDetailsModal({ job, onClose }) {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                <div className="hidden sm:flex flex-wrap items-center gap-1.5 mb-1.5">
                   {/* FACT: Added Status and Posting Date to the UI */}
                   <span
                     className={`px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-extrabold uppercase tracking-widest border ${job.status === "active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-600 border-slate-200"}`}
@@ -148,6 +148,21 @@ export default function JobDetailsModal({ job, onClose }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* --- MAIN CONTENT (LEFT) --- */}
               <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                
+                {/* Mobile-only Status Badges */}
+                <div className="flex sm:hidden flex-wrap items-center gap-2 mb-2">
+                  <span
+                    className={`px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-widest border ${job.status === "active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-600 border-slate-200"}`}
+                  >
+                    {job.status?.replace("_", " ") || "Active"}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {renderArray(job.mode)}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100">
+                    {renderArray(job.jobType)}
+                  </span>
+                </div>
                 {/* Job Highlights */}
                 {validFeatures.length > 0 && (
                   <div className="flex flex-wrap gap-2 sm:gap-3">
