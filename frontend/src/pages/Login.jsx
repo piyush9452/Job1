@@ -100,7 +100,7 @@ export default function Login() {
       <button
         type="button"
         onClick={() => navigate("/admin/login")}
-        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 rounded-full px-4 py-2 text-xs font-bold transition-all backdrop-blur-md shadow-lg"
+        className="fixed top-12 right-4 sm:top-14 sm:right-8 z-50 flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 rounded-full px-4 py-2 text-xs font-bold transition-all backdrop-blur-md shadow-lg"
       >
         <span className="w-2 h-2 rounded-full bg-red-500/80"></span>
         Admin
