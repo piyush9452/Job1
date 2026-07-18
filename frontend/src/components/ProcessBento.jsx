@@ -69,6 +69,9 @@ export default function ProcessBento() {
   const [twirlingIndex, setTwirlingIndex] = useState(null);
 
   useEffect(() => {
+    // Disable random icon twirling on mobile to save JS execution cycles
+    if (window.innerWidth <= 768) return;
+
     const triggerRandomTwirl = () => {
       const randomIndex = Math.floor(Math.random() * steps.length);
       setTwirlingIndex(randomIndex);
@@ -87,8 +90,8 @@ export default function ProcessBento() {
 
   return (
     <section className="relative py-24 bg-[#F8FAFC] font-sans overflow-hidden border-t border-slate-200/60">
-      {/* FREEROAMING LAVA LAMP BACKGROUNDS */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      {/* FREEROAMING LAVA LAMP BACKGROUNDS (Desktop Only for Performance) */}
+      <div className="hidden md:block absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{
             x: ["0vw", "40vw", "-20vw", "30vw", "0vw"],
@@ -111,13 +114,13 @@ export default function ProcessBento() {
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-6">
-        {/* Header - 2-Way Scroll Reveal */}
+        {/* Header - Static on Mobile, Animated on Desktop */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.2 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="hidden md:block text-center mb-16"
         >
           <div className="flex items-center justify-center gap-2 mb-3">
             <span className="w-6 h-[2px] bg-blue-600 rounded-full"></span>
@@ -126,7 +129,7 @@ export default function ProcessBento() {
             </span>
             <span className="w-6 h-[2px] bg-blue-600 rounded-full"></span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">
             Your path to a{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
               new career
@@ -138,68 +141,113 @@ export default function ProcessBento() {
           </p>
         </motion.div>
 
+        {/* Static Header for Mobile */}
+        <div className="block md:hidden text-center mb-10">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="w-4 h-[1px] bg-blue-600 rounded-full"></span>
+            <span className="text-blue-600 font-bold tracking-widest uppercase text-[9px]">
+              How it works
+            </span>
+            <span className="w-4 h-[1px] bg-blue-600 rounded-full"></span>
+          </div>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+            Your path to a{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
+              new career
+            </span>
+          </h2>
+          <p className="text-slate-500 mt-3 font-medium text-sm max-w-xl mx-auto px-2">
+            Simplified, automated, and designed for maximum speed. Skip the long
+            forms and get straight to the interviews.
+          </p>
+        </div>
+
         {/* Card Grid */}
         <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6"
           onMouseLeave={() =>
             setActiveBlobs({ b1: "bg-blue-600", b2: "bg-indigo-500" })
           }
         >
-          {steps.map((step, i) => (
-            <motion.div
-              key={i}
-              // FACT: Directional 2-Way Scroll Logic
-              initial={{ opacity: 0, x: step.initX, y: step.initY }}
-              whileInView={{ opacity: 1, x: 0, y: 0 }}
-              viewport={{ once: false, amount: 0.1 }}
-              transition={{
-                type: "spring",
-                stiffness: 100,
-                damping: 20,
-                delay: i * 0.1,
-              }}
-              onMouseEnter={() =>
-                setActiveBlobs({ b1: step.blob1, b2: step.blob2 })
-              }
-              whileHover={{ y: -4, scale: 1.02 }}
-              className="relative bg-white/80 backdrop-blur-sm shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.08)] border border-slate-200/80 hover:border-slate-300 p-8 pt-10 rounded-[2rem] overflow-hidden group transition-colors duration-300 flex flex-col h-full cursor-default"
-            >
-              {/* Top-Right Decorative Circle */}
-              <div
-                className={`w-28 h-28 absolute -right-6 -top-6 rounded-full transition-transform duration-500 group-hover:scale-110 ${step.circleColor} flex items-end justify-start pb-5 pl-7`}
-              >
-                <p className="text-white text-3xl font-black leading-none drop-shadow-md">
-                  {step.num}
-                </p>
-              </div>
-
-              {/* Card Content */}
-              <div className="relative z-10">
-                {/* FACT: CSS Conflict Fix. Framer Motion controls JS Twirl, Tailwind controls Hover Scale */}
-                <motion.div
-                  animate={
-                    twirlingIndex === i
-                      ? { y: [0, -15, 0], rotate: [0, 720, 720] }
-                      : { y: 0, rotate: 0 }
-                  }
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
-                  className={`mb-6 inline-block ${step.iconColor}`}
+          {steps.map((step, i) => {
+            const cardContent = (
+              <>
+                {/* Top-Right Decorative Circle */}
+                <div
+                  className={`w-16 h-16 md:w-28 md:h-28 absolute -right-3 -top-3 md:-right-6 md:-top-6 rounded-full transition-transform duration-500 group-hover:scale-110 ${step.circleColor} flex items-end justify-start pb-2 pl-4 md:pb-5 md:pl-7`}
                 >
-                  <div className="transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110">
-                    {step.icon}
+                  <p className="text-white text-lg md:text-3xl font-black leading-none drop-shadow-md">
+                    {step.num}
+                  </p>
+                </div>
+
+                {/* Card Content */}
+                <div className="relative z-10">
+                  {/* Desktop Only Twirl Animation */}
+                  <div className="hidden md:block">
+                    <motion.div
+                      animate={
+                        twirlingIndex === i
+                          ? { y: [0, -15, 0], rotate: [0, 720, 720] }
+                          : { y: 0, rotate: 0 }
+                      }
+                      transition={{ duration: 1.2, ease: "easeInOut" }}
+                      className={`mb-6 inline-block ${step.iconColor}`}
+                    >
+                      <div className="transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110">
+                        {step.icon}
+                      </div>
+                    </motion.div>
                   </div>
+                  
+                  {/* Static Icon for Mobile */}
+                  <div className={`block md:hidden mb-4 inline-block ${step.iconColor}`}>
+                     {React.cloneElement(step.icon, { size: 20 })}
+                  </div>
+
+                  <h3 className="font-extrabold text-sm md:text-xl text-slate-900 mb-2 md:mb-3 group-hover:text-blue-600 transition-colors leading-tight">
+                    {step.title}
+                  </h3>
+
+                  <p className="text-[10px] md:text-sm text-slate-500 font-medium leading-snug md:leading-relaxed">
+                    {step.desc}
+                  </p>
+                </div>
+              </>
+            );
+
+            return (
+              <React.Fragment key={i}>
+                {/* Desktop Animated Card */}
+                <motion.div
+                  initial={{ opacity: 0, x: step.initX, y: step.initY }}
+                  whileInView={{ opacity: 1, x: 0, y: 0 }}
+                  viewport={{ once: false, amount: 0.1 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 100,
+                    damping: 20,
+                    delay: i * 0.1,
+                  }}
+                  onMouseEnter={() =>
+                    setActiveBlobs({ b1: step.blob1, b2: step.blob2 })
+                  }
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  className="hidden md:flex relative bg-white/80 backdrop-blur-sm shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.08)] border border-slate-200/80 hover:border-slate-300 p-8 pt-10 rounded-[2rem] overflow-hidden group transition-colors duration-300 flex-col h-full cursor-default"
+                >
+                  {cardContent}
                 </motion.div>
 
-                <h3 className="font-extrabold text-xl text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
-                  {step.title}
-                </h3>
-
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+                {/* Mobile Static Card (No animations) */}
+                <div
+                  onClick={() => setActiveBlobs({ b1: step.blob1, b2: step.blob2 })}
+                  className="flex md:hidden relative bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] border border-slate-200/80 p-4 pt-5 rounded-2xl overflow-hidden group flex-col h-full cursor-default"
+                >
+                  {cardContent}
+                </div>
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
     </section>
