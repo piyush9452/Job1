@@ -326,6 +326,7 @@ export default function JobCategories() {
                   {cardContent}
                 </div>
               </React.Fragment>
+            );
           })}
         </div>
       </div>
