@@ -4,29 +4,29 @@ import { motion } from "framer-motion";
 const MobileHeroBg = () => {
   // Memoize the particles so they don't re-render randomly when the parent state changes
   const particles = useMemo(() => {
-    return Array.from({ length: 45 }).map((_, i) => ({
+    return Array.from({ length: 60 }).map((_, i) => ({
       id: i,
-      size: 2 + Math.random() * 4,
+      size: 1 + Math.random() * 2, // Much smaller, sharper dots (1px - 3px)
       startX: Math.random() * 100, // 0 to 100vw
-      startY: 65 + Math.random() * 25, // Start near the planet's top edge
-      duration: 5 + Math.random() * 7,
+      startY: 75 + Math.random() * 25, // Start exactly around the planet
+      duration: 3 + Math.random() * 6,
       delay: Math.random() * 5,
-      xDrift: (Math.random() - 0.5) * 150, // Drift left or right
-      yDistance: -300 - Math.random() * 300, // Float up
+      xDrift: (Math.random() - 0.5) * 100,
+      yDistance: -200 - Math.random() * 400,
     }));
   }, []);
 
   return (
     <div className="absolute inset-0 w-full h-full block md:hidden bg-[#010614] overflow-hidden z-0">
       {/* The glowing planet */}
-      <div className="absolute bottom-[-30vw] left-1/2 -translate-x-1/2 w-[160vw] h-[160vw] max-w-[800px] max-h-[800px] rounded-full border-[2px] border-cyan-400/50 bg-[#010614] shadow-[0_0_60px_rgba(34,211,238,0.4),inset_0_0_80px_rgba(34,211,238,0.2)]" />
+      <div className="absolute bottom-[-80vw] sm:bottom-[-60vw] left-1/2 -translate-x-1/2 w-[150vw] h-[150vw] max-w-[800px] max-h-[800px] rounded-full border-[1.5px] border-cyan-400/40 bg-[#010614] shadow-[0_0_40px_rgba(34,211,238,0.5),inset_0_0_60px_rgba(34,211,238,0.2)]" />
       
       {/* Glowing dust emitting upwards */}
       <div className="absolute inset-0 pointer-events-none">
         {particles.map((p) => (
           <motion.div
             key={p.id}
-            className="absolute rounded-full bg-cyan-300 shadow-[0_0_10px_2px_rgba(34,211,238,0.9)]"
+            className="absolute rounded-full bg-white shadow-[0_0_4px_1px_rgba(34,211,238,1)]"
             style={{
               width: p.size,
               height: p.size,

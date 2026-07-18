@@ -154,7 +154,7 @@ export default function HeroSection() {
       />
       {/* Animated CSS component for mobile */}
       <MobileHeroBg />
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-slate-900/95 backdrop-blur-[4px]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-slate-900/95 backdrop-blur-[4px] hidden md:block" />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8">
         {/* FACT: Adjusted gap for mobile so forms aren't pushed too far down */}
