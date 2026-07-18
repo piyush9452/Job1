@@ -148,7 +148,7 @@ export default function Navbar() {
       } ${
         scrolled || menuOpen
           ? "bg-white shadow-sm md:shadow-none md:bg-black/40 md:backdrop-blur-sm md:backdrop-saturate-200"
-          : "bg-white md:bg-black/40 md:backdrop-blur-sm md:backdrop-saturate-200"
+          : "bg-black/5 md:bg-black/40 md:backdrop-blur-sm md:backdrop-saturate-200"
       }`}
     >
       <div className="container mx-auto px-5 lg:px-10 flex justify-between items-center">
@@ -163,7 +163,7 @@ export default function Navbar() {
             <LogoJobOne
               width={350}
               height={200}
-              textColor="#000000"
+              textColor={scrolled || menuOpen ? "#000000" : "#FFFFFF"}
               className="h-15 w-auto"
             />
           </div>
@@ -334,7 +334,11 @@ export default function Navbar() {
         <div className="md:hidden flex items-center">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="focus:outline-none p-2 rounded-full transition-colors duration-300 text-slate-900 hover:bg-slate-100"
+            className={`focus:outline-none p-2 rounded-full transition-colors duration-300 ${
+              scrolled || menuOpen
+                ? "text-slate-900 hover:bg-slate-100"
+                : "text-white hover:bg-white/10"
+            }`}
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
