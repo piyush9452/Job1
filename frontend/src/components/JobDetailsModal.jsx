@@ -63,7 +63,7 @@ export default function JobDetailsModal({ job, onClose }) {
   return (
     <>
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 sm:p-6"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 sm:bg-slate-900/60 sm:backdrop-blur-sm p-4 sm:p-6"
         onClick={onClose}
       >
         <motion.div
@@ -571,18 +571,18 @@ export default function JobDetailsModal({ job, onClose }) {
           </div>
 
           {/* --- FOOTER ACTION --- */}
-          <div className="p-4 sm:p-6 bg-white border-t border-slate-200 shrink-0 flex justify-end items-center gap-4">
+          <div className="p-3 sm:p-6 bg-white border-t border-slate-200 shrink-0 flex justify-end items-center gap-3 sm:gap-4">
             <button
               onClick={onClose}
-              className="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
+              className="px-4 py-2.5 sm:px-6 sm:py-3 text-[13px] sm:text-base font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={() => setShowApplyModal(true)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
+              className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 sm:px-8 sm:py-3 rounded-xl text-[13px] sm:text-base font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
             >
-              <Send size={18} /> Apply for this Job
+              <Send size={16} className="w-4 h-4 sm:w-[18px] sm:h-[18px]" /> Apply for this Job
             </button>
           </div>
         </motion.div>
