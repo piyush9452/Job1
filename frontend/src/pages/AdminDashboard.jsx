@@ -342,10 +342,31 @@ export default function AdminDashboard() {
     </button>
   );
 
+  const MobileTab = ({ id, icon: Icon, label, badgeCount }) => (
+    <button
+      onClick={() => {
+        setActiveTab(id);
+        setSearchResults([]);
+        setSearchQuery("");
+      }}
+      className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm transition-all shrink-0 ${activeTab === id ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"}`}
+    >
+      <Icon size={16} />
+      <span>{label}</span>
+      {badgeCount !== undefined && badgeCount > 0 && (
+        <span
+          className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === id ? "bg-white text-indigo-600" : "bg-indigo-200 text-indigo-700"}`}
+        >
+          {badgeCount}
+        </span>
+      )}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans flex ">
+    <div className="h-screen bg-slate-50 font-sans flex flex-col md:flex-row overflow-hidden">
       {/* ─── LEFT SIDEBAR ──────────────────────────────────────────────────────── */}
-      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0 shadow-sm z-10 ">
+      <aside className="w-72 bg-white border-r border-slate-200 hidden md:flex flex-col h-screen sticky top-0 shadow-sm z-10 ">
         <div className="p-6 border-b border-slate-100  pt-[120px]">
           <h1 className="text-2xl font-black flex items-center gap-3 text-slate-900 tracking-tight">
             <LayoutDashboard className="text-indigo-600" size={28} /> Admin
@@ -447,9 +468,51 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
+      {/* ─── MOBILE TOP NAVIGATION ──────────────────────────────────────────────────────── */}
+      <div className="md:hidden bg-white sticky top-0 z-20 shadow-sm border-b border-slate-200 pt-[80px] pb-3 px-4 flex gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar">
+          {canManageEmployers && (
+            <>
+              <MobileTab id="pendingJobs" icon={Briefcase} label="Pending Jobs" badgeCount={pendingJobs.length} />
+              <MobileTab id="pendingEmployers" icon={Building2} label="Pending Employers" badgeCount={pendingEmployers.length} />
+              <MobileTab id="allJobs" icon={FileText} label="All Jobs" badgeCount={allJobs.length} />
+              <MobileTab id="allEmployers" icon={Building2} label="All Employers" badgeCount={allEmployers.length} />
+              <MobileTab id="searchEmployers" icon={Search} label="Search / Freeze" />
+            </>
+          )}
+          {canManageJobseekers && (
+            <>
+              <MobileTab id="allJobseekers" icon={Users} label="All Jobseekers" badgeCount={allJobseekers.length} />
+              <MobileTab id="searchJobseekers" icon={Search} label="Search / Freeze" />
+            </>
+          )}
+          {adminRole === "superAdmin" && (
+            <MobileTab id="manageAdmins" icon={ShieldAlert} label="Manage Admins" />
+          )}
+          <MobileTab id="exportDB" icon={Download} label="Database Export" />
+          <button
+            onClick={() => {
+              localStorage.removeItem("adminInfo");
+              navigate("/admin/login");
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm bg-slate-900 text-white shrink-0 ml-2 shadow-sm"
+          >
+            <LogOut size={16} /> Logout
+          </button>
+      </div>
+
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+
       {/* ─── MAIN CONTENT AREA ──────────────────────────────────────────────────────── */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto h-screen bg-slate-50/50">
-        <div className="max-w-5xl mx-auto space-y-6  pt-[100px]">
+      <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto bg-slate-50/50">
+        <div className="max-w-5xl mx-auto space-y-6 pt-4 md:pt-[100px]">
           {/* EXPORT DB VIEW */}
           {activeTab === "exportDB" && (
             <div>
@@ -573,7 +636,7 @@ export default function AdminDashboard() {
                   pendingJobs.map((job) => (
                     <div
                       key={job._id}
-                      className="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center gap-4 shadow-sm hover:shadow-md transition"
+                      className="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm hover:shadow-md transition"
                     >
                       <div>
                         <h3 className="font-bold text-lg text-slate-800">
@@ -630,7 +693,7 @@ export default function AdminDashboard() {
                   pendingEmployers.map((emp) => (
                     <div
                       key={emp._id}
-                      className="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center gap-4 shadow-sm hover:shadow-md transition"
+                      className="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm hover:shadow-md transition"
                     >
                       <div>
                         <h3 className="font-bold text-lg text-slate-800">
@@ -688,7 +751,7 @@ export default function AdminDashboard() {
                   allJobs.map((job) => (
                     <div
                       key={job._id}
-                      className="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center gap-4 shadow-sm hover:shadow-md transition"
+                      className="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm hover:shadow-md transition"
                     >
                       <div>
                         <h3 className="font-bold text-lg text-slate-800">
@@ -738,7 +801,7 @@ export default function AdminDashboard() {
                   allEmployers.map((emp) => (
                     <div
                       key={emp._id}
-                      className={`bg-white p-6 rounded-2xl border ${emp.isFrozen ? "border-rose-300 bg-rose-50/30" : "border-slate-200"} flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm hover:shadow-md transition`}
+                      className={`bg-white p-6 rounded-2xl border ${emp.isFrozen ? "border-rose-300 bg-rose-50/30" : "border-slate-200"} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm hover:shadow-md transition`}
                     >
                       <div>
                         <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
@@ -798,7 +861,7 @@ export default function AdminDashboard() {
                   allJobseekers.map((user) => (
                     <div
                       key={user._id}
-                      className={`bg-white p-6 rounded-2xl border ${user.isFrozen ? "border-rose-300 bg-rose-50/30" : "border-slate-200"} flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm hover:shadow-md transition`}
+                      className={`bg-white p-6 rounded-2xl border ${user.isFrozen ? "border-rose-300 bg-rose-50/30" : "border-slate-200"} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm hover:shadow-md transition`}
                     >
                       <div className="flex items-center gap-4">
                         {user.profilePicture ? (
