@@ -1,49 +1,31 @@
-import React, { useEffect } from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { FaArrowRight, FaCheckCircle, FaStar } from "react-icons/fa";
 import demoIllustration from "../assets/skyscrapers.jpg";
 
 export default function CompanyCard() {
   const navigate = useNavigate();
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+  const containerRef = useRef(null);
 
-  // Soft spring for cinematic global tracking
-  const mouseXSpring = useSpring(x, { stiffness: 100, damping: 30 });
-  const mouseYSpring = useSpring(y, { stiffness: 100, damping: 30 });
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  });
 
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["12deg", "-12deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-12deg", "12deg"]);
-
-  const handleMouseMove = (e) => {
-    // Disable heavy 3D calculations on mobile for better Android performance
-    if (window.innerWidth <= 768) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const xPct = (e.clientX - rect.left) / rect.width - 0.5;
-    const yPct = (e.clientY - rect.top) / rect.height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
+  // Scroll parallax: bottom-left to top-right
+  const rotateX = useTransform(scrollYProgress, [0, 1], ["15deg", "-15deg"]);
+  const rotateY = useTransform(scrollYProgress, [0, 1], ["-15deg", "15deg"]);
 
   return (
     // FACT: Perspective is established here
     <section
+      ref={containerRef}
       className="px-4 py-12 md:py-16 bg-[#F8FAFC] flex justify-center items-center font-sans overflow-hidden"
       style={{ perspective: 2000 }}
     >
-      {/* FACT: 3D Chain Link 1 - The fade-in wrapper MUST preserve 3D */}
+      {/* FACT: 3D Chain Link 1 - The wrapper MUST preserve 3D */}
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
         className="w-full max-w-6xl"
         style={{ transformStyle: "preserve-3d" }}
       >
@@ -55,8 +37,6 @@ export default function CompanyCard() {
             transformStyle: "preserve-3d",
           }}
           className="relative w-full rounded-3xl md:rounded-[2.5rem] bg-[#0B1120] shadow-2xl border border-slate-800"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
         >
           {/* Ambient Glows pushed backwards */}
           <div
