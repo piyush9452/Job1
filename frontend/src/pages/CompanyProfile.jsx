@@ -119,7 +119,7 @@ export default function CompanyProfile() {
   const logo = company.profilePicture || company.image;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24 mt-12">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24">
       {/* --- HERO COVER SECTION --- */}
       <div className="h-48 sm:h-64 bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
