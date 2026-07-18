@@ -5,11 +5,19 @@ import { FaArrowRight, FaBolt, FaUsers, FaClock } from "react-icons/fa";
 export default function VideoSection() {
   const containerRef = useRef(null);
 
-  // FACT: The Hydration Lock. This ensures the hidden layers DO NOT render
-  // on the server, preventing the production "flash" before JS loads.
+  // FACT: The Hydration Lock & Mobile Detection
   const [isMounted, setIsMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
   useEffect(() => {
     setIsMounted(true);
+    
+    // Check initial width for mobile optimization
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -31,11 +39,17 @@ export default function VideoSection() {
   const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.04], [1, 0]);
   const progressScaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
-  // ── TEXT ZOOM ────────────────────────────────────────────
+  // ── TEXT ZOOM (Desktop) & FADE (Mobile) ────────────────────────────────────────────
   const textScale = useTransform(
     scrollYProgress,
     [0, 0.1, 0.45, 0.85, 0.95, 1.0],
     [1, 1, 300, 300, 1, 1],
+  );
+  
+  const textOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.15, 0.25],
+    [1, 1, 0]
   );
 
   // ── VIDEO DARKENING ──────────────────────────────────────
@@ -73,7 +87,7 @@ export default function VideoSection() {
   return (
     <section
       ref={containerRef}
-      className="relative h-[600vh] bg-white font-sans"
+      className={`relative ${isMobile ? 'h-[300vh]' : 'h-[600vh]'} bg-white font-sans`}
     >
       {/* FACT: Added [perspective:1000px] to enable 3D GPU sorting inside the sticky container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-white flex items-center justify-center isolate [perspective:1000px]">
@@ -86,37 +100,63 @@ export default function VideoSection() {
           }}
         />
 
-        {/* ── LAYER 0: FULL-SCREEN VIDEO ──────────────────── */}
+        {/* ── LAYER 0: FULL-SCREEN VIDEO OR IMAGE ──────────────────── */}
         <div className="absolute inset-0 z-10">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover"
-          >
-            <source src="/video.mp4" type="video/mp4" />
-          </video>
+          {!isMobile ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              className="w-full h-full object-cover"
+            >
+              <source src="/video.mp4" type="video/mp4" />
+            </video>
+          ) : (
+            <img 
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1080&q=80" 
+              alt="Professionals collaborating" 
+              className="w-full h-full object-cover" 
+            />
+          )}
           {/* Base darkening to ensure the white mask doesn't erase the letters */}
           <div className="absolute inset-0 bg-slate-950/40" />
         </div>
 
-        {/* ── LAYER 1: MIX-BLEND MASK ─────────────────────── */}
-        {/* FACT: translateZ(-10px) physically pushes the mask BACKWARDS into the screen so it cannot overlap the final text */}
-        <div className="absolute inset-0 z-20 bg-white mix-blend-screen flex items-center justify-center pointer-events-none [transform:translateZ(-10px)]">
-          <motion.div style={{ scale: textScale, transformOrigin: "34% 50%" }}>
+        {/* ── LAYER 1: MASK & TEXT EFFECTS ─────────────────────── */}
+        {!isMobile ? (
+          /* DESKTOP: 300x Zoom through mix-blend hole punch */
+          <div className="absolute inset-0 z-20 bg-white mix-blend-screen flex items-center justify-center pointer-events-none [transform:translateZ(-10px)]">
+            <motion.div style={{ scale: textScale, transformOrigin: "34% 50%" }}>
+              <h1
+                className="text-black font-black leading-[0.88] tracking-tight uppercase select-none"
+                style={{
+                  fontSize: "clamp(100px, 28vw, 320px)",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                JOBONE
+              </h1>
+            </motion.div>
+          </div>
+        ) : (
+          /* MOBILE: High performance opacity crossfade (Zero blending overhead) */
+          <motion.div 
+            style={{ opacity: textOpacity }} 
+            className="absolute inset-0 z-20 bg-white flex items-center justify-center pointer-events-none [transform:translateZ(-10px)]"
+          >
             <h1
               className="text-black font-black leading-[0.88] tracking-tight uppercase select-none"
               style={{
-                fontSize: "clamp(100px, 28vw, 320px)",
+                fontSize: "clamp(60px, 15vw, 100px)",
                 letterSpacing: "-0.02em",
               }}
             >
               JOBONE
             </h1>
           </motion.div>
-        </div>
+        )}
 
         {/* ── LAYER 2: INTRO SUBTITLE (Visible on load) ─────────────────────── */}
         <motion.div
