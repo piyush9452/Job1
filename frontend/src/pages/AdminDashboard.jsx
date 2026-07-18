@@ -469,7 +469,14 @@ export default function AdminDashboard() {
       </aside>
 
       {/* ─── MOBILE TOP NAVIGATION ──────────────────────────────────────────────────────── */}
-      <div className="md:hidden bg-white sticky top-0 z-20 shadow-sm border-b border-slate-200 pt-[80px] pb-3 px-4 flex gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar">
+      <div className="md:hidden sticky top-0 z-20 bg-white shadow-sm border-b border-slate-200 pt-[100px] flex flex-col">
+        <div className="px-4 pb-2 flex justify-between items-center text-slate-400 w-full">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Options</span>
+          <span className="text-[10px] font-bold tracking-wider flex items-center gap-1 text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full animate-pulse">
+            Swipe to explore <span className="text-sm leading-none">→</span>
+          </span>
+        </div>
+        <div className="pb-4 px-4 flex gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar">
           {canManageEmployers && (
             <>
               <MobileTab id="pendingJobs" icon={Briefcase} label="Pending Jobs" badgeCount={pendingJobs.length} />
@@ -494,10 +501,11 @@ export default function AdminDashboard() {
               localStorage.removeItem("adminInfo");
               navigate("/admin/login");
             }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm bg-slate-900 text-white shrink-0 ml-2 shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm bg-slate-900 text-white shrink-0 ml-2 shadow-sm mr-4"
           >
             <LogOut size={16} /> Logout
           </button>
+        </div>
       </div>
 
       <style>{`
