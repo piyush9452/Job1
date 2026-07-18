@@ -8,6 +8,20 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  // Vite options tailored for Tauri development
+  clearScreen: false,
+  server: {
+    port: 1420,
+    strictPort: true,
+    host: process.env.TAURI_DEV_HOST || false,
+    hmr: process.env.TAURI_DEV_HOST
+      ? {
+          protocol: "ws",
+          host: process.env.TAURI_DEV_HOST,
+          port: 1421,
+        }
+      : undefined,
+  },
   build: {
     rollupOptions: {
       output: {
