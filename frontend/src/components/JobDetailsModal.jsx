@@ -349,7 +349,7 @@ export default function JobDetailsModal({ job, onClose }) {
                       {job.screeningQuestions.map((q, i) => (
                         <li
                           key={i}
-                          className="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm font-medium text-slate-700"
+                          className="flex items-start gap-2 sm:gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 text-[11px] sm:text-sm font-medium text-slate-700"
                         >
                           <span className="font-extrabold text-rose-500">
                             Q{i + 1}.
@@ -365,19 +365,19 @@ export default function JobDetailsModal({ job, onClose }) {
               {/* --- SIDEBAR DETAILS (RIGHT) --- */}
               <div className="lg:col-span-1 space-y-6">
                 {/* Premium Compensation Card */}
-                <section className="bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-xl text-white relative overflow-hidden">
+                <section className="bg-slate-900 rounded-3xl p-5 sm:p-8 shadow-xl text-white relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
 
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-5 sm:mb-6 relative z-10">
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 sm:mb-6 relative z-10">
                     Compensation
                   </h3>
                   <div className="relative z-10">
-                    <p className="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-wide flex items-center gap-1.5">
+                    <p className="text-slate-400 text-[9px] sm:text-[10px] font-bold mb-1 uppercase tracking-wide flex items-center gap-1.5">
                       <IndianRupee size={12} /> Total Salary
                     </p>
-                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-5 sm:mb-6">
+                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-4 sm:mb-6">
                       {/* FACT: Render the dynamic currency symbol and range properly */}
-                      <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                      <span className="text-xl sm:text-3xl font-extrabold tracking-tight">
                         {(() => {
                           // FACT: Safely handle both Legacy Jobs and New Jobs
                           const sMin =
@@ -394,7 +394,7 @@ export default function JobDetailsModal({ job, onClose }) {
                         })()}
                       </span>
                     </div>
-                    <div className="bg-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10 flex justify-between items-center text-xs sm:text-sm font-bold backdrop-blur-md">
+                    <div className="bg-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-white/10 flex justify-between items-center text-[10px] sm:text-sm font-bold backdrop-blur-md">
                       <span className="text-slate-300">Frequency</span>
                       <span className="text-emerald-400 uppercase tracking-wider">
                         {job.salaryFrequency || "Monthly"}
