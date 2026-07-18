@@ -86,8 +86,8 @@ export default function Login() {
     <div className="relative flex flex-col justify-center items-center min-h-screen bg-slate-950 font-sans p-4 sm:p-8 overflow-x-hidden">
       {/* FACT: The background is pinned directly to the screen viewport */}
       <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-        <div className="opacity-50">
-          <BackgroundJoin />
+        <div className="absolute inset-0 z-0">
+          <BackgroundJoin theme={activeTab} />
         </div>
       </div>
 
