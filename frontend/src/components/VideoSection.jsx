@@ -48,7 +48,7 @@ export default function VideoSection() {
   
   const textOpacity = useTransform(
     scrollYProgress,
-    [0, 0.15, 0.25],
+    [0, 0.35, 0.48], // Perfectly synced: finishes fading exactly when the final text (0.48) begins
     [1, 1, 0]
   );
 
