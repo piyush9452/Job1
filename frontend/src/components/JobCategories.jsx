@@ -130,7 +130,6 @@ export default function JobCategories() {
     b1: "bg-blue-600",
     b2: "bg-indigo-500",
   });
-  const [twirlingIndex, setTwirlingIndex] = useState(null);
 
   useEffect(() => {
     // FACT: Fetch the aggregated counts from the database on mount
@@ -145,17 +144,6 @@ export default function JobCategories() {
       }
     };
     fetchCategoryCounts();
-
-    const triggerRandomTwirl = () => {
-      const randomIndex = Math.floor(Math.random() * categories.length);
-      setTwirlingIndex(randomIndex);
-      setTimeout(() => setTwirlingIndex(null), 1500);
-      const nextInterval = Math.random() * 5000 + 10;
-      setTimeout(triggerRandomTwirl, nextInterval);
-    };
-
-    const initialTimer = setTimeout(triggerRandomTwirl, 5000);
-    return () => clearTimeout(initialTimer);
   }, []);
 
   const handleCategoryClick = (category) => {
@@ -166,25 +154,33 @@ export default function JobCategories() {
     <section className="relative py-10 bg-[#F8FAFC] font-sans overflow-hidden w-full">
       {/* FREEROAMING LAVA LAMP BACKGROUNDS */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{
-            x: ["0vw", "40vw", "-20vw", "30vw", "0vw"],
-            y: ["0vh", "30vh", "10vh", "-20vh", "0vh"],
-            scale: [1, 1.2, 0.8, 1.1, 1],
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className={`absolute top-[10%] left-[10%] w-[25rem] h-[25rem] rounded-full mix-blend-multiply blur-[100px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b1}`}
-        />
-
-        <motion.div
-          animate={{
-            x: ["0vw", "-30vw", "20vw", "-40vw", "0vw"],
-            y: ["0vh", "-20vh", "40vh", "10vh", "0vh"],
-            scale: [1, 0.9, 1.3, 0.9, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className={`absolute top-[40%] right-[10%] w-[35rem] h-[35rem] rounded-full mix-blend-multiply blur-[120px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b2}`}
-        />
+        {/* Desktop Animated Blobs */}
+        <div className="hidden md:block">
+          <motion.div
+            animate={{
+              x: ["0vw", "40vw", "-20vw", "30vw", "0vw"],
+              y: ["0vh", "30vh", "10vh", "-20vh", "0vh"],
+              scale: [1, 1.2, 0.8, 1.1, 1],
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className={`absolute top-[10%] left-[10%] w-[25rem] h-[25rem] rounded-full mix-blend-multiply blur-[100px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b1}`}
+          />
+          <motion.div
+            animate={{
+              x: ["0vw", "-30vw", "20vw", "-40vw", "0vw"],
+              y: ["0vh", "-20vh", "40vh", "10vh", "0vh"],
+              scale: [1, 0.9, 1.3, 0.9, 1],
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className={`absolute top-[40%] right-[10%] w-[35rem] h-[35rem] rounded-full mix-blend-multiply blur-[120px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b2}`}
+          />
+        </div>
+        
+        {/* Mobile Static Blobs */}
+        <div className="block md:hidden">
+          <div className={`absolute top-[10%] left-[10%] w-[25rem] h-[25rem] rounded-full mix-blend-multiply blur-[100px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b1}`} />
+          <div className={`absolute top-[40%] right-[10%] w-[35rem] h-[35rem] rounded-full mix-blend-multiply blur-[120px] opacity-30 transition-colors duration-1000 ease-in-out ${activeBlobs.b2}`} />
+        </div>
       </div>
 
       <div className="relative z-10 w-full px-4 sm:px-6 md:px-10 lg:px-16 mx-auto max-w-[1600px]">
@@ -256,28 +252,22 @@ export default function JobCategories() {
                   setActiveBlobs({ b1: cat.blob1, b2: cat.blob2 })
                 }
                 whileHover={{ y: -6, scale: 1.02 }}
-                className="group relative overflow-hidden rounded-2xl bg-white/30 backdrop-blur-md p-6 border border-slate-200/80 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.1)] hover:border-slate-300 cursor-pointer transition-colors duration-300"
+                // FACT: Replaced glassmorphism with solid white on mobile to reduce rendering cost
+                className="group relative overflow-hidden rounded-2xl bg-white md:bg-white/30 md:backdrop-blur-md p-6 border border-slate-200/80 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.1)] hover:border-slate-300 cursor-pointer transition-colors duration-300"
               >
                 <div
                   className={`absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${cat.color} opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-20`}
                 />
 
                 <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                  <motion.div
-                    animate={
-                      twirlingIndex === index
-                        ? { y: [0, -15, 0], rotate: [0, 720, 720] }
-                        : { y: 0, rotate: 0 }
-                    }
-                    transition={{ duration: 1.2, ease: "easeInOut" }}
-                    className="w-12 h-12"
-                  >
+                  {/* Static logo wrapper (removed twirl calculation for performance) */}
+                  <div className="w-12 h-12">
                     <div
                       className={`w-full h-full rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg ${cat.shadow} group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300`}
                     >
                       <cat.icon size={18} />
                     </div>
-                  </motion.div>
+                  </div>
 
                   <div className="mt-auto">
                     <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
