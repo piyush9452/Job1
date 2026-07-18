@@ -36,8 +36,6 @@ const MobileHeroBg = () => {
             animate={{
               y: [0, p.yDistance],
               x: [0, p.xDrift],
-              opacity: [0, 1, 0.8, 0],
-              scale: [0.5, 1.2, 1, 0.5],
             }}
             transition={{
               duration: p.duration,

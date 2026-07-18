@@ -198,7 +198,7 @@ export default function HeroSection() {
             <motion.form
               variants={itemVariants}
               onSubmit={handleSearch}
-              className={`w-full flex-col md:flex-row items-center bg-black/95 md:bg-white/5 md:backdrop-blur-md p-2 rounded-3xl md:rounded-full border border-white/10 shadow-2xl transition-all focus-within:border-blue-500/50 focus-within:bg-black/95 md:focus-within:bg-white/10 gap-2 md:gap-0 ${!isLoggedIn ? 'hidden md:flex' : 'flex'}`}
+              className={`w-full flex-col md:flex-row items-center bg-black/5 md:bg-white/5 md:backdrop-blur-md p-2 rounded-3xl md:rounded-full border border-white/10 shadow-2xl transition-all focus-within:border-blue-500/50 focus-within:bg-black/5 md:focus-within:bg-white/10 gap-2 md:gap-0 ${!isLoggedIn ? 'hidden md:flex' : 'flex'}`}
             >
               <div className="flex items-center px-4 py-3 md:py-2 flex-1 w-full md:border-r border-white/10 group">
                 <FaBriefcase className="text-blue-400/70 group-focus-within:text-blue-400 mr-3 shrink-0 text-base transition-colors" />
@@ -239,8 +239,8 @@ export default function HeroSection() {
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              // FACT: Adjusted padding on mobile to give inputs more room, replaced glassmorphism with solid black on mobile
-              className="w-full lg:w-5/12 max-w-md mx-auto lg:mx-0 bg-black/95 md:bg-slate-900/50 md:backdrop-blur-xl border border-white/10 rounded-3xl p-5 sm:p-8 shadow-2xl relative overflow-hidden"
+              // FACT: Adjusted padding on mobile to give inputs more room, replaced glassmorphism with 95% transparent black on mobile
+              className="w-full lg:w-5/12 max-w-md mx-auto lg:mx-0 bg-black/5 md:bg-slate-900/50 md:backdrop-blur-xl border border-white/10 rounded-3xl p-5 sm:p-8 shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl hidden md:block" />
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl hidden md:block" />
