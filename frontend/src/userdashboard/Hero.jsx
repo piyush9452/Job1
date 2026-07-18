@@ -45,33 +45,15 @@ const Hero = () => {
 
   return (
     <section className="hero-rain-container flex items-center justify-center relative w-full min-h-[100dvh] pt-32 pb-20 overflow-hidden">
-      {/* Animated Glass Blobs */}
+      {/* Static Glass Blobs (Optimized for Performance) */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{
-            x: ["0vw", "40vw", "-20vw", "20vw", "0vw"],
-            y: ["0vh", "15vh", "5vh", "-10vh", "0vh"],
-            scale: [1, 1.1, 0.9, 1.2, 1],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+        <div
           className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-cyan-700/30 mix-blend-screen blur-[100px]"
         />
-        <motion.div
-          animate={{
-            x: ["0vw", "-30vw", "20vw", "-15vw", "0vw"],
-            y: ["0vh", "-10vh", "20vh", "5vh", "0vh"],
-            scale: [1, 0.9, 1.1, 0.9, 1],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        <div
           className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-800/30 mix-blend-screen blur-[120px]"
         />
-        <motion.div
-          animate={{
-            x: ["0vw", "15vw", "-20vw", "5vw", "0vw"],
-            y: ["0vh", "10vh", "-15vh", "20vh", "0vh"],
-            scale: [1, 1.2, 0.8, 1.1, 1],
-          }}
-          transition={{ duration: 11, repeat: Infinity, ease: "linear" }}
+        <div
           className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] max-w-[400px] max-h-[400px] rounded-full bg-indigo-700/30 mix-blend-screen blur-[90px]"
         />
       </div>
@@ -90,12 +72,12 @@ const Hero = () => {
       <div className="relative z-20 w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 pointer-events-none mt-10 lg:mt-0">
         {/* LEFT CONTENT */}
         <div className="flex-1 text-white pointer-events-auto flex flex-col items-center lg:items-start text-center lg:text-left w-full">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-white drop-shadow-md">
+          <h1 className="text-4xl  md:text-5xl lg:text-6xl font-extrabold leading-tight text-white drop-shadow-md">
             Build Your Career with <br />
             <span className="text-cyan-300">JobOne</span>
           </h1>
 
-          <p className="md:mt-6 mt-40 text-blue-50 text-base md:text-lg max-w-xl font-medium drop-shadow-sm">
+          <p className="md:mt-6 text-blue-50 text-base md:text-lg max-w-xl font-medium drop-shadow-sm">
             Create an impressive profile, showcase your skills, and get
             discovered by top employers in a dynamic tech-driven ecosystem.
           </p>

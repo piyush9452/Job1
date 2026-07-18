@@ -86,9 +86,10 @@ export default function JobsAroundMe({ onJobClick }) {
             "Location permission denied. Please allow location access to find jobs near you."
           );
         } else {
-          setError("Unable to retrieve your location. Please try again.");
+          setError("Unable to retrieve your location. Please try again or check your device settings.");
         }
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 

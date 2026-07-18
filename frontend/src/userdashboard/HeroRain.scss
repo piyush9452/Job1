@@ -28,7 +28,8 @@
 
 .drop {
   $drops: 100;
-  border: 0.25vmin solid transparent;
+  /* Thicker, more visible rain lines */
+  border: 0.35vmin solid transparent;
   /* Soft blue drops */
   border-bottom-color: rgba(171, 194, 233, 0.6);
   position: absolute;
@@ -40,7 +41,8 @@
       /* Boosted opacity slightly since there are fewer drops */
       opacity: (math.random(60) + 40) * 0.01;
       left: math.random(1200) * 0.1vw;
-      border-left-width: math.random(80) * 0.1vmin;
+      /* Increase length of the rain drops significantly */
+      border-left-width: (math.random(120) * 0.1vmin) + 0.3vmin;
       /* Hardware acceleration hint */
       will-change: transform;
       /* Slowed down rain: changed 0.15s to 0.35s base */
@@ -58,5 +60,18 @@
         transform: rotate(var(--angle)) translateX(calc(100vh + 5vmin));
       }
     }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .rain {
+      height: 150vh;
+  }
+  .hero-rain-container {
+    height: 150vh;
+  }
+  /* Reduce rain density by half on mobile by hiding odd numbered drops */
+  .drop:nth-child(odd) {
+    display: none;
   }
 }
