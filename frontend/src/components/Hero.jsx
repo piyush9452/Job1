@@ -175,7 +175,7 @@ export default function HeroSection() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className={`flex flex-col ${!isLoggedIn ? "lg:items-start lg:text-left items-center text-center lg:w-1/2" : "items-center text-center w-full max-w-4xl mx-auto"}`}
+            className={`flex flex-col ${!isLoggedIn ? "lg:items-start lg:text-left items-center text-center lg:w-1/2" : "items-center text-center w-full max-w-4xl mx-auto mt-16 sm:mt-24 lg:mt-0"}`}
           >
             <motion.span
               variants={itemVariants}
