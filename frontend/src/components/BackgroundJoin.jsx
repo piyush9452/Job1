@@ -31,13 +31,14 @@ const BackgroundJoin = ({ theme = "user" }) => {
 
     const initParticles = () => {
       particles = [];
+      const isMobile = document.documentElement.clientWidth < 640;
       for (let i = 0; i < particleCount; i++) {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
           vx: (Math.random() - 0.5) * 0.8,
           vy: (Math.random() - 0.5) * 0.8,
-          radius: 6,
+          radius: isMobile ? 3 : 6,
         });
       }
     };

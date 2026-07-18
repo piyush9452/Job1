@@ -83,7 +83,8 @@ export default function Login() {
   return (
     // FACT: Replaced 100dvh with min-h-screen to prevent the desktop band issue.
     // Removed unnecessary w-full that conflicts with Windows scrollbars.
-    <div className={`relative flex flex-col justify-center items-center min-h-screen font-sans p-4 sm:p-8 overflow-x-hidden transition-colors duration-700 ${
+    // UPDATE: Now fully fixed to screen to prevent any scrolling.
+    <div className={`fixed inset-0 flex flex-col justify-center items-center font-sans p-4 sm:p-8 overflow-hidden transition-colors duration-700 ${
       activeTab === "employer" ? "bg-[#0a0b22]" : "bg-slate-950"
     }`}>
       {/* FACT: The background is pinned directly to the screen viewport */}
@@ -95,7 +96,7 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl mt-8 mb-8">
+      <div className="relative z-10 w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl">
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
 
