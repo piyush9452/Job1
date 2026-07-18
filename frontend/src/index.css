@@ -4,5 +4,11 @@ html {
     -webkit-text-size-adjust: 100%;
 }
 
+@keyframes live-ticker {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
 
-
+.animate-live-ticker {
+  animation: live-ticker 40s linear infinite;
+}

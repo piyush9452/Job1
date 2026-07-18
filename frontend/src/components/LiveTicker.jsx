@@ -1,6 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
-
 export default function LiveActivityTicker() {
   // Split text into standard and highlighted parts for a premium typographic feel
   const activities = [
@@ -29,12 +27,8 @@ export default function LiveActivityTicker() {
       {/* Right Edge Fade Mask */}
       <div className="absolute right-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-l from-slate-900 to-transparent z-10 pointer-events-none" />
 
-      <motion.div
-        // Translating exactly half of the duplicated container guarantees a mathematically perfect, invisible reset
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-        className="flex w-max"
-      >
+      {/* Pure CSS hardware-accelerated animation instead of JS-driven framer-motion */}
+      <div className="flex w-max animate-live-ticker">
         {tickerItems.map((item, i) => (
           <div
             key={i}
@@ -53,7 +47,7 @@ export default function LiveActivityTicker() {
             </p>
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
