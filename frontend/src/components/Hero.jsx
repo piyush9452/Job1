@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import heroVideo from "../assets/herovideo.mp4";
-import mobileBg from "../assets/mobile_hero_bg.png";
+import MobileHeroBg from "./MobileHeroBg";
 
 export default function HeroSection() {
   const [title, setTitle] = useState("");
@@ -152,12 +152,8 @@ export default function HeroSection() {
         muted
         playsInline
       />
-      {/* Static image for mobile */}
-      <img 
-        src={mobileBg} 
-        alt="Background" 
-        className="absolute inset-0 w-full h-full object-cover block md:hidden"
-      />
+      {/* Animated CSS component for mobile */}
+      <MobileHeroBg />
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-slate-900/95 backdrop-blur-[4px]" />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8">
