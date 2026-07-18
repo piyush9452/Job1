@@ -12,38 +12,20 @@ import axios from "axios";
 import heroVideo from "../assets/herovideo.mp4";
 import MobileHeroBg from "./MobileHeroBg";
 
-export default function HeroSection() {
-  const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const navigate = useNavigate();
-
-  // --- Auth State ---
-  const isLoggedIn =
-    localStorage.getItem("userToken") || localStorage.getItem("employerToken");
-
-  // --- Typewriter Logic ---
+const Typewriter = () => {
   const words = ["Dream Career", "Future Role", "Remote Gig", "Next Chapter"];
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState(150);
 
-  // --- Quick Register State ---
-  const [regTab, setRegTab] = useState("jobseeker");
-  const [regLoading, setRegLoading] = useState(false);
-  const [regError, setRegError] = useState("");
-
-  const [regData, setRegData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    companyName: "",
-    companyEmail: "",
-    userType: "Company",
-  });
-
   useEffect(() => {
+    // Disable continuous JS typing loops on Android/mobile to save massive power
+    if (window.innerWidth <= 768) {
+      setDisplayText("Dream Career");
+      return;
+    }
+
     const handleTyping = () => {
       const fullWord = words[currentWordIndex];
 
@@ -66,6 +48,33 @@ export default function HeroSection() {
     const timer = setTimeout(handleTyping, typingSpeed);
     return () => clearTimeout(timer);
   }, [displayText, isDeleting, currentWordIndex]);
+
+  return <>{displayText}</>;
+};
+
+export default function HeroSection() {
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const navigate = useNavigate();
+
+  // --- Auth State ---
+  const isLoggedIn =
+    localStorage.getItem("userToken") || localStorage.getItem("employerToken");
+
+  // --- Quick Register State ---
+  const [regTab, setRegTab] = useState("jobseeker");
+  const [regLoading, setRegLoading] = useState(false);
+  const [regError, setRegError] = useState("");
+
+  const [regData, setRegData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    companyName: "",
+    companyEmail: "",
+    userType: "Company",
+  });
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -182,7 +191,7 @@ export default function HeroSection() {
             >
               Find your <br />
               <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-blue-400 bg-[length:200%_auto] animate-gradient bg-clip-text text-transparent min-h-[1.2em] inline-block ml-1 md:ml-0">
-                {displayText}
+                <Typewriter />
                 <span className="text-blue-400 animate-pulse ml-1">|</span>
               </span>
             </motion.h1>
