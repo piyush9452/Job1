@@ -28,38 +28,16 @@ const MobileHeroBg = () => {
 
   return (
     <div className="absolute inset-0 w-full h-full block md:hidden bg-[#010614] overflow-hidden z-0">
-      {/* 
-        Hardware-accelerated CSS animations for ultimate performance.
-        Zero JavaScript intervals required.
-      */}
-      <style>
-        {`
-          @keyframes ambientHue {
-            0% { filter: hue-rotate(0deg); }
-            50% { filter: hue-rotate(60deg); }
-            100% { filter: hue-rotate(0deg); }
-          }
-          .planet-ambience {
-            animation: ambientHue 12s ease-in-out infinite;
-          }
-        `}
-      </style>
-
-      <div className="absolute inset-0 w-full h-full planet-ambience">
-        {/* 
-          The glowing planet 
-          - Moved up (bottom-[-40vw]) for extreme visibility
-          - Replaced solid bg with a deep radial gradient for 3D depth
-          - Doubled the box-shadow spread for intense neon glow
-        */}
-        <div className="absolute bottom-[-45vw] sm:bottom-[-25vw] left-1/2 -translate-x-1/2 w-[160vw] h-[160vw] max-w-[900px] max-h-[900px] rounded-full border-t-2 border-cyan-400/80 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#03112e] via-[#010614] to-[#010614] shadow-[0_-10px_80px_rgba(34,211,238,0.8),inset_0_20px_100px_rgba(34,211,238,0.4)]" />
+      <div className="absolute inset-0 w-full h-full">
+        {/* The glowing planet - reverted position, kept radial gradient */}
+        <div className="absolute bottom-[-60vw] sm:bottom-[-40vw] left-1/2 -translate-x-1/2 w-[150vw] h-[150vw] max-w-[800px] max-h-[800px] rounded-full border-[1.5px] border-cyan-400/40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#03112e] via-[#010614] to-[#010614] shadow-[0_0_40px_rgba(34,211,238,0.5),inset_0_0_60px_rgba(34,211,238,0.2)]" />
         
         {/* Glowing dust emitting upwards */}
-        <div className="absolute bottom-[-45vw] sm:bottom-[-25vw] left-1/2 -translate-x-1/2 w-[160vw] h-[160vw] max-w-[900px] max-h-[900px] pointer-events-none">
+        <div className="absolute bottom-[-60vw] sm:bottom-[-40vw] left-1/2 -translate-x-1/2 w-[150vw] h-[150vw] max-w-[800px] max-h-[800px] pointer-events-none">
           {particles.map((p) => (
             <motion.div
               key={p.id}
-              className="absolute rounded-full bg-white shadow-[0_0_8px_2px_rgba(34,211,238,1)]"
+              className="absolute rounded-full bg-cyan-100"
               style={{
                 width: p.size,
                 height: p.size,
