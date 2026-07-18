@@ -150,16 +150,14 @@ export default function JobDetailsModal({ job, onClose }) {
               <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                 {/* Job Highlights */}
                 {validFeatures.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
                     {validFeatures.map((feature, i) => (
                       <div
                         key={i}
-                        className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 p-4 sm:p-5 rounded-2xl flex items-start gap-3 sm:gap-4 shadow-sm"
+                        className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl flex items-center gap-1.5 sm:gap-2 shadow-sm w-fit"
                       >
-                        <div className="p-2 bg-amber-100/50 rounded-lg shrink-0">
-                          <Zap className="text-amber-500" size={18} />
-                        </div>
-                        <p className="text-xs sm:text-sm font-bold text-amber-900 mt-0.5 sm:mt-1 leading-snug">
+                        <Zap className="text-amber-500 shrink-0" size={14} />
+                        <p className="text-[10px] sm:text-xs font-bold text-amber-900 leading-none m-0">
                           {feature}
                         </p>
                       </div>
@@ -332,9 +330,9 @@ export default function JobDetailsModal({ job, onClose }) {
                   )}
                 </section>
 
-                {/* FACT: New Assessment / Screening Questions Section */}
+                {/* FACT: New Assessment / Screening Questions Section (Desktop Only) */}
                 {job.screeningQuestions?.length > 0 && (
-                  <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+                  <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm hidden lg:block">
                     <h2 className="text-base sm:text-lg font-extrabold text-slate-800 mb-4 border-b border-slate-100 pb-4 flex items-center gap-3">
                       <div className="p-2 bg-rose-50 rounded-lg text-rose-600">
                         <HelpCircle size={18} />
@@ -540,6 +538,34 @@ export default function JobDetailsModal({ job, onClose }) {
                     />
                   </div>
                 </section>
+
+                {/* FACT: Assessment / Screening Questions Section (Mobile Only - Placed at bottom) */}
+                {job.screeningQuestions?.length > 0 && (
+                  <section className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-sm block lg:hidden mt-4">
+                    <h2 className="text-sm sm:text-lg font-extrabold text-slate-800 mb-3 border-b border-slate-100 pb-3 flex items-center gap-2">
+                      <div className="p-1.5 bg-rose-50 rounded-lg text-rose-600">
+                        <HelpCircle size={16} />
+                      </div>{" "}
+                      Application Assessment
+                    </h2>
+                    <p className="text-[10px] font-bold text-slate-500 mb-3">
+                      You will be required to answer the following questions during the application process:
+                    </p>
+                    <ul className="space-y-2">
+                      {job.screeningQuestions.map((q, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[10px] sm:text-sm font-medium text-slate-700"
+                        >
+                          <span className="font-extrabold text-rose-500">
+                            Q{i + 1}.
+                          </span>{" "}
+                          {q}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
               </div>
             </div>
           </div>
