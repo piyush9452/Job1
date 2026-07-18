@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import heroVideo from "../assets/herovideo.mp4";
+import mobileBg from "../assets/mobile_hero_bg.png";
 
 export default function HeroSection() {
   const [title, setTitle] = useState("");
@@ -142,13 +143,20 @@ export default function HeroSection() {
     // FACT: Mobile fix - Changed fixed h-[85vh] to min-h-[100dvh] so the page can scroll on small devices
     // Added pt-28 pb-12 so the content isn't hidden under your transparent navbar
     <section className="relative w-full min-h-[100dvh] lg:min-h-[750px] lg:h-[85vh] flex lg:items-center justify-center overflow-hidden font-sans pt-36 pb-12 lg:pt-36 lg:pb-16">
+      {/* Video for desktop */}
       <video
-        className="absolute inset-0 w-full h-full object-cover scale-105"
+        className="absolute inset-0 w-full h-full object-cover scale-105 hidden md:block"
         src={heroVideo}
         autoPlay
         loop
         muted
         playsInline
+      />
+      {/* Static image for mobile */}
+      <img 
+        src={mobileBg} 
+        alt="Background" 
+        className="absolute inset-0 w-full h-full object-cover block md:hidden"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-slate-900/95 backdrop-blur-[4px]" />
 

@@ -143,7 +143,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-300 ${
+      className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-300 pt-6 md:pt-[env(safe-area-inset-top)] ${
         showNavbar ? "translate-y-0" : "-translate-y-full"
       } ${
         scrolled || menuOpen
