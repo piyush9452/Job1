@@ -795,19 +795,19 @@ export default function CreateJob() {
   }
 
   return (
-    <div className="flex flex-col py-20 md:flex-row gap-10 p-8 bg-gray-50 min-h-screen">
+    <div className="flex flex-col pt-24 pb-10 sm:py-20 md:flex-row gap-4 sm:gap-10 p-4 sm:p-8 bg-gray-50 min-h-screen">
       {isPostingDisabled && (
         <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl mb-6 font-bold flex items-center gap-3">
           <AlertTriangle size={20} />
           {blockMessage}
         </div>
       )}
-      <div className="w-full md:w-1/2 bg-white p-8 rounded-2xl shadow-lg border border-gray-100 overflow-y-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">
+      <div className="w-full md:w-1/2 bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-gray-100 overflow-y-auto">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
             {locationState?.repostData ? "Repost a Job" : "Create a Job"}
           </h1>
-          <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+          <span className="text-xs sm:text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
             Step {step} of 2
           </span>
         </div>
@@ -1097,7 +1097,7 @@ export default function CreateJob() {
                 </div>
               </div>
 
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
                 <div className="relative" ref={currencyRef}>
                   <button
                     type="button"
@@ -1199,7 +1199,7 @@ export default function CreateJob() {
                   )}
                 </div>
 
-                <div className="flex-1 flex items-center gap-3 w-full">
+                <div className="flex-1 flex items-center gap-2 sm:gap-3 w-full">
                   <input
                     type="number"
                     placeholder="Min Salary"
@@ -1957,7 +1957,7 @@ export default function CreateJob() {
             {(job.mode.includes("Work from office") ||
               job.mode.includes("Work from field")) && (
               <div className="space-y-4">
-                <h3 className="font-bold text-gray-800 flex items-center justify-between text-lg">
+                <h3 className="font-bold text-gray-800 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 justify-between text-base sm:text-lg">
                   <span className="flex items-center gap-2">
                     <MapPin className="text-blue-600" /> Job Location{" "}
                     <span className="text-red-500 text-sm">*</span>
