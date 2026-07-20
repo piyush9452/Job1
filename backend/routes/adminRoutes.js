@@ -14,7 +14,8 @@ import {
   freezeEmployer,searchJobseekers,searchEmployers,
   createAdmin, getAllJobsForAdmin, getEmployerJobsWithApplications, getJobseekerApplicationsForAdmin,
   getAllEmployersForAdmin, getAllJobseekersForAdmin,
-  exportEmployersDataToExcel, exportJobseekersDataToExcel, getAdminDashboardStats
+  exportEmployersDataToExcel, exportJobseekersDataToExcel, getAdminDashboardStats,
+  getAllContactsForAdmin, markContactAsRead
 } from "../controllers/adminControllers.js";
 import { protectAdmin, restrictTo } from "../middleware/authorization.js";
 
@@ -41,6 +42,8 @@ router.get('/jobs/:id', protectAdmin, getJobForAdmin);
 
 // Dashboard & Export Routes
 router.get('/stats', protectAdmin, getAdminDashboardStats);
+router.get('/contacts', protectAdmin, getAllContactsForAdmin);
+router.patch('/contacts/:id/read', protectAdmin, markContactAsRead);
 router.get('/export/all', protectAdmin, restrictTo('superAdmin'), exportDataToExcel);
 router.get('/export/employers', protectAdmin, restrictTo('superAdmin', 'employerAdmin'), exportEmployersDataToExcel);
 router.get('/export/jobseekers', protectAdmin, restrictTo('superAdmin', 'jobseekerAdmin'), exportJobseekersDataToExcel);

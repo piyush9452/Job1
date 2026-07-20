@@ -498,3 +498,23 @@ export const getAdminDashboardStats = expressAsyncHandler(async (req, res) => {
   const totalEmployers = await Employer.countDocuments();
   res.json({ jobs: totalJobs, jobseekers: totalJobseekers, employers: totalEmployers });
 });
+
+// @desc    Get all contact messages for admins
+// @route   GET /api/admin/contacts
+export const getAllContactsForAdmin = expressAsyncHandler(async (req, res) => {
+  const contacts = await Contact.find({}).sort({ createdAt: -1 });
+  res.status(200).json(contacts);
+});
+
+// @desc    Mark contact message as read
+// @route   PATCH /api/admin/contacts/:id/read
+export const markContactAsRead = expressAsyncHandler(async (req, res) => {
+  const contact = await Contact.findById(req.params.id);
+  if (!contact) {
+    res.status(404);
+    throw new Error("Contact message not found");
+  }
+  contact.isRead = true;
+  await contact.save();
+  res.status(200).json({ message: "Contact marked as read", contact });
+});

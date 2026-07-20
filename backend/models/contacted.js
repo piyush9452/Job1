@@ -10,6 +10,7 @@ const contactSchema = new mongoose.Schema({
     required: true 
   },
   message: { type: String, required: true }, // main content of the message
+  isRead: { type: Boolean, default: false }, // tracking if admin has viewed it
   createdAt: { type: Date, default: Date.now }
 });
 

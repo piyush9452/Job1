@@ -53,7 +53,7 @@ export default function CompanyProfile() {
             j.postedBy === id &&
             j.status !== "pending_approval" &&
             j.status !== "rejected" &&
-            j.status !== "disregarded"
+            j.status !== "disregarded",
         );
         setJobs(companyJobs);
       } catch (err) {
@@ -119,10 +119,10 @@ export default function CompanyProfile() {
   const logo = company.profilePicture || company.image;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24 ">
       {/* --- HERO COVER SECTION --- */}
-      <div className="h-48 sm:h-64 bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 relative">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+      <div className="h-48 sm:h-64 bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 relative ">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 "></div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full relative">
           <button
             onClick={() => navigate(-1)}

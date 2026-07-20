@@ -29,10 +29,10 @@ android {
         create("release") {
             // Point this to your keystore file. 
             // Relative to: frontend/src-tauri/gen/android/app
-            storeFile = file("../../../../adorejob-release.keystore")
-            storePassword = System.getenv("TAURI_KEYSTORE_PASSWORD") ?: "YOUR_PASSWORD_HERE"
-            keyAlias = System.getenv("TAURI_KEYSTORE_ALIAS") ?: "adorejob-alias"
-            keyPassword = System.getenv("TAURI_KEYSTORE_ALIAS_PASSWORD") ?: "YOUR_PASSWORD_HERE"
+            storeFile = file("../../../../adorejob-new.keystore")
+            storePassword = "AdoreJob2026"
+            keyAlias = "adorejob-alias"
+            keyPassword = "AdoreJob2026"
         }
     }
 
