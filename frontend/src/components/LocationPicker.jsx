@@ -220,30 +220,32 @@ export default function LocationPicker({ onLocationSelect }) {
   return (
     <div className="space-y-3">
       {/* Search Bar */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search city or area..."
-          className="flex-1 p-2 border rounded-lg text-sm"
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-        />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex gap-2 flex-1">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search city or area..."
+            className="flex-1 p-2 border rounded-lg text-sm"
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors shrink-0"
+            title="Search"
+          >
+            <Search size={20} />
+          </button>
+        </div>
         <button
           type="button"
           onClick={handleCurrentLocation}
-          className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors gap-2 text-sm font-bold whitespace-nowrap"
+          className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors gap-2 text-sm font-bold whitespace-nowrap w-full sm:w-auto"
           title="Use My Current Location"
         >
           <Navigation size={18} /> Use My Current Location
-        </button>
-        <button
-          type="button"
-          onClick={handleSearch}
-          className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
-          title="Search"
-        >
-          <Search size={20} />
         </button>
       </div>
 
