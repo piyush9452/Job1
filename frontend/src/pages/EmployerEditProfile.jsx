@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import LocationPicker from "../components/LocationPicker.jsx";
 import {
   Loader2,
@@ -125,9 +126,18 @@ export default function EmployerEditProfile() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      await axios.put(data.uploadUrl, file, {
-        headers: { "Content-Type": file.type },
-      });
+      if (window.__TAURI__) {
+        const arrayBuffer = await file.arrayBuffer();
+        await tauriFetch(data.uploadUrl, {
+          method: "PUT",
+          body: new Uint8Array(arrayBuffer),
+          headers: { "Content-Type": file.type },
+        });
+      } else {
+        await axios.put(data.uploadUrl, file, {
+          headers: { "Content-Type": file.type },
+        });
+      }
 
       setForm((prev) => ({ ...prev, profilePicture: data.publicUrl }));
     } catch (error) {

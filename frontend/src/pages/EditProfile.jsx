@@ -22,6 +22,7 @@ import {
   Globe,
   HeartHandshake,
 } from "lucide-react";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 
 export default function EditProfile() {
   const navigate = useNavigate();
@@ -184,11 +185,20 @@ export default function EditProfile() {
         { fileType: file.type },
         { headers: { Authorization: `Bearer ${storedData.token}` } }
       );
-      await fetch(s3Data.uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
+      if (window.__TAURI__) {
+        const arrayBuffer = await file.arrayBuffer();
+        await tauriFetch(s3Data.uploadUrl, {
+          method: "PUT",
+          body: new Uint8Array(arrayBuffer),
+          headers: { "Content-Type": file.type },
+        });
+      } else {
+        await fetch(s3Data.uploadUrl, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        });
+      }
       await axios.post(
         `https://jobone-if7l.onrender.com/user/${userId}/resume/save-key`,
         { key: s3Data.key },
@@ -262,9 +272,18 @@ export default function EditProfile() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      await axios.put(data.uploadUrl, file, {
-        headers: { "Content-Type": file.type },
-      });
+      if (window.__TAURI__) {
+        const arrayBuffer = await file.arrayBuffer();
+        await tauriFetch(data.uploadUrl, {
+          method: "PUT",
+          body: new Uint8Array(arrayBuffer),
+          headers: { "Content-Type": file.type },
+        });
+      } else {
+        await axios.put(data.uploadUrl, file, {
+          headers: { "Content-Type": file.type },
+        });
+      }
 
       setProfile(prev => ({ ...prev, profilePicture: data.publicUrl }));
     } catch (error) {
