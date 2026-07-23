@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [allEmployers, setAllEmployers] = useState([]);
   const [allJobseekers, setAllJobseekers] = useState([]);
   const [allContacts, setAllContacts] = useState([]);
+  const [allAdmins, setAllAdmins] = useState([]);
 
   // Search States
   const [searchQuery, setSearchQuery] = useState("");
@@ -129,6 +130,13 @@ export default function AdminDashboard() {
           .catch(() => ({ data: [] }));
         setAllJobseekers(usersRes.data);
       }
+
+      if (admin.role === "superAdmin") {
+        const adminsRes = await axios
+          .get("https://jobone-mrpy.onrender.com/admin/all-admins", { headers })
+          .catch(() => ({ data: [] }));
+        setAllAdmins(adminsRes.data);
+      }
     } catch (err) {
       if (err.response?.status === 401) navigate("/admin/login");
     } finally {
@@ -149,6 +157,37 @@ export default function AdminDashboard() {
       );
     } catch (err) {
       alert("Failed to mark message as read.");
+    }
+  };
+
+  const handleChangeAdminRole = async (id, newRole) => {
+    try {
+      const token = JSON.parse(localStorage.getItem("adminInfo")).token;
+      await axios.patch(
+        `https://jobone-mrpy.onrender.com/admin/${id}/role`,
+        { role: newRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAllAdmins((prev) =>
+        prev.map((a) => (a._id === id ? { ...a, role: newRole } : a))
+      );
+      alert("Role updated successfully!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update role");
+    }
+  };
+
+  const handleDeleteAdmin = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this admin?")) return;
+    try {
+      const token = JSON.parse(localStorage.getItem("adminInfo")).token;
+      await axios.delete(`https://jobone-mrpy.onrender.com/admin/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAllAdmins((prev) => prev.filter((a) => a._id !== id));
+      alert("Admin deleted successfully!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete admin");
     }
   };
 
@@ -276,7 +315,7 @@ export default function AdminDashboard() {
     setIsCreatingAdmin(true);
     try {
       const token = JSON.parse(localStorage.getItem("adminInfo")).token;
-      await axios.post(
+      const res = await axios.post(
         "https://jobone-mrpy.onrender.com/admin/create-admin",
         {
           name: newAdminName,
@@ -286,6 +325,15 @@ export default function AdminDashboard() {
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
+      
+      if (res.data && res.data.admin) {
+        setAllAdmins((prev) => [...prev, res.data.admin]);
+      } else {
+        // Fallback fetch if API doesn't return the admin
+        const adminsRes = await axios.get("https://jobone-mrpy.onrender.com/admin/all-admins", { headers: { Authorization: `Bearer ${token}` } });
+        setAllAdmins(adminsRes.data);
+      }
+
       alert("Admin created successfully!");
       setNewAdminName("");
       setNewAdminEmail("");
@@ -1156,84 +1204,152 @@ export default function AdminDashboard() {
 
           {/* MANAGE ADMINS PANEL (Super Admin Only) */}
           {activeTab === "manageAdmins" && adminRole === "superAdmin" && (
-            <div>
-              <h2 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
-                <ShieldAlert className="text-indigo-600" /> Manage Admins
-              </h2>
-              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-xl">
-                <h3 className="text-lg font-bold mb-6 text-slate-700">
-                  Provision New Sub-Admin
-                </h3>
-                <form onSubmit={handleCreateAdmin} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">
-                      Admin Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newAdminName}
-                      onChange={(e) => setNewAdminName(e.target.value)}
-                      className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                      placeholder="John Doe"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={newAdminEmail}
-                      onChange={(e) => setNewAdminEmail(e.target.value)}
-                      className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                      placeholder="admin@jobone.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">
-                      Secure Password
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={newAdminPassword}
-                      onChange={(e) => setNewAdminPassword(e.target.value)}
-                      className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">
-                      Role Type
-                    </label>
-                    <select
-                      value={newAdminRole}
-                      onChange={(e) => setNewAdminRole(e.target.value)}
-                      className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800"
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+                <div className="bg-indigo-100 p-2.5 rounded-xl">
+                  <ShieldAlert size={24} className="text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-800">
+                    Manage Admins
+                  </h2>
+                  <p className="text-slate-500 font-medium">
+                    Directory and role management.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col lg:flex-row gap-8 items-start">
+                {/* LEFT: ADMIN DIRECTORY */}
+                <div className="flex-1 w-full space-y-4">
+                  <h3 className="text-lg font-bold text-slate-700">Admin Directory</h3>
+                  {allAdmins.length === 0 ? (
+                    <div className="p-8 text-center bg-white border border-slate-200 rounded-3xl shadow-sm text-slate-400 font-medium">
+                      Loading admins...
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+                      {allAdmins.map((admin, index) => (
+                        <div
+                          key={admin._id}
+                          className={`p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                            index !== allAdmins.length - 1 ? "border-b border-slate-100" : ""
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-lg">
+                              {admin.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">{admin.name}</p>
+                              <p className="text-xs text-slate-500 font-medium">{admin.email}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={admin.role}
+                              onChange={(e) => handleChangeAdminRole(admin._id, e.target.value)}
+                              className={`text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer border-r-8 border-transparent ${
+                                admin.role === "superAdmin"
+                                  ? "bg-purple-100 text-purple-700"
+                                  : admin.role === "employerAdmin"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-emerald-100 text-emerald-700"
+                              }`}
+                            >
+                              <option value="superAdmin">Super Admin</option>
+                              <option value="employerAdmin">Employer Admin</option>
+                              <option value="jobseekerAdmin">Jobseeker Admin</option>
+                            </select>
+
+                            <button
+                              onClick={() => handleDeleteAdmin(admin._id)}
+                              className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                              title="Delete Admin"
+                            >
+                              <XCircle size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* RIGHT: CREATE ADMIN FORM */}
+                <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200 w-full lg:w-[400px] shrink-0">
+                  <h3 className="text-lg font-bold mb-6 text-slate-700">
+                    Provision New Admin
+                  </h3>
+                  <form onSubmit={handleCreateAdmin} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 ml-1 uppercase tracking-wider">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newAdminName}
+                        onChange={(e) => setNewAdminName(e.target.value)}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 ml-1 uppercase tracking-wider">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={newAdminEmail}
+                        onChange={(e) => setNewAdminEmail(e.target.value)}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                        placeholder="admin@jobone.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 ml-1 uppercase tracking-wider">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={newAdminPassword}
+                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 ml-1 uppercase tracking-wider">
+                        Role
+                      </label>
+                      <select
+                        value={newAdminRole}
+                        onChange={(e) => setNewAdminRole(e.target.value)}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 text-sm"
+                      >
+                        <option value="employerAdmin">Employer Admin</option>
+                        <option value="jobseekerAdmin">Jobseeker Admin</option>
+                        <option value="superAdmin">Super Admin</option>
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isCreatingAdmin}
+                      className="w-full bg-indigo-600 text-white py-3 px-4 font-black rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md mt-6 text-sm"
                     >
-                      <option value="employerAdmin">
-                        Employer Admin (Approves Companies & Jobs)
-                      </option>
-                      <option value="jobseekerAdmin">
-                        Jobseeker Admin (Manages Users)
-                      </option>
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isCreatingAdmin}
-                    className="w-full bg-indigo-600 text-white p-4 font-black text-lg rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 mt-8"
-                  >
-                    {isCreatingAdmin ? (
-                      <Loader2 className="animate-spin" size={20} />
-                    ) : (
-                      <ShieldAlert size={20} />
-                    )}{" "}
-                    Create Secure Account
-                  </button>
-                </form>
+                      {isCreatingAdmin ? (
+                        <Loader2 className="animate-spin" size={18} />
+                      ) : (
+                        <ShieldAlert size={18} />
+                      )}{" "}
+                      Create Account
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           )}

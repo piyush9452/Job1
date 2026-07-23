@@ -15,7 +15,8 @@ import {
   createAdmin, getAllJobsForAdmin, getEmployerJobsWithApplications, getJobseekerApplicationsForAdmin,
   getAllEmployersForAdmin, getAllJobseekersForAdmin,
   exportEmployersDataToExcel, exportJobseekersDataToExcel, getAdminDashboardStats,
-  getAllContactsForAdmin, markContactAsRead
+  getAllContactsForAdmin, markContactAsRead,
+  getAllAdmins, updateAdminRole, deleteAdmin
 } from "../controllers/adminControllers.js";
 import { protectAdmin, restrictTo } from "../middleware/authorization.js";
 
@@ -25,6 +26,9 @@ router.post("/login", authAdmin);
 
 // Super Admin Only Route
 router.post("/create-admin", protectAdmin, restrictTo("superAdmin"), createAdmin);
+router.get("/all-admins", protectAdmin, restrictTo("superAdmin"), getAllAdmins);
+router.patch("/:id/role", protectAdmin, restrictTo("superAdmin"), updateAdminRole);
+router.delete("/:id", protectAdmin, restrictTo("superAdmin"), deleteAdmin);
 
 // Protected Global Admin Routes
 router.get("/employers/pending", protectAdmin, restrictTo('superAdmin', 'employerAdmin'), getPendingEmployers);

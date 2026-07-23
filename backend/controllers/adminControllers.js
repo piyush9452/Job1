@@ -518,3 +518,54 @@ export const markContactAsRead = expressAsyncHandler(async (req, res) => {
   await contact.save();
   res.status(200).json({ message: "Contact marked as read", contact });
 });
+
+// @desc    Get all admins
+// @route   GET /api/admin/all-admins
+export const getAllAdmins = expressAsyncHandler(async (req, res) => {
+  const admins = await Admin.find({}).select("-password");
+  res.status(200).json(admins);
+});
+
+// @desc    Update admin role
+// @route   PATCH /api/admin/:id/role
+export const updateAdminRole = expressAsyncHandler(async (req, res) => {
+  const { role } = req.body;
+  const admin = await Admin.findById(req.params.id);
+  if (!admin) {
+    res.status(404);
+    throw new Error("Admin not found");
+  }
+  
+  if (admin.role === "superAdmin" && role !== "superAdmin") {
+    const superAdminCount = await Admin.countDocuments({ role: "superAdmin" });
+    if (superAdminCount <= 1) {
+      res.status(400);
+      throw new Error("Cannot change role of the only Super Admin");
+    }
+  }
+
+  admin.role = role;
+  await admin.save();
+  res.status(200).json({ message: "Admin role updated", admin: { _id: admin._id, name: admin.name, email: admin.email, role: admin.role } });
+});
+
+// @desc    Delete admin
+// @route   DELETE /api/admin/:id
+export const deleteAdmin = expressAsyncHandler(async (req, res) => {
+  const admin = await Admin.findById(req.params.id);
+  if (!admin) {
+    res.status(404);
+    throw new Error("Admin not found");
+  }
+  
+  if (admin.role === "superAdmin") {
+    const superAdminCount = await Admin.countDocuments({ role: "superAdmin" });
+    if (superAdminCount <= 1) {
+      res.status(400);
+      throw new Error("Cannot delete the only Super Admin");
+    }
+  }
+
+  await Admin.deleteOne({ _id: admin._id });
+  res.status(200).json({ message: "Admin deleted successfully" });
+});
