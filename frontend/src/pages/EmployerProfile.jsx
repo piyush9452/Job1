@@ -288,18 +288,16 @@ export default function EmployerProfile() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {jobs.map((job) => (
                   <motion.div key={job._id} whileHover={{ y: -2 }} className="cursor-pointer group bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col h-full" onClick={() => navigate(`/job/${job._id}`)}>
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-center mb-3">
                       <h3 className="font-bold text-gray-800 text-sm sm:text-base line-clamp-1 pr-2 group-hover:text-blue-700 transition-colors">{job.title}</h3>
                       {job.status === "pending_approval" && (
-                         <span className="text-[10px] bg-orange-100 text-orange-700 font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap">Pending</span>
+                         <span className="text-[10px] bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded-md whitespace-nowrap">Pending</span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-xs text-gray-500 mb-3 font-medium">
-                      <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{job.jobType}</span>
-                      <span>•</span>
-                      <span className="truncate max-w-[120px] sm:max-w-[150px]">{job.location?.address || "Remote"}</span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 font-medium mb-4">
+                      <span className="bg-gray-100 px-2 py-1 rounded text-gray-700">{job.jobType}</span>
+                      <span className="truncate max-w-[150px]">{job.location?.address || "Remote"}</span>
                     </div>
-                    <p className="text-[13px] sm:text-sm text-gray-600 line-clamp-2 mb-4 flex-grow">{job.description}</p>
                     <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
                       <div className="text-blue-600 font-bold text-xs sm:text-sm group-hover:translate-x-1 transition-transform">
                         View Details →

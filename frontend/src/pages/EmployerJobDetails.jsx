@@ -211,7 +211,7 @@ export default function EmployerJobDetails() {
                     <div className="p-2 bg-amber-100/50 rounded-lg shrink-0">
                       <Zap className="text-amber-500" size={18} sm:size={20} />
                     </div>
-                    <p className="text-xs sm:text-sm font-bold text-amber-900 mt-0.5 sm:mt-1 leading-snug">
+                    <p className="text-[11px] sm:text-xs font-bold text-amber-900 mt-0.5 sm:mt-1 leading-snug">
                       {feature}
                     </p>
                   </div>
@@ -293,7 +293,7 @@ export default function EmployerJobDetails() {
                   {job.skillsRequired.map((skill, i) => (
                     <span
                       key={i}
-                      className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-900 text-white rounded-xl text-[10px] sm:text-xs font-bold shadow-sm"
+                      className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-900 text-white rounded-xl text-[10px] sm:text-xs font-bold shadow-sm"
                     >
                       {skill}
                     </span>
@@ -319,7 +319,7 @@ export default function EmployerJobDetails() {
                   {job.screeningQuestions.map((q, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3 bg-white p-4 rounded-xl border border-rose-100 text-sm font-medium text-slate-700 shadow-sm"
+                      className="flex items-start gap-3 bg-white p-3 sm:p-4 rounded-xl border border-rose-100 text-[11px] sm:text-xs font-medium text-slate-700 shadow-sm"
                     >
                       <span className="font-extrabold text-rose-500">
                         Q{i + 1}.
@@ -339,7 +339,7 @@ export default function EmployerJobDetails() {
                   Job Summary
                 </h2>
                 <div
-                  className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium"
+                  className="prose max-w-none text-xs sm:text-sm text-slate-600 leading-relaxed font-medium"
                   dangerouslySetInnerHTML={{
                     __html: job.jobSummary || job.description,
                   }}
@@ -354,7 +354,7 @@ export default function EmployerJobDetails() {
                     Key Responsibilities
                   </h2>
 
-                  <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-medium prose-ul:list-disc prose-ul:pl-5 prose-li:marker:text-purple-500">
+                  <div className="prose max-w-none text-xs sm:text-sm text-slate-600 leading-relaxed font-medium prose-ul:list-disc prose-ul:pl-5 prose-li:marker:text-purple-500">
                     {(() => {
                       let respHtml = job.keyResponsibilities;
 
@@ -415,18 +415,17 @@ export default function EmployerJobDetails() {
                 </p>
                 <div className="flex items-baseline gap-1.5 sm:gap-2 mb-5 sm:mb-6">
                   <IndianRupee
-                    size={24}
-                    sm:size={28}
-                    className="text-emerald-400"
+                    size={20}
+                    className="text-emerald-400 sm:w-6 sm:h-6"
                   />
-                  <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight">
                     {/* FACT: Updated to read the new min/max fields with explicit currency */}
                     {job.salaryMin === 0 && job.salaryMax === 0
                       ? "Unpaid"
                       : `${job.salaryCurrency || "₹"} ${job.salaryMin?.toLocaleString() || 0} - ${job.salaryMax?.toLocaleString() || 0}`}
                   </span>
                 </div>
-                <div className="bg-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10 flex justify-between items-center text-xs sm:text-sm font-bold backdrop-blur-md">
+                <div className="bg-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-white/10 flex justify-between items-center text-[10px] sm:text-xs font-bold backdrop-blur-md">
                   <span className="text-slate-300">Frequency</span>
                   <span className="text-emerald-400 uppercase tracking-wider">
                     {job.salaryFrequency || "Monthly"}
