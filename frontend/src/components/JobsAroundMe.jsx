@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from "axios";
+import { getCurrentPosition, checkPermissions, requestPermissions } from "@tauri-apps/plugin-geolocation";
 import CompanyDisplay from "./CompanyDisplay";
 import {
   MapPin,
@@ -62,35 +63,59 @@ export default function JobsAroundMe({ onJobClick }) {
     return () => window.removeEventListener("autoTriggerLocation", handleAutoTrigger);
   }, []);
 
-  const handleGetLocation = () => {
+  const handleGetLocation = async () => {
     setLoading(true);
     setError(null);
 
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser.");
-      setLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        fetchNearbyJobs(latitude, longitude);
-      },
-      (err) => {
-        console.error(err);
-        setLoading(false);
-        if (err.code === 1) {
-          setError(
-            "Location permission denied. Please allow location access to find jobs near you."
-          );
-        } else {
-          setError("Unable to retrieve your location. Please try again or check your device settings.");
+    // If running inside Tauri (Android/Desktop app)
+    if (window.__TAURI__) {
+      try {
+        let permissions = await checkPermissions();
+        if (permissions.location === 'prompt' || permissions.location === 'prompt-with-rationale') {
+          permissions = await requestPermissions();
         }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+        if (permissions.location !== 'granted') {
+          setError("Location permission denied. Please allow location access in your device settings.");
+          setLoading(false);
+          return;
+        }
+
+        const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        fetchNearbyJobs(pos.coords.latitude, pos.coords.longitude);
+      } catch (err) {
+        console.error(err);
+        setError("Unable to retrieve your location. Please try again or check your device settings.");
+        setLoading(false);
+      }
+    } else {
+      // Running in standard web browser
+      if (!navigator.geolocation) {
+        setError("Geolocation is not supported by your browser.");
+        setLoading(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+          fetchNearbyJobs(latitude, longitude);
+        },
+        (err) => {
+          console.error(err);
+          setLoading(false);
+          if (err.code === 1) {
+            setError(
+              "Location permission denied. Please allow location access to find jobs near you."
+            );
+          } else {
+            setError("Unable to retrieve your location. Please try again or check your device settings.");
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
   };
 
   const fetchNearbyJobs = async (lat, lng) => {

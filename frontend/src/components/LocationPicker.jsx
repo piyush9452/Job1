@@ -10,6 +10,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from "axios";
 import { Search, Navigation } from "lucide-react";
+import { getCurrentPosition, checkPermissions, requestPermissions } from "@tauri-apps/plugin-geolocation";
 
 // Fix Leaflet's default icon path issue in React
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -139,14 +140,19 @@ export default function LocationPicker({ onLocationSelect }) {
     }
   };
 
-  const handleCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
+  const handleCurrentLocation = async () => {
+    if (window.__TAURI__) {
+      try {
+        let permissions = await checkPermissions();
+        if (permissions.location === 'prompt' || permissions.location === 'prompt-with-rationale') {
+          permissions = await requestPermissions();
+        }
+        if (permissions.location !== 'granted') {
+          alert("Location permission denied. Please allow location access in your device settings.");
+          return;
+        }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+        const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         
@@ -168,11 +174,47 @@ export default function LocationPicker({ onLocationSelect }) {
           setPosition(newPos);
           setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
         }
-      },
-      (err) => {
-        alert("Unable to retrieve your location. Please ensure location permissions are granted in your browser settings.");
+      } catch (err) {
+        console.error(err);
+        alert("Unable to retrieve your location. Please try again or check your device settings.");
       }
-    );
+    } else {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          
+          try {
+            const res = await axios.get(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+            );
+            const newAddress = res.data.display_name;
+            const newPos = { lat, lng };
+
+            setMapCenter([lat, lng]);
+            setPosition(newPos);
+            setAddress(newAddress);
+            setSearchQuery(""); // Clear search query if they used GPS
+          } catch (error) {
+            console.error("Reverse geocoding failed", error);
+            const newPos = { lat, lng };
+            setMapCenter([lat, lng]);
+            setPosition(newPos);
+            setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("Unable to retrieve your location. Please ensure location services are enabled.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
   };
 
   return (
