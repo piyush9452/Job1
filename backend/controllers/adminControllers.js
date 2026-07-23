@@ -87,7 +87,7 @@ export const authAdmin = errorHandler(async (req, res) => {
 export const createAdmin = expressAsyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
 
-  if (!['jobseekerAdmin', 'employerAdmin'].includes(role)) {
+  if (!['jobseekerAdmin', 'employerAdmin','superAdmin'].includes(role)) {
     res.status(400);
     throw new Error('Invalid role. Must be jobseekerAdmin or employerAdmin');
   }
