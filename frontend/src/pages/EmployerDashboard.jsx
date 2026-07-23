@@ -192,10 +192,10 @@ export default function EmployerDashboard() {
       <main className="flex-1 md:ml-64 px-0 sm:px-8 relative">
         <header className="mb-6 sm:mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900">
               Welcome back, {employerName}!
             </h1>
-            <p className="mt-1 text-sm sm:text-base text-slate-500">
+            <p className="mt-1 text-xs sm:text-sm text-slate-500">
               {approvalStatus === "approved"
                 ? "Here's a live overview of your hiring pipeline."
                 : "Your account security status overview."}
@@ -206,7 +206,7 @@ export default function EmployerDashboard() {
           {approvalStatus === "approved" && (
             <button
               onClick={() => navigate("/createjob")}
-              className="flex items-center justify-center w-full sm:w-auto gap-2 rounded-xl bg-blue-600 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
+              className="flex items-center justify-center w-full sm:w-auto gap-2 rounded-xl bg-blue-600 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
             >
               <PlusCircle size={18} /> Post New Job
             </button>
@@ -556,10 +556,10 @@ function StatCard({ label, value, color }) {
     purple: "bg-purple-50 text-purple-600",
   };
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
-      <p className="text-[11px] sm:text-sm font-medium text-slate-500 truncate">{label}</p>
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm">
+      <p className="text-[10px] sm:text-xs font-medium text-slate-500 truncate">{label}</p>
       <div className="mt-1 sm:mt-2 flex items-end justify-between">
-        <h4 className="text-xl sm:text-3xl font-extrabold text-slate-900">{value}</h4>
+        <h4 className="text-lg sm:text-2xl font-extrabold text-slate-900">{value}</h4>
         <span
           className={`rounded-lg px-1.5 py-0.5 sm:px-2 sm:py-1 text-[9px] sm:text-xs font-bold ${colors[color] || colors.blue}`}
         >
@@ -592,11 +592,11 @@ function JobCard({ job, toggleJobStatus, navigate, employerName }) {
   return (
     <div 
       onClick={() => navigate(`/job/${job._id}`)}
-      className="border border-slate-200 bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col gap-3 group relative"
+      className="border border-slate-200 bg-white rounded-2xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col gap-2.5 group relative"
     >
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1">
-           <div className="font-extrabold text-slate-900 text-[14px] sm:text-[15px] group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight mb-1">{job.title}</div>
+           <div className="font-extrabold text-slate-900 text-[13px] sm:text-[14px] group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight mb-1">{job.title}</div>
            <div className="text-[11px] text-slate-500 font-bold flex items-center gap-1.5 mb-0.5"><CompanyDisplay job={job} fallback={employerName || "Your Company"} /></div>
            <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5"><Clock size={11} className="w-3 h-3" /> Posted: {new Date(job.postedAt).toLocaleDateString()}</div>
         </div>
@@ -623,7 +623,7 @@ function JobCard({ job, toggleJobStatus, navigate, employerName }) {
               toggleJobStatus(job._id, job.status);
             }}
             disabled={job.status === "pending_approval" || job.status === "rejected"}
-            className={`p-2 rounded-xl transition-colors ${
+            className={`p-1.5 sm:p-2 rounded-xl transition-colors ${
               job.status === "pending_approval" || job.status === "rejected"
                 ? "text-slate-300 cursor-not-allowed bg-slate-50"
                 : job.status === "active"

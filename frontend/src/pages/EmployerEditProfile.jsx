@@ -284,7 +284,7 @@ export default function EmployerEditProfile() {
             <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
               <ShieldCheck size={18} className="text-blue-600" /> Entity Type
             </label>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <label
                 className={`flex-1 flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${form.employerType === "company" ? "border-blue-600 bg-blue-50 text-blue-700 font-bold" : "border-slate-200 text-slate-600 hover:bg-slate-100"}`}
               >
@@ -403,22 +403,30 @@ export default function EmployerEditProfile() {
                 <ImageIcon size={16} className="text-blue-500" /> Profile/Logo
               </label>
               
-              <div className="flex gap-4 mb-3 border-b border-gray-100 pb-2">
-                <button
-                  type="button"
-                  onClick={() => setImgUploadType("link")}
-                  className={`text-sm font-semibold transition-colors ${imgUploadType === "link" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
-                >
-                  Provide Link
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setImgUploadType("upload")}
-                  className={`text-sm font-semibold transition-colors ${imgUploadType === "upload" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-400 hover:text-gray-600"}`}
-                >
-                  Upload Image
-                </button>
-              </div>
+                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setImgUploadType("link")}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                      imgUploadType === "link"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    Provide Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImgUploadType("upload")}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                      imgUploadType === "upload"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    Upload File
+                  </button>
+                </div>
 
               {imgUploadType === "link" ? (
                 <input
@@ -529,11 +537,18 @@ export default function EmployerEditProfile() {
             />
           </div>
 
-          <div className="pt-6 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              disabled={saving}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={saving || uploadingImage}
+              className="w-full sm:flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <Loader2 className="animate-spin" />
