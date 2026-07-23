@@ -90,71 +90,71 @@ export default function EmployerProfile() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-15 font-sans">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-15 font-sans pb-20">
       {/* ---------------- Header Section ---------------- */}
       <div className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 text-center md:text-left">
             <img
               src={profile.profilePicture || "https://via.placeholder.com/150"}
               alt="Logo"
-              className="w-32 h-32 object-cover rounded-xl border-4 border-gray-50 shadow-sm"
+              className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-xl border-2 sm:border-4 border-gray-50 shadow-sm"
             />
 
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">
+            <div className="flex-1 w-full flex flex-col items-center md:items-start">
+              <div className="flex flex-wrap justify-center md:justify-start items-center gap-2 mb-2">
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
                   {profile.employerType === 'company' ? (profile.companyName || profile.name) : profile.name}
                 </h1>
                 
                 {/* FACT: Show Employer Type Badge */}
-                <span className="flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-md">
-                  {profile.employerType === 'company' ? <Building size={14} /> : <User size={14} />}
+                <span className="flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-1 bg-indigo-100 text-indigo-700 text-[10px] sm:text-xs font-bold rounded-md">
+                  {profile.employerType === 'company' ? <Building size={12} /> : <User size={12} />}
                   {profile.employerType === 'company' ? 'Company' : 'Individual'}
                 </span>
 
                 {profile.isApproved === "approved" && (
-                  <span className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-md">
-                    <CheckCircle size={14} /> Approved
+                  <span className="flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold rounded-md">
+                    <CheckCircle size={12} /> Approved
                   </span>
                 )}
                 {profile.isApproved === "pending" && (
-                  <span className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-md">
-                    <CheckCircle size={14} /> Pending Review
+                  <span className="flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-1 bg-orange-100 text-orange-700 text-[10px] sm:text-xs font-bold rounded-md">
+                    <CheckCircle size={12} /> Pending Review
                   </span>
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-4 text-gray-600 text-sm mt-3">
+              <div className="flex flex-wrap justify-center md:justify-start gap-3 sm:gap-4 text-gray-600 text-xs sm:text-sm mt-2 sm:mt-3">
                 <div className="flex items-center gap-1">
-                  <MapPin size={16} className="text-gray-400" />
+                  <MapPin size={14} className="text-gray-400" />
                   {profile.officeLocation?.address || profile.location || "Location not set"}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Calendar size={16} className="text-gray-400" />
+                  <Calendar size={14} className="text-gray-400" />
                   Joined {new Date(profile.createdAt).getFullYear()}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Star size={16} className="text-yellow-500" />
+                  <Star size={14} className="text-yellow-500" />
                   {calculateRating(profile.ratingsReceived)} ({profile.ratingsReceived?.length || 0} reviews)
                 </div>
               </div>
             </div>
 
-            <button onClick={() => navigate(`/employereditprofile`)} className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition shadow-sm">
-              <Edit size={18} /> Edit Profile
+            <button onClick={() => navigate(`/employereditprofile`)} className="w-full md:w-auto mt-4 md:mt-0 flex justify-center items-center gap-2 bg-blue-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg text-sm sm:text-base font-bold hover:bg-blue-700 transition shadow-sm">
+              <Edit size={16} /> Edit Profile
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-4 sm:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
         {/* ---------------- Left Column: Info Cards ---------------- */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
           
           {/* Business Details Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Business Details</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4">Business Details</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Briefcase className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -177,8 +177,8 @@ export default function EmployerProfile() {
           </div>
 
           {/* Contact Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Contact Info</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4">Contact Info</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <User className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -220,9 +220,9 @@ export default function EmployerProfile() {
           </div>
 
           {/* FACT: Dynamic Document Verification Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <FileText size={20} className="text-blue-600"/> Verification Documents
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+              <FileText size={18} className="text-blue-600"/> Verification Docs
             </h3>
             <div className="space-y-2 mb-4">
               {/* Universal Documents */}
@@ -253,12 +253,12 @@ export default function EmployerProfile() {
         </div>
 
         {/* ---------------- Right Column: Main Content ---------------- */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-8">
           
           {/* About Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">About</h2>
-            <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-8">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">About</h2>
+            <p className="text-sm sm:text-base text-gray-600 leading-relaxed whitespace-pre-wrap">
               {profile.description || "No description provided yet."}
             </p>
             {/* Provide helpful context if description is too short or too long based on our new rule */}
@@ -272,35 +272,39 @@ export default function EmployerProfile() {
 
           {/* Openings Section */}
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
               Current Openings
-              <span className="bg-blue-100 text-blue-700 text-sm px-2.5 py-0.5 rounded-full font-bold">{jobs.length}</span>
+              <span className="bg-blue-100 text-blue-700 text-xs sm:text-sm px-2 py-0.5 rounded-full font-bold">{jobs.length}</span>
             </h2>
 
             {jobs.length === 0 ? (
-              <div className="text-center py-10 bg-white rounded-xl border border-gray-200 border-dashed">
-                <p className="text-gray-500 font-medium">No job openings posted yet.</p>
-                <button onClick={() => navigate("/createjob")} className="mt-2 text-blue-600 font-bold hover:underline">
+              <div className="text-center py-8 bg-white rounded-xl border border-gray-200 border-dashed">
+                <p className="text-sm text-gray-500 font-medium">No job openings posted yet.</p>
+                <button onClick={() => navigate("/createjob")} className="mt-2 text-sm text-blue-600 font-bold hover:underline">
                   Post a Job
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {jobs.map((job) => (
-                  <motion.div key={job._id} whileHover={{ y: -2 }} className="cursor-pointer bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition" onClick={() => navigate(`/job/${job._id}`)}>
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-bold text-gray-800 truncate">{job.title}</h3>
+                  <motion.div key={job._id} whileHover={{ y: -2 }} className="cursor-pointer group bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col h-full" onClick={() => navigate(`/job/${job._id}`)}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-gray-800 text-sm sm:text-base line-clamp-1 pr-2 group-hover:text-blue-700 transition-colors">{job.title}</h3>
                       {job.status === "pending_approval" && (
-                         <span className="text-[10px] bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Pending</span>
+                         <span className="text-[10px] bg-orange-100 text-orange-700 font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap">Pending</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 font-medium">
-                      <span className="bg-gray-100 px-2 py-0.5 rounded">{job.jobType}</span>
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-xs text-gray-500 mb-3 font-medium">
+                      <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{job.jobType}</span>
                       <span>•</span>
-                      <span>{job.location?.address || "Remote"}</span>
+                      <span className="truncate max-w-[120px] sm:max-w-[150px]">{job.location?.address || "Remote"}</span>
                     </div>
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">{job.description}</p>
-                    <div className="text-blue-600 font-bold text-sm">View Details →</div>
+                    <p className="text-[13px] sm:text-sm text-gray-600 line-clamp-2 mb-4 flex-grow">{job.description}</p>
+                    <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+                      <div className="text-blue-600 font-bold text-xs sm:text-sm group-hover:translate-x-1 transition-transform">
+                        View Details →
+                      </div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
