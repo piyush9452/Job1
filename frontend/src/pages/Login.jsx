@@ -180,13 +180,7 @@ export default function Login() {
             />
           </div>
 
-          <div className="flex items-center my-6">
-            <hr className="flex-grow border-white/10" />
-            <span className="mx-4 text-slate-500 text-xs font-semibold uppercase tracking-wider">
-              OR
-            </span>
-            <hr className="flex-grow border-white/10" />
-          </div>
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
