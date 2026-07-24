@@ -141,12 +141,15 @@ export default function Navbar() {
     </Link>
   );
 
+  const isHomePage = location.pathname === "/";
+  const mobileSolid = !isHomePage;
+
   return (
     <nav
       className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-300 pt-10 md:pt-6 lg:pt-[env(safe-area-inset-top)] ${
         showNavbar ? "translate-y-0" : "-translate-y-full"
       } ${
-        scrolled || menuOpen
+        scrolled || menuOpen || mobileSolid
           ? "bg-white shadow-sm md:shadow-none md:bg-black/40 md:backdrop-blur-sm md:backdrop-saturate-200"
           : "bg-black/5 md:bg-black/40 md:backdrop-blur-sm md:backdrop-saturate-200"
       }`}
@@ -163,7 +166,7 @@ export default function Navbar() {
             <LogoJobOne
               width={350}
               height={200}
-              textColor={scrolled || menuOpen ? "#000000" : "#FFFFFF"}
+              textColor={scrolled || menuOpen || mobileSolid ? "#000000" : "#FFFFFF"}
               className="h-15 w-auto"
             />
           </div>
@@ -335,7 +338,7 @@ export default function Navbar() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className={`focus:outline-none p-2 rounded-full transition-colors duration-300 ${
-              scrolled || menuOpen
+              scrolled || menuOpen || mobileSolid
                 ? "text-slate-900 hover:bg-slate-100"
                 : "text-white hover:bg-white/10"
             }`}

@@ -123,7 +123,7 @@ export default function EmployerEditProfile() {
       const { data } = await axios.post(
         `https://jobone-mrpy.onrender.com/employer/profile-picture/upload-url`,
         { fileType: file.type },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (window.__TAURI__) {
@@ -199,8 +199,10 @@ export default function EmployerEditProfile() {
         phone: form.phone,
         employerType: form.employerType,
         companyName: form.employerType === "company" ? form.companyName : "",
-        natureOfBusiness: form.employerType === "company" ? form.natureOfBusiness : "",
-        companyWebsite: form.employerType === "company" ? form.companyWebsite : "",
+        natureOfBusiness:
+          form.employerType === "company" ? form.natureOfBusiness : "",
+        companyWebsite:
+          form.employerType === "company" ? form.companyWebsite : "",
         location: form.location,
         officeLocation: officeLocation,
         industry: form.industry,
@@ -211,13 +213,13 @@ export default function EmployerEditProfile() {
       const { data } = await axios.post(
         "https://jobone-mrpy.onrender.com/employer/updateProfile",
         payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       // FACT: Mark profile as complete so ProtectedRoute stops blocking them
       localStorage.setItem(
         "employerInfo",
-        JSON.stringify({ ...storedEmployer, ...data, isProfileComplete: true })
+        JSON.stringify({ ...storedEmployer, ...data, isProfileComplete: true }),
       );
 
       alert("Profile updated successfully!");
@@ -276,7 +278,9 @@ export default function EmployerEditProfile() {
       <div className="max-w-4xl mx-auto bg-white sm:rounded-2xl shadow-lg p-3 sm:p-8 border-y sm:border border-slate-100">
         <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
           <div>
-            <h1 className="text-lg sm:text-2xl font-bold text-slate-800">Edit Profile</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-slate-800">
+              Edit Profile
+            </h1>
             <p className="text-sm text-slate-500">
               Update your business or professional details
             </p>
@@ -412,31 +416,31 @@ export default function EmployerEditProfile() {
               <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
                 <ImageIcon size={16} className="text-blue-500" /> Profile/Logo
               </label>
-              
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setImgUploadType("link")}
-                    className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${
-                      imgUploadType === "link"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    Provide Link
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImgUploadType("upload")}
-                    className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${
-                      imgUploadType === "upload"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    Upload File
-                  </button>
-                </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setImgUploadType("link")}
+                  className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${
+                    imgUploadType === "link"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Provide Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImgUploadType("upload")}
+                  className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${
+                    imgUploadType === "upload"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Upload File
+                </button>
+              </div>
 
               {imgUploadType === "link" ? (
                 <input
@@ -461,13 +465,21 @@ export default function EmployerEditProfile() {
                       hover:file:bg-blue-100 cursor-pointer
                       border border-slate-200 rounded-xl p-2"
                   />
-                  {uploadingImage && <Loader2 className="animate-spin text-blue-600" size={24} />}
+                  {uploadingImage && (
+                    <Loader2 className="animate-spin text-blue-600" size={24} />
+                  )}
                 </div>
               )}
               {form.profilePicture && !uploadingImage && (
                 <div className="mt-3 flex items-center gap-3">
-                  <img src={form.profilePicture} alt="Preview" className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200" />
-                  <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded">Image ready</span>
+                  <img
+                    src={form.profilePicture}
+                    alt="Preview"
+                    className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200"
+                  />
+                  <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded">
+                    Image ready
+                  </span>
                 </div>
               )}
             </div>
@@ -558,7 +570,7 @@ export default function EmployerEditProfile() {
             <button
               type="submit"
               disabled={saving || uploadingImage}
-              className="w-full sm:flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white p-2.5 sm:p-3 text-xs sm:text-sm rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full sm:flex-1 flex items-center justify-center  gap-2 bg-blue-600 text-white p-2.5 sm:p-3 text-xs sm:text-sm rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <Loader2 className="animate-spin" />

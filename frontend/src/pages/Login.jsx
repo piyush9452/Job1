@@ -15,6 +15,19 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const savedEmail = activeTab === "user" 
+      ? localStorage.getItem("lastJobseekerEmail") 
+      : localStorage.getItem("lastEmployerEmail");
+    
+    if (savedEmail) {
+      setEmail(savedEmail);
+    } else {
+      setEmail("");
+    }
+    setPassword("");
+  }, [activeTab]);
+
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const endpoint =
@@ -67,10 +80,12 @@ export default function Login() {
       if (activeTab === "employer") {
         localStorage.setItem("employerToken", data.token);
         localStorage.setItem("employerInfo", JSON.stringify(data));
+        localStorage.setItem("lastEmployerEmail", email);
         navigate("/employerdashboard");
       } else {
         localStorage.setItem("userToken", data.token);
         localStorage.setItem("userInfo", JSON.stringify(data));
+        localStorage.setItem("lastJobseekerEmail", email);
         navigate("/userdashboard");
       }
     } catch (err) {
@@ -176,6 +191,9 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <input
+                id={activeTab === "user" ? "user-email" : "employer-email"}
+                name={activeTab === "user" ? "user-email" : "employer-email"}
+                autoComplete="username"
                 type="email"
                 placeholder="Email Address"
                 className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm rounded-xl p-3.5 outline-none focus:border-blue-500 focus:bg-white/10 transition-colors"
@@ -188,6 +206,9 @@ export default function Login() {
             <div>
               <div className="relative">
                 <input
+                  id={activeTab === "user" ? "user-password" : "employer-password"}
+                  name={activeTab === "user" ? "user-password" : "employer-password"}
+                  autoComplete="current-password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm rounded-xl p-3.5 outline-none focus:border-blue-500 focus:bg-white/10 transition-colors pr-12 hide-password-toggle"
