@@ -74,7 +74,7 @@ function App() {
     <Router>
       <Navbar />
       <GlobalNotificationPopup />
-      <ChatWidget />
+      {/* <ChatWidget /> */}
       <PageWrapper>
         <Routes>
         {/* ================= PUBLIC ROUTES ================= */}
