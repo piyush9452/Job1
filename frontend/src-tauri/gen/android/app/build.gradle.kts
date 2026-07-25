@@ -14,28 +14,16 @@ val tauriProperties = Properties().apply {
 }
 
 android {
-    compileSdk = 35
-    namespace = "com.adorejob.app"
+    compileSdk = 36
+    namespace = "com.jobone.app"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "com.adorejob.app"
+        applicationId = "com.jobone.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
-
-    signingConfigs {
-        create("release") {
-            // Point this to your keystore file. 
-            // Relative to: frontend/src-tauri/gen/android/app
-            storeFile = file("../../../../adorejob-new.keystore")
-            storePassword = "AdoreJob2026"
-            keyAlias = "adorejob-alias"
-            keyPassword = "AdoreJob2026"
-        }
-    }
-
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
@@ -43,15 +31,13 @@ android {
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
-            packaging {
-                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
+            packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86_64/*.so")
             }
         }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }

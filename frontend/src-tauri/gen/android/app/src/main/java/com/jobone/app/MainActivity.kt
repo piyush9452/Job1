@@ -1,4 +1,4 @@
-package com.adorejob.app
+package com.jobone.app
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
