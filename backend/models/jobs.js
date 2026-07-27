@@ -46,6 +46,7 @@ const JobSchema = new mongoose.Schema({
 
   incentives: { type: [String], default: [] },
   screeningQuestions: [{ type: String }],
+  requestedDocuments: [{ type: String, default: [] }],
   
   durationType: { type: String, enum: ["Day", "Week", "Month"], required: false },
   startDate: { type: Date, default: null },

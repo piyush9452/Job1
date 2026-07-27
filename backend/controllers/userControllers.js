@@ -481,3 +481,125 @@ export const resetPasswordUser = expressAsyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Password reset successful. You can now log in." });
 });
+
+// ==========================================
+// JOBSEEKER VERIFICATION DOCUMENTS ENDPOINTS
+// ==========================================
+
+export const getJobseekerDocumentUploadUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client();
+  const userId = req.params.id;
+  const { fileType, field } = req.body;
+
+  if (!fileType || !field) {
+    res.status(400); throw new Error("File type and document field are required");
+  }
+
+  const extension = fileType.split('/')[1] || 'pdf';
+  const randomBytes = crypto.randomBytes(8).toString('hex');
+  const key = `jobseeker_documents/${userId}/${field}/${randomBytes}.${extension}`;
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    ContentType: fileType,
+  });
+
+  const url = await getSignedUrl(client, command, { expiresIn: 600 });
+  res.status(200).json({ uploadUrl: url, key: key });
+});
+
+export const saveJobseekerDocumentKey = expressAsyncHandler(async (req, res) => {
+  const userId = req.params.id;
+  const { field, key, fileName } = req.body;
+
+  if (!field || !key) {
+    res.status(400); throw new Error("Document field and key are required");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404); throw new Error("User not found");
+  }
+
+  if (!user.documents) {
+    user.documents = {};
+  }
+  user.documents[field] = { key: key, name: fileName || "Uploaded Document" };
+  await user.save();
+
+  res.status(200).json({ message: "Document saved successfully.", documents: user.documents });
+});
+
+export const getViewableJobseekerDocumentUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client();
+  const user = await User.findById(req.params.id);
+  const { field } = req.query;
+
+  if (!user) {
+    res.status(404); throw new Error("User not found");
+  }
+  if (!field || !user.documents || !user.documents[field] || !user.documents[field].key) {
+    res.status(404); throw new Error(`No document uploaded for ${field}`);
+  }
+
+  // SECURITY: Allow authenticated user or employer to view
+  if (!req.employerId && !req.user && !req.admin) {
+    res.status(401); throw new Error("Not authorized");
+  }
+
+  const key = user.documents[field].key;
+  const command = new GetObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: key });
+  const url = await getSignedUrl(client, command, { expiresIn: 3600 });
+
+  res.status(200).json({ viewableUrl: url });
+});
+
+export const getDownloadableJobseekerDocumentUrl = expressAsyncHandler(async (req, res) => {
+  const client = getS3Client();
+  const user = await User.findById(req.params.id);
+  const { field } = req.query;
+
+  if (!user) {
+    res.status(404); throw new Error("User not found");
+  }
+  if (!field || !user.documents || !user.documents[field] || !user.documents[field].key) {
+    res.status(404); throw new Error(`No document uploaded for ${field}`);
+  }
+
+  if (!req.employerId && !req.user && !req.admin) {
+    res.status(401); throw new Error("Not authorized");
+  }
+
+  const key = user.documents[field].key;
+  const originalName = user.documents[field].name || `${field}.pdf`;
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    ResponseContentDisposition: `attachment; filename="${originalName.replace(/\s+/g, '_')}"`,
+  });
+
+  const url = await getSignedUrl(client, command, { expiresIn: 300 });
+  res.status(200).json({ downloadableUrl: url });
+});
+
+export const deleteJobseekerDocument = expressAsyncHandler(async (req, res) => {
+  const userId = req.params.id;
+  const { field } = req.body;
+
+  if (!field) {
+    res.status(400); throw new Error("Document field is required");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404); throw new Error("User not found");
+  }
+
+  if (user.documents && user.documents[field]) {
+    user.documents[field] = { key: "", name: "" };
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Document removed successfully.", documents: user.documents });
+});

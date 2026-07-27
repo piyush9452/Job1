@@ -3,6 +3,21 @@ import expressAsyncHandler from "express-async-handler";
 import mammoth from "mammoth";
 import Job from "../models/jobs.js";
 import User from "../models/users.js";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+
+let s3Client;
+const getS3Client = () => {
+  if (!s3Client) {
+    s3Client = new S3Client({
+      region: process.env.AWS_BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_KEY,
+      },
+    });
+  }
+  return s3Client;
+};
 
 // FACT: Massively upgraded AI prompt to include Experience, Age, and Skills
 export const generateJobDetails = expressAsyncHandler(async (req, res) => {
@@ -81,17 +96,27 @@ export const generateJobDetails = expressAsyncHandler(async (req, res) => {
 export const parseResume = expressAsyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  if (!req.file) {
+  let fileBuffer;
+  let fileType;
+
+  if (req.file && req.file.buffer) {
+    fileBuffer = req.file.buffer;
+    fileType = req.file.mimetype;
+  } else if (req.body && req.body.key) {
+    const client = getS3Client();
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: req.body.key,
+    });
+    const s3Item = await client.send(command);
+    const byteArray = await s3Item.Body.transformToByteArray();
+    fileBuffer = Buffer.from(byteArray);
+    fileType = s3Item.ContentType || "application/pdf";
+  } else {
     res.status(400);
-    throw new Error("No document uploaded.");
+    throw new Error("No document or S3 key provided.");
   }
 
-  if (!req.file.buffer) {
-    res.status(400);
-    throw new Error("Server Error: File buffer is missing. Ensure your backend route uses multer.memoryStorage().");
-  }
-
-  const fileType = req.file.mimetype;
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -133,7 +158,7 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
         { text: basePrompt },
         {
           inlineData: {
-            data: req.file.buffer.toString("base64"),
+            data: fileBuffer.toString("base64"),
             mimeType: "application/pdf"
           }
         }
@@ -143,7 +168,7 @@ export const parseResume = expressAsyncHandler(async (req, res) => {
       fileType === "application/msword"
     ) {
       // For Word Docs, we still use mammoth to extract text
-      const docxData = await mammoth.extractRawText({ buffer: req.file.buffer });
+      const docxData = await mammoth.extractRawText({ buffer: fileBuffer });
       const rawText = docxData.value;
       
       if (!rawText || rawText.trim().length === 0) {

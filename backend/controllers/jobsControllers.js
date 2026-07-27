@@ -71,7 +71,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
   const { 
     title, industry, subdomain, jobSummary, keyResponsibilities, jobType, workDaysPattern, customWorkDaysDescription,
     skillsRequired, salaryMin, salaryMax, salaryFrequency, salaryCurrency, incentives, 
-    screeningQuestions, durationType, startDate, endDate, isFlexibleDuration,
+    screeningQuestions, requestedDocuments, durationType, startDate, endDate, isFlexibleDuration,
     shifts, isFlexibleShifts, mode, noOfDays, noOfPeopleRequired, 
     genderPreference, qualifications, courses, ageLimit, languages, experience,
     pinCode, location, useOfficeLocation ,applicationDeadline,
@@ -114,6 +114,7 @@ export const createJob = expressAsyncHandler(async (req, res) => {
     salaryCurrency,
     incentives,
     screeningQuestions,
+    requestedDocuments: requestedDocuments || [],
     durationType, 
     startDate, 
     endDate,

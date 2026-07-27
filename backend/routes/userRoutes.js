@@ -2,7 +2,8 @@ import express from "express";
 import { 
   createUser, loginUser, updateUser, userDetails, verifyUserOTP, resendUserOTP, googleLogin,
   getResumeUploadUrl, saveResumeKey, getViewableResumeUrl, getDownloadableResumeUrl, getProfilePicUploadUrl,
-  forgotPasswordUser, resetPasswordUser
+  forgotPasswordUser, resetPasswordUser,
+  getJobseekerDocumentUploadUrl, saveJobseekerDocumentKey, getViewableJobseekerDocumentUrl, getDownloadableJobseekerDocumentUrl, deleteJobseekerDocument
 } from "../controllers/userControllers.js";
 import { protectAny, protect } from "../middleware/authorization.js";
 
@@ -25,5 +26,12 @@ router.post("/:id/profile-picture/upload-url", protect, getProfilePicUploadUrl);
 router.post("/:id/resume/save-key", protect, saveResumeKey);
 router.get("/:id/resume/view", protectAny, getViewableResumeUrl);
 router.get("/:id/resume/download", protectAny, getDownloadableResumeUrl);
+
+// FACT: Jobseeker Verification Documents Endpoints
+router.post("/:id/document/upload-url", protect, getJobseekerDocumentUploadUrl);
+router.post("/:id/document/save-key", protect, saveJobseekerDocumentKey);
+router.get("/:id/document/view", protectAny, getViewableJobseekerDocumentUrl);
+router.get("/:id/document/download", protectAny, getDownloadableJobseekerDocumentUrl);
+router.delete("/:id/document", protect, deleteJobseekerDocument);
 
 export default router;

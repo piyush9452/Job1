@@ -53,6 +53,7 @@ export default function EditJob() {
     salaryCurrency: "INR",
     incentives: [],
     screeningQuestions: [],
+    requestedDocuments: [],
     startDate: "",
     endDate: "",
     applicationDeadline: "",
@@ -190,6 +191,7 @@ export default function EditJob() {
           salaryCurrency: d.salaryCurrency || "INR",
           incentives: Array.isArray(d.incentives) ? d.incentives : [],
           screeningQuestions: d.screeningQuestions || [],
+          requestedDocuments: d.requestedDocuments || [],
           startDate: formatDate(d.startDate),
           endDate: formatDate(d.endDate),
           applicationDeadline: formatDate(d.applicationDeadline),
@@ -1387,6 +1389,53 @@ export default function EditJob() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* REQUESTED DOCUMENTS CHECKLIST */}
+        <section className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-3xl p-6 sm:p-8 border border-blue-200 shadow-sm">
+          <h2 className="text-lg font-extrabold text-blue-900 mb-2 flex items-center gap-2">
+            <FileText size={20} className="text-blue-600" /> Requested Candidate Documents (Optional Checklist)
+          </h2>
+          <p className="text-sm text-blue-800 mb-6">
+            Select any specific documents you require applicants to provide when applying for this position:
+          </p>
+          <div className="flex flex-wrap gap-2.5">
+            {[
+              "10th Marksheet",
+              "12th Marksheet",
+              "UG Marksheet",
+              "PG Marksheet",
+              "Aadhar Card",
+              "PAN Card",
+              "Medical Certificate",
+              "3 Months Salary Slip (if Experienced)",
+              "Other Documents",
+            ].map((docName) => {
+              const isSelected = (job.requestedDocuments || []).includes(docName);
+              return (
+                <button
+                  key={docName}
+                  type="button"
+                  onClick={() => {
+                    setJob((prev) => {
+                      const current = prev.requestedDocuments || [];
+                      const updated = isSelected
+                        ? current.filter((d) => d !== docName)
+                        : [...current, docName];
+                      return { ...prev, requestedDocuments: updated };
+                    });
+                  }}
+                  className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-2 ${
+                    isSelected
+                      ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                      : "bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
+                  }`}
+                >
+                  <span>{isSelected ? "✓" : "+"}</span> {docName}
+                </button>
+              );
+            })}
+          </div>
         </section>
 
         {/* FEATURES & DESCRIPTION */}

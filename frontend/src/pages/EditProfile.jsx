@@ -206,19 +206,34 @@ export default function EditProfile() {
       );
       setProfile((prev) => ({ ...prev, resumeFileKey: s3Data.key }));
 
-      const formData = new FormData();
-      formData.append("resume", file);
+      let parsedData;
+      if (window.__TAURI__) {
+        const res = await axios.post(
+          "https://jobone-if7l.onrender.com/ai/parse-resume",
+          { key: s3Data.key },
+          {
+            headers: {
+              Authorization: `Bearer ${storedData.token}`,
+            },
+          }
+        );
+        parsedData = res.data;
+      } else {
+        const formData = new FormData();
+        formData.append("resume", file);
 
-      const { data: parsedData } = await axios.post(
-        "https://jobone-if7l.onrender.com/ai/parse-resume",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${storedData.token}`,
-            "Content-Type": "multipart/form-data",
+        const res = await axios.post(
+          "https://jobone-if7l.onrender.com/ai/parse-resume",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${storedData.token}`,
+              "Content-Type": "multipart/form-data",
+            },
           },
-        },
-      );
+        );
+        parsedData = res.data;
+      }
 
       if (parsedData.name) setProfile((p) => ({ ...p, name: parsedData.name }));
       if (parsedData.phone)
@@ -485,6 +500,19 @@ export default function EditProfile() {
                 ✓ Resume securely attached
               </p>
             )}
+            <div className="mt-4 pt-4 border-t border-blue-200/60 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-blue-950">Verification & Credential Documents</p>
+                <p className="text-xs text-blue-800">Upload optional marksheets, ID proofs, and salary slips.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate("/jobseeker-documents")}
+                className="bg-white text-blue-700 hover:bg-blue-50 border border-blue-300 px-4 py-2 rounded-xl font-bold text-sm transition shadow-sm"
+              >
+                Manage Documents →
+              </button>
+            </div>
           </GlassCard>
 
           {/* 1. PERSONAL DETAILS */}

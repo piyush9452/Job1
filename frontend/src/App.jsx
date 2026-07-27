@@ -29,6 +29,7 @@ import MyApplications from "./pages/MyApplications";
 import UserOTP from "./pages/UserOTP";
 import ApplyPage from "./pages/ApplyPage";
 import EmployerAdminView from "./pages/EmployerAdminView";
+import JobseekerDOC from "./pages/JobseekerDOC";
 
 // --- EMPLOYER PAGES ---
 import EmployerDashboard from "./pages/EmployerDashboard";
@@ -122,6 +123,14 @@ function App() {
           element={
             <ProtectedRoute>
               <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/jobseeker-documents"
+          element={
+            <ProtectedRoute>
+              <JobseekerDOC />
             </ProtectedRoute>
           }
         />

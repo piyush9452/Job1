@@ -4,6 +4,18 @@ import { X, Send, Loader2, FileText, CheckCircle2, UserCircle, ExternalLink, Ale
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
+const DOC_FIELD_MAP = {
+  "10th Marksheet": "tenthMarksheet",
+  "12th Marksheet": "twelfthMarksheet",
+  "UG Marksheet": "ugMarksheet",
+  "PG Marksheet": "pgMarksheet",
+  "Aadhar Card": "aadharCard",
+  "PAN Card": "panCard",
+  "Medical Certificate": "medicalCertificate",
+  "3 Months Salary Slip (if Experienced)": "salarySlips",
+  "Other Documents": "otherDocuments",
+};
+
 export default function ApplyModal({ job, onClose, onSuccess }) {
   const navigate = useNavigate();
   const [pitch, setPitch] = useState("");
@@ -186,6 +198,53 @@ export default function ApplyModal({ job, onClose, onSuccess }) {
                         className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center justify-end sm:justify-center gap-1"
                       >
                         Edit / Update Resume <ExternalLink size={12} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Requested Documents Checklist */}
+                {job.requestedDocuments && job.requestedDocuments.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-blue-100/60">
+                    <h4 className="font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-1.5">
+                      <FileText size={16} className="text-indigo-600" />
+                      Employer Requested Documents
+                    </h4>
+                    <p className="text-xs text-slate-600 mb-3">
+                      The employer requested these documents for verification. They will be shared from your profile if uploaded:
+                    </p>
+                    <div className="space-y-2">
+                      {job.requestedDocuments.map((docName) => {
+                        const field = DOC_FIELD_MAP[docName] || docName;
+                        const docObj = userProfile.documents?.[field];
+                        const isUploaded = !!(docObj && docObj.key);
+                        const fileName = docObj?.name || "Uploaded File";
+                        return (
+                          <div key={docName} className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 text-xs shadow-sm">
+                            <span className="font-bold text-slate-700">{docName}</span>
+                            {isUploaded ? (
+                              <span className="text-emerald-600 font-bold flex items-center gap-1">
+                                ✓ Attached ({fileName})
+                              </span>
+                            ) : (
+                              <span className="text-amber-600 font-bold flex items-center gap-1">
+                                ⚠️ Missing in profile
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          navigate("/jobseeker-documents");
+                        }}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 underline flex items-center gap-1"
+                      >
+                        Upload / Manage Documents in Profile <ExternalLink size={12} />
                       </button>
                     </div>
                   </div>

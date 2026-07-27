@@ -168,6 +168,12 @@ const Profile = () => {
               >
                 <Edit size={18} /> Edit Profile
               </button>
+              <button
+                onClick={() => navigate("/jobseeker-documents")}
+                className="w-full md:w-auto px-6 py-3 bg-indigo-600/90 text-white border border-indigo-500 rounded-xl font-bold hover:bg-indigo-600 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.2)] hover:scale-105 active:scale-95"
+              >
+                <FileText size={18} className="text-indigo-300" /> My Documents
+              </button>
               {(profile.resume || profile.resumeFileKey) && (
                 <button
                   onClick={async () => {

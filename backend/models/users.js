@@ -103,6 +103,19 @@ const userSchema = new mongoose.Schema({
   // FACT: This will now store the AWS S3 Key (e.g. "resumes/123-abc.pdf")
   resumeFileKey: { type: String },
   resume: { type: String }, // Leaving this as-is for backward compatibility (external links)
+
+  // FACT: Optional verification and credentials documents for Jobseekers
+  documents: {
+    tenthMarksheet: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    twelfthMarksheet: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    ugMarksheet: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    pgMarksheet: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    aadharCard: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    panCard: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    otherDocuments: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    medicalCertificate: { key: { type: String, default: "" }, name: { type: String, default: "" } },
+    salarySlips: { key: { type: String, default: "" }, name: { type: String, default: "" } }
+  },
   
   education:[{
     degree: { type: String },

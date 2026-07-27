@@ -15,7 +15,8 @@ import {
   User,
   Clock,
   Code,
-  Award, // <-- Added Code and Award
+  Award,
+  FileText,
 } from "lucide-react";
 
 export default function PublicProfile() {
@@ -347,6 +348,55 @@ export default function PublicProfile() {
                 <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-xl text-center">
                   <p className="text-sm font-bold text-orange-800">No Resume Uploaded</p>
                   <p className="text-xs font-medium text-orange-600 mt-1">This candidate has not uploaded a resume yet.</p>
+                </div>
+              )}
+
+              {/* CANDIDATE VERIFICATION DOCUMENTS */}
+              {profile.documents && Object.keys(profile.documents).some(k => profile.documents[k]?.key) && (
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                    <FileText size={16} className="text-blue-600" /> Verification Documents
+                  </h4>
+                  <div className="space-y-2">
+                    {Object.entries(profile.documents).map(([field, docObj]) => {
+                      if (!docObj?.key) return null;
+                      const labelMap = {
+                        tenthMarksheet: "10th Marksheet",
+                        twelfthMarksheet: "12th Marksheet",
+                        ugMarksheet: "UG Marksheet",
+                        pgMarksheet: "PG Marksheet",
+                        aadharCard: "Aadhar Card",
+                        panCard: "PAN Card",
+                        medicalCertificate: "Medical Certificate",
+                        salarySlips: "Salary Slips",
+                        otherDocuments: "Other Documents",
+                      };
+                      return (
+                        <div key={field} className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-medium shadow-sm">
+                          <span className="text-slate-800 font-bold">{labelMap[field] || field}</span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const token = JSON.parse(localStorage.getItem("userInfo"))?.token || JSON.parse(localStorage.getItem("employerInfo"))?.token;
+                                const { data } = await axios.get(`https://jobone-mrpy.onrender.com/user/${profile._id}/document/download?field=${field}`, {
+                                  headers: token ? { Authorization: `Bearer ${token}` } : {}
+                                });
+                                if (data.downloadableUrl) {
+                                  window.open(data.downloadableUrl, "_blank");
+                                }
+                              } catch (e) {
+                                alert("Failed to download document.");
+                              }
+                            }}
+                            className="text-blue-600 hover:text-blue-800 font-bold underline flex items-center gap-1"
+                          >
+                            <Download size={12} /> Download
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
