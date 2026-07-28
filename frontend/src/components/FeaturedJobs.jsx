@@ -9,6 +9,7 @@ import {
   IndianRupee,
   ArrowRight,
   Sparkles,
+  Building2,
 } from "lucide-react";
 import JobDetailsModal from "../components/JobDetailsModal";
 
