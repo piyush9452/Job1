@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // --- COMPONENTS ---
 import Navbar from "./components/NavBar";
+import MobileBottomNav from "./components/MobileBottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EmployerProtectedRoute from "./components/EmployerProtectedRoute";
 import Candidates from "./pages/EmployerCandidateSearch";
@@ -62,9 +63,10 @@ const PageWrapper = ({ children }) => {
   const location = useLocation();
   const noPaddingRoutes = ["/", "/admin/dashboard", "/admin/login"];
   const hasPadding = !noPaddingRoutes.includes(location.pathname);
+  const actualPadding = hasPadding && !window.__TAURI__ ? "pt-[80px]" : "";
 
   return (
-    <div className={hasPadding ? "pt-[80px]" : ""}>
+    <div className={actualPadding}>
       {children}
     </div>
   );
@@ -74,6 +76,7 @@ function App() {
   return (
     <Router>
       <Navbar />
+      <MobileBottomNav />
       <GlobalNotificationPopup />
       {/* <ChatWidget /> */}
       <PageWrapper>

@@ -144,6 +144,10 @@ export default function Navbar() {
   const isHomePage = location.pathname === "/";
   const mobileSolid = !isHomePage;
 
+  if (window.__TAURI__) {
+    return null;
+  }
+
   return (
     <nav
       className={`fixed w-full z-[100] top-0 left-0 font-sans transition-all duration-300 pt-10 md:pt-6 lg:pt-[env(safe-area-inset-top)] ${

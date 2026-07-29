@@ -153,14 +153,16 @@ export default function HeroSection() {
     // Added pt-28 pb-6 so the content isn't hidden under your transparent navbar and fits mobile screens better
     <section className="relative w-full min-h-[90dvh] lg:min-h-[750px] lg:h-[85vh] flex lg:items-center justify-center overflow-hidden font-sans pt-28 pb-6 lg:pt-36 lg:pb-16">
       {/* Video for desktop */}
-      <video
-        className="absolute inset-0 w-full h-full object-cover scale-105 hidden md:block"
-        src={heroVideo}
-        autoPlay
-        loop
-        muted
-        playsInline
-      />
+      {!window.__TAURI__ && (
+        <video
+          className="absolute inset-0 w-full h-full object-cover scale-105 hidden md:block"
+          src={heroVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      )}
       {/* Animated CSS component for mobile */}
       <MobileHeroBg />
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-slate-900/95 backdrop-blur-[4px] hidden md:block" />
